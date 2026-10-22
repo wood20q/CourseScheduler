@@ -1,0 +1,73 @@
+/* Setup CSS */
+* {
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --grid-outline: 3px;
+}
+
+/* Setting the main grid of the site */
+main {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1em;
+  margin: 1em;
+}
+
+/* Setting Schedule Grid */
+.scheduleArea {
+  display: grid;
+  background-color: black;
+  border-radius: 25px;
+  gap: var(--grid-outline);
+  outline: calc(var(--grid-outline) * 2) solid black;
+}
+
+.yearBlock {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--grid-outline);
+}
+
+.termBlock {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minMax(0px, 1fr));
+  gap: var(--grid-outline);
+}
+
+/* Fixing background color */
+#yearLabel {
+  padding: 1em;
+  background-color: white;
+}
+
+.term {
+  background-color: white;
+}
+
+/* Course Card Styles */
+.course {
+  display: grid;
+  background-color: black;
+  color: white;
+  margin-top: 1em;
+  padding: 1em;
+  border-radius: 25px;
+  gap: 0.5em;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: 
+    "courseName courseName"
+    "courseCode courseCredits"
+    "courseDescription courseDescription";
+}
+
+.course .name { grid-area: courseName; }
+.course .code { grid-area: courseCode; }
+.course .credits { grid-area: courseCredits; }
+.course .description { grid-area: courseDescription; }
+
+.scheduleArea .course > :not(.code, .credits) {
+  display: none;
+}
