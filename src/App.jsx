@@ -4,11 +4,12 @@ import AvailableCourses from './components/AvailableCourses'
 
 function App() {
   return (
-    <>
-      <nav>
-        <h2>Course Scheduler</h2>
+    <div className="app-container">
+      <nav className="top-nav">
+        <h1>Course Scheduler</h1>
+        <p>Student Name: Chad Quick</p>
       </nav>
-      <main>
+      <main className="main-container">
         <div className="availableCourses">
           <AvailableCourses/>
         </div>
@@ -19,7 +20,7 @@ function App() {
           <Year yearNumber={4}/>
         </div>
       </main>
-    </>
+    </div>
   )
 }
 
