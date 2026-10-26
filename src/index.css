@@ -176,10 +176,13 @@ main,
 .yearLabel {
   padding: 1em;
   background-color: var(--mantle);
-  display: flex;
-  align-items: center;
+  display: grid;
   justify-content: center;
+  grid-template-rows: 1fr 1fr;
 }
+
+.yearLabel h1 { align-self: end; }
+.yearLabel p { align-self: start; }
 
 .term {
   background-color: var(--mantle);
