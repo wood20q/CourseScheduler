@@ -1,0 +1,230 @@
+/* Setup CSS */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --grid-outline: 3px;
+  /* Mocha Color Theme */
+  --rosewater: #f5e0dc;
+  --flamingo: #f2cdcd;
+  --pink: #f5c2e7;
+  --mauve: #cba6f7;
+  --red: #f38ba8;
+  --maroon: #eba0ac;
+  --peach: #fab387;
+  --yellow: #f9e2af;
+  --green: #a6e3a1;
+  --teal: #94e2d5;
+  --sky: #89dceb;
+  --sapphire: #74c7ec;
+  --blue: #89b4fa;
+  --lavender: #b4befe;
+  --text: #cdd6f4;
+  --subtext1: #bac2de;
+  --subtext0: #a6adc8;
+  --overlay2: #9399b2;
+  --overlay1: #7f849c;
+  --overlay0: #6c7086;
+  --surface2: #585b70;
+  --surface1: #45475a;
+  --surface0: #313244;
+  --base: #1e1e2e;
+  --mantle: #181825;
+  --crust: #11111b;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  background-color: var(--crust);
+  color: var(--text);
+}
+
+body {
+  overflow: hidden;
+}
+
+.app-container {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 0.5em;
+}
+
+/* Scrollbar Styles */
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: var(--surface0); 
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: var(--overlay2);
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mauve); 
+}
+
+/* Nav Style */
+.top-nav {
+  flex-shrink: 0;
+  padding: 0.5em 1em 0.5em 1em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--surface0);
+}
+
+/* Setting the main grid of the site */
+main,
+.main-container {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1em;
+  padding: 1em;
+  overflow: hidden;
+}
+
+.availableCourses {
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#searchForm {
+  flex-shrink: 0;
+  padding-bottom: 0.75em;
+  display: flex;
+  gap: 0.5em;
+}
+
+#searchBox {
+  flex: 1;
+  padding: 0.4em 0.6em;
+  border-radius: 25px;
+  border: 4px solid var(--mauve);
+  background-color: var(--surface0);
+  color: var(--text);
+
+}
+
+#searchForm button {
+  padding: 0.4em 0.8em;
+  border-radius: 8px;
+  border: none;
+  background-color: var(--mauve);
+  color: var(--crust);
+  cursor: pointer;
+}
+
+.coursesList {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.5em;
+}
+
+.coursesList .course:first-child {
+  margin-top: 0;
+}
+
+/* Setting Schedule Grid */
+.scheduleArea {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  background-color: var(--mauve);
+  border-radius: 25px;
+  gap: var(--grid-outline);
+  outline: calc(var(--grid-outline) * 2) solid var(--mauve);
+}
+
+.yearBlock {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--grid-outline);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.termBlock {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0px, 1fr));
+  gap: var(--grid-outline);
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Fixing background color */
+.yearLabel {
+  padding: 1em;
+  background-color: var(--mantle);
+  display: grid;
+  justify-items: center;
+  grid-template-rows: 1fr 1fr;
+}
+
+.yearLabel h1 { align-self: end; }
+.yearLabel p { align-self: start; }
+
+.term {
+  background-color: var(--mantle);
+  min-height: 0;
+  overflow: hidden;
+  padding: 0.5em;
+}
+
+.termLabel {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 1fr auto;
+}
+
+.courseArea {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1em;
+}
+
+/* Course Card Styles */
+.course {
+  display: grid;
+  background-color: var(--surface0);
+  color: white;
+  margin-top: 1em;
+  padding: 1em;
+  border-radius: 25px;
+  gap: 0.5em;
+  align-items: center;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: 
+    "courseName courseName"
+    "courseCode courseCredits"
+    "courseDescription courseDescription";
+}
+
+.course .name { grid-area: courseName; }
+.course .code { grid-area: courseCode; }
+.course .credits { grid-area: courseCredits; }
+.course .description { grid-area: courseDescription; }
+
+.scheduleArea .course > :not(.code, .credits) {
+  display: none;
+}
