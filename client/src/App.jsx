@@ -102,6 +102,7 @@ function App() {
     <div className="app-container">
       <nav className="top-nav">
         <h1>Course Scheduler</h1>
+        <p>Total Credits: {schedule.flat(2).reduce((sum, course) => sum += course.credits, 0)}</p>
         <p>Student Name: Chad Quick</p>
       </nav>
       <main className="main-container">
