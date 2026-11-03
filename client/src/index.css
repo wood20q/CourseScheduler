@@ -149,7 +149,7 @@ main,
   height: 100%;
   overflow: hidden;
   display: grid;
-  grid-template-rows: repeat(4, minmax(0, 1fr));
+  /* grid-template-rows: repeat(4, minmax(0, 1fr)); Removed to allow for modulation */
   background-color: var(--mauve);
   border-radius: 25px;
   gap: var(--grid-outline);
