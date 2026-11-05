@@ -29,7 +29,7 @@ function App() {
         body: JSON.stringify({
           termList: termList,
           course: course,
-          schedule, schedule
+          schedule: schedule
         })
       })
 
