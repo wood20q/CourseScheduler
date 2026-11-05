@@ -15,7 +15,12 @@ const initialCourses = [
     { name: "Database Management Systems", code: "CS310", credits: 1, description: "Principles of database design, SQL, and normalization." },
     { name: "Intro to Philosophy", code: "PHIL101", credits: 0.5, description: "Examination of fundamental philosophical questions." },
     { name: "General Chemistry", code: "CHEM110", credits: 1, description: "Study of atomic structure, chemical bonding, and reactions." },
-    { name: "Intro to Sociology", code: "SOC101", credits: 0.5, description: "Overview of social structures and human interactions." }
+    { name: "Intro to Sociology", code: "SOC101", credits: 0.5, description: "Overview of social structures and human interactions." },
+    { name: "Software Engineering", code: "CS350", credits: 1, description: "Methodologies for software design, testing, agile development, and team project management." },
+    { name: "Linear Algebra", code: "MATH215", credits: 1, description: "Vector spaces, matrices, linear transformations, eigenvalues, and applications." },
+    { name: "Public Speaking", code: "COMM101", credits: 0.5, description: "Principles of effective oral communication, speech preparation, and presentation skills." },
+    { name: "Cybersecurity Fundamentals", code: "CS240", credits: 1, description: "Core concepts of network security, cryptography, vulnerability assessment, and defense strategies." },
+    { name: "Environmental Science", code: "ENV101", credits: 0.5, description: "Interdisciplinary study of ecosystems, climate change, biodiversity, and conservation." }
 ];
 
 async function setup() {
