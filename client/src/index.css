@@ -217,14 +217,29 @@ main,
   grid-template-areas: 
     "courseName courseName"
     "courseCode courseCredits"
-    "courseDescription courseDescription";
+    "courseDescription courseDescription"
+    "addCourseButton addCourseButton";
 }
 
 .course .name { grid-area: courseName; }
 .course .code { grid-area: courseCode; }
 .course .credits { grid-area: courseCredits; }
 .course .description { grid-area: courseDescription; }
+.course .addCourse {
+  grid-area: addCourseButton;
+  justify-self: center;
+  padding: .5em 1em;
+  background-color: var(--mauve);
+  border: none;
+  font-size: 1em;
+  border-radius: 25px;
+  margin-top: 0.5em;
+}
 
 .scheduleArea .course > :not(.code, .credits) {
   display: none;
+}
+
+.scheduleArea .course {
+  grid-template-areas: "courseCode courseCredits";
 }

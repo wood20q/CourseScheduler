@@ -56,7 +56,7 @@ function App() {
         <div className="availableCourses">
           {isLoading ? (
             <p>Loading Courses</p>
-          ) : <AvailableCourses courseList={availCourses}/>
+          ) : <AvailableCourses handleAddCourse={handleAddCourse} courseList={availCourses}/>
           }
         </div>
         <div className="scheduleArea">
