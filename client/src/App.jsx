@@ -19,6 +19,32 @@ function App() {
       })
   }, [])
 
+  const handleAddCourse = async (termList, course) => {
+    try {
+      const response = await fetch('http://localhost:3000/api/schedule/addCourse', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          termList: termList,
+          course: course,
+          schedule, schedule
+        })
+      })
+
+      if (!response.ok) {
+        const errData = await response.json()
+        throw new Error(errData.error)
+      }
+
+      const data = await response.json()
+      setSchedule(data.schedule)
+    } catch (error) {
+      alert(`Could not add course: ${error.message}`)
+    }
+  }
+
   return (
     <div className="app-container">
       <nav className="top-nav">
