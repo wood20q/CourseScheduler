@@ -9,7 +9,7 @@ function AvailableCourses({ courseList }) {
             </form>
             <div className="coursesList">
                 {courseList.map((course) => (
-                    <CourseCard name={course.name} code={course.code} credits={course.credits} description={course.description}/>
+                    <CourseCard key={course.code} name={course.name} code={course.code} credits={course.credits} description={course.description}/>
                 ))}
             </div>
         </>

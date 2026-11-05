@@ -11,7 +11,7 @@ function Term({ termLabel, termList }) {
             <hr />
             <div className="courseArea">
                 {termList.map((course) => (
-                    <CourseCard name={course.name} code={course.code} credits={course.credits} description={course.description}/>
+                    <CourseCard key={course.code} name={course.name} code={course.code} credits={course.credits} description={course.description}/>
                 ))}
             </div>
         </div>
