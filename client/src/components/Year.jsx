@@ -1,7 +1,7 @@
 import Term from "./Term"
 
 function Year({ yearNumber, yearList }) {
-    const yearCredits = yearList.flat().reduce((sum, course) => sum += course.credits, 0)
+    const yearCredits = yearList.flat().reduce((sum, course) => sum + course.credits, 0)
     return (
         <div className="yearBlock">
             <div className="yearLabel">

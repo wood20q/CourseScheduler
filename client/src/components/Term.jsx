@@ -1,7 +1,7 @@
 import CourseCard from "./CourseCard"
 
 function Term({ termLabel, termList }) {
-    const termCredits = termList.reduce((sum, course) => sum += course.credits, 0)
+    const termCredits = termList.reduce((sum, course) => sum + course.credits, 0)
     return (
         <div className="term">
             <div className="termLabel">

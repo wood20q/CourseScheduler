@@ -7,8 +7,13 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/api/courses', async (req, res) => {
-    const courses = await Course.findAll();
-    res.json(courses);
+    try {
+        const courses = await Course.findAll();
+        res.json(courses);
+    } catch (error) {
+        console.error('Failed to fetch courses:', error);
+        res.status(500).json({ error: 'Failed to fetch courses' });
+    }
 });
 
 sequelize.authenticate().then(() => {
