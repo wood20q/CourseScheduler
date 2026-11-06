@@ -158,7 +158,7 @@ main,
 
 .yearBlock {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 180px 1fr;
   gap: var(--grid-outline);
   min-height: 0;
   overflow: hidden;
@@ -174,15 +174,16 @@ main,
 
 /* Fixing background color */
 .yearLabel {
-  padding: 1em;
+  padding: 0.75em 0.5em;
   background-color: var(--mantle);
   display: grid;
   justify-items: center;
   grid-template-rows: 1fr 1fr;
+  text-align: center;
 }
 
 .yearLabel h1 { align-self: end; }
-.yearLabel p { align-self: start; }
+.yearLabel p { align-self: start; white-space: nowrap; font-size: 0.95em; }
 
 .term {
   background-color: var(--mantle);
