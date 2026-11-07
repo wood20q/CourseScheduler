@@ -16,7 +16,7 @@ export async function addCourseToSchedule(termList, course, schedule) {
 
     if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errData.error)
+        throw new Error(errorData.error || 'Failed to add course')
     }
 
     const data = await response.json()

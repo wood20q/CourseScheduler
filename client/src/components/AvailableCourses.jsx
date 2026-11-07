@@ -1,6 +1,6 @@
 import CourseCard from "./CourseCard"
 
-function AvailableCourses({ courseList, handleAddCourse }) {
+function AvailableCourses({ courseList, onSelectCourse }) {
     return (
         <>
             <form id="searchForm">
@@ -9,7 +9,7 @@ function AvailableCourses({ courseList, handleAddCourse }) {
             </form>
             <div className="coursesList">
                 {courseList.map((course) => (
-                    <CourseCard key={course.code} handleAddCourse={handleAddCourse} name={course.name} code={course.code} credits={course.credits} description={course.description}/>
+                    <CourseCard key={course.code} onSelectCourse={onSelectCourse} name={course.name} code={course.code} credits={course.credits} description={course.description}/>
                 ))}
             </div>
         </>

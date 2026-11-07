@@ -244,3 +244,125 @@ main,
 .scheduleArea .course {
   grid-template-areas: "courseCode courseCredits";
 }
+
+/* Add Course Dialog Styles */
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(17, 17, 27, 0.7); /* Translucent Mocha Crust */
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1em;
+}
+
+.dialogWrapper {
+  background-color: var(--surface0);
+  border: 3px solid var(--mauve);
+  border-radius: 25px;
+  padding: 1.75em;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+.dialogWrapper h2 {
+  color: var(--mauve);
+  font-size: 1.5em;
+}
+
+.dialogCourseName {
+  color: var(--subtext1);
+  font-size: 0.95em;
+  line-height: 1.4;
+  background-color: var(--mantle);
+  padding: 0.6em 0.8em;
+  border-radius: 12px;
+}
+
+.dialogCourseName strong {
+  color: var(--mauve);
+}
+
+.dialogWrapper form {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+
+.formGroup label {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.95em;
+}
+
+.formGroup select {
+  padding: 0.6em 0.8em;
+  border-radius: 12px;
+  background-color: var(--mantle);
+  color: var(--text);
+  border: 2px solid var(--surface2);
+  font-size: 1em;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.formGroup select:focus {
+  border-color: var(--mauve);
+}
+
+.formGroup.buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 0.75em;
+  margin-top: 0.8em;
+}
+
+.btn-close {
+  padding: 0.6em 1.2em;
+  border-radius: 20px;
+  background-color: var(--surface1);
+  color: var(--text);
+  border: none;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-close:hover {
+  background-color: var(--surface2);
+}
+
+.btn-submit {
+  padding: 0.6em 1.4em;
+  border-radius: 20px;
+  background-color: var(--mauve);
+  color: var(--crust);
+  border: none;
+  font-size: 0.95em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-submit:hover {
+  background-color: var(--pink);
+}
+
+.btn-submit:active {
+  transform: scale(0.98);
+}
