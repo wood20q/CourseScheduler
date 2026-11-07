@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Year from './components/Year'
 import AvailableCourses from './components/AvailableCourses'
+import { addCourseToSchedule, fetchCourses } from './services/scheduleApi'
 
 function App() {
   const [schedule, setSchedule] = useState(() => Array.from({length: 4}, () => Array.from({length: 3}, () => [{"name": "Intro to Python", "code": "CS120", "credits": 1, "description": "Foundation in structured and object-oriented programming methodology with a high-level language. Special emphasis on decision and looping structures, subprograms and objects used in development of computer programs. Focus on algorithm development and a variety of applications provides basis for more advanced courses."}, {"name": "Data Structures and Algorithms", "code": "CS220", "credits": 1, "description": "In-depth study of data structures such as stacks, queues, linked lists, trees, and graphs. Includes the analysis of algorithm complexity, sorting, and searching techniques. Emphasizes writing efficient and scalable code."}])))
@@ -8,38 +9,16 @@ function App() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/courses')
-      .then((response) => response.json())
-      .then((data) => {
-        setAvailCourses(data)
-        setIsLoading(false)
-      }).catch((error) => {
-        console.log('Failed to load courses', error)
-        setIsLoading(false)
-      })
-  }, [])
+    fetchCourses()
+      .then((data) => setAvailCourses(data))
+      .catch((err) => console.error(err))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const handleAddCourse = async (termList, course) => {
     try {
-      const response = await fetch('http://localhost:3000/api/schedule/addCourse', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          termList: termList,
-          course: course,
-          schedule: schedule
-        })
-      })
-
-      if (!response.ok) {
-        const errData = await response.json()
-        throw new Error(errData.error)
-      }
-
-      const data = await response.json()
-      setSchedule(data.schedule)
+      const updatedSchedule = await addCourseToSchedule(termList, course, schedule)
+      setSchedule(updatedSchedule)
     } catch (error) {
       alert(`Could not add course: ${error.message}`)
     }
