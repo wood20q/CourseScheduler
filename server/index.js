@@ -28,6 +28,10 @@ app.post('/api/schedule/addCourse', (req, res) => {
     }
 })
 
-sequelize.authenticate().then(() => {
-    app.listen(3000, () => console.log('Server running on port 3000'));
-});
+sequelize.authenticate()
+    .then(() => {
+        app.listen(3000, () => console.log('Server running on port 3000'));
+    })
+    .catch((err) => {
+        console.error('Unable to connect to the database:', err);
+    });

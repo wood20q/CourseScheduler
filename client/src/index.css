@@ -37,22 +37,33 @@
 }
 
 html,
-body,
-#root {
+body {
   height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  overflow-x: hidden;
+  overscroll-behavior: none;
   background-color: var(--crust);
   color: var(--text);
 }
 
-body {
+#root {
+  height: 100%;
+  width: 100%;
   overflow: hidden;
+  overflow-x: hidden;
 }
 
 .app-container {
   height: 100dvh;
+  width: 100vw;
+  max-width: 100vw;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  overflow-x: hidden;
   gap: 0.5em;
 }
 
@@ -85,6 +96,9 @@ body {
   justify-content: space-between;
   align-items: center;
   background-color: var(--surface0);
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
 }
 
 /* Setting the main grid of the site */
@@ -92,18 +106,26 @@ main,
 .main-container {
   flex: 1;
   min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100vw;
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 300px minmax(0, 1fr);
   gap: 1em;
   padding: 1em;
   overflow: hidden;
+  overflow-x: hidden;
 }
 
 .availableCourses {
   min-height: 0;
+  min-width: 0;
   height: 100%;
+  width: 300px;
+  max-width: 300px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 #searchForm {
@@ -135,7 +157,9 @@ main,
 .coursesList {
   flex: 1;
   min-height: 0;
+  width: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 0.5em;
 }
 
@@ -146,6 +170,8 @@ main,
 /* Setting Schedule Grid */
 .scheduleArea {
   min-height: 0;
+  min-width: 0;
+  width: 100%;
   height: 100%;
   overflow: hidden;
   display: grid;
@@ -153,22 +179,24 @@ main,
   background-color: var(--mauve);
   border-radius: 25px;
   gap: var(--grid-outline);
-  outline: calc(var(--grid-outline) * 2) solid var(--mauve);
+  box-shadow: 0 0 0 calc(var(--grid-outline) * 2) var(--mauve);
 }
 
 .yearBlock {
   display: grid;
-  grid-template-columns: 180px 1fr;
+  grid-template-columns: 180px minmax(0, 1fr);
   gap: var(--grid-outline);
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
 }
 
 .termBlock {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--grid-outline);
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -188,7 +216,9 @@ main,
 .term {
   background-color: var(--mantle);
   min-height: 0;
-  overflow: hidden;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 0.5em;
 }
 
@@ -201,7 +231,8 @@ main,
 .courseArea {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 1em;
+  gap: 0.75em;
+  min-width: 0;
 }
 
 /* Course Card Styles */
@@ -214,27 +245,35 @@ main,
   border-radius: 25px;
   gap: 0.5em;
   align-items: center;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas: 
     "courseName courseName"
     "courseCode courseCredits"
     "courseDescription courseDescription"
     "addCourseButton addCourseButton";
+  max-width: 100%;
+  overflow: hidden;
+  word-break: break-word;
 }
 
-.course .name { grid-area: courseName; }
+.course .name { 
+  grid-area: courseName;
+  font-size: 1.25em;
+}
 .course .code { grid-area: courseCode; }
 .course .credits { grid-area: courseCredits; }
 .course .description { grid-area: courseDescription; }
 .course .addCourse {
   grid-area: addCourseButton;
   justify-self: center;
+  width: 100%;
   padding: .5em 1em;
   background-color: var(--mauve);
   border: none;
-  font-size: 1em;
+  font-size: 0.95em;
   border-radius: 25px;
   margin-top: 0.5em;
+  cursor: pointer;
 }
 
 .scheduleArea .course > :not(.code, .credits) {
