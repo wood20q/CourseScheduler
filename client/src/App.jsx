@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Year from './components/Year'
 import AvailableCourses from './components/AvailableCourses'
-import AddCourseDialog from './AddCourseDialog'
+import AddCourseDialog from './components/AddCourseDialog'
 import { addCourseToSchedule, fetchCourses } from './services/scheduleApi'
 
 function App() {
