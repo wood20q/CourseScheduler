@@ -37,12 +37,17 @@ describe('addCourse', () => {
 describe('findCourse', () => {
     test('Find Course #1', () => {
         expect(findCourse('cs120', [[[{'name':'Intro To Python', 'code':'CS120'}], [], []], [[], [], []], [[], [], []], [[], [], []]]))
-            .toEqual([0,0])
+            .toEqual([0,0,0])
     })
 
     test('Find Course #2', () => {
         expect(findCourse('mA230', [[[], [], []], [[], [], []], [[], [], []], [[], [{'name':'Intro To Python', 'code':'MA230'}], []]]))
-            .toEqual([3,1])
+            .toEqual([3,1,0])
+    })
+
+    test('Find Course #3', () => {
+        expect(findCourse('mA230', [[[], [], []], [[], [], []], [[], [], []], [[], [{'name':'Intro To Python', 'code':'CS120'}, {'name':'Intro To Python', 'code':'MA230'}], []]]))
+            .toEqual([3,1,1])
     })
 
     test('Error: Course not found', () => {
