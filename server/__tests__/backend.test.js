@@ -1,4 +1,4 @@
-const { addCourse } = require("../scheduleService")
+const { addCourse, findCourse } = require("../scheduleService")
 // Template Schedule: [[[], [], []], [[], [], []], [[], [], []], [[], [], []]]
 
 describe('addCourse', () => {

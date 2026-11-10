@@ -17,4 +17,16 @@ function addCourse(termList, course, oldSchedule) {
     return newSchedule
 }
 
-module.exports = { addCourse }
+function findCourse(code, schedule) {
+    for (const [yIndex, year] of schedule.entries()) {
+        for (const [tIndex, term] of year.entries()) {
+            for (const [cIndex, course] of term.entries()) {
+                if (course?.code?.trim().toLowerCase() == code.trim().toLowerCase()) return [yIndex,tIndex]
+            }
+        }
+    }
+    
+    throw new Error("Course not found in schedule")
+}
+
+module.exports = { addCourse, findCourse }
