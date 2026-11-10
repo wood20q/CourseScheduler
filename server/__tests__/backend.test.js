@@ -33,3 +33,20 @@ describe('addCourse', () => {
     })
 
 })
+
+describe('findCourse', () => {
+    test('Find Course #1', () => {
+        expect(findCourse('cs120', [[[{'name':'Intro To Python', 'code':'CS120'}], [], []], [[], [], []], [[], [], []], [[], [], []]]))
+            .toEqual([0,0])
+    })
+
+    test('Find Course #2', () => {
+        expect(findCourse('mA230', [[[], [], []], [[], [], []], [[], [], []], [[], [{'name':'Intro To Python', 'code':'MA230'}], []]]))
+            .toEqual([3,1])
+    })
+
+    test('Error: Course not found', () => {
+        expect(() => findCourse('MA450', [[[{'name':'Intro To Python', 'code':'CS120'}], [], []], [[], [], []], [[], [], []], [[], [], []]]))
+            .toThrow("Course not found in schedule")
+    })  
+})
