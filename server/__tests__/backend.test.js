@@ -1,4 +1,4 @@
-const { addCourse, findCourse, removeCourse } = require("../scheduleService")
+const { addCourse, findCourse, removeCourse, moveCourse } = require("../scheduleService")
 // Template Schedule: [[[], [], []], [[], [], []], [[], [], []], [[], [], []]]
 
 describe('addCourse', () => {
@@ -110,5 +110,87 @@ describe('removeCourse', () => {
         const schedule = [[[{'name':'Intro To Python', 'code':'CS120'}], [], []], [[], [], []], [[], [], []], [[], [], []]];
         expect(removeCourse('  cs120  ', schedule)[0][0])
             .toEqual([]);
+    })
+})
+
+describe('moveCourse', () => {
+    // moveCourse(termList, code, schedule)
+
+    test('Move Course within the same year', () => {
+        const schedule = [[[{'name':'Intro To Python', 'code':'CS120'}], [], []], [[], [], []], [[], [], []], [[], [], []]];
+        expect(moveCourse([0,1], 'CS120', schedule))
+            .toEqual([[[], [{'name':'Intro To Python', 'code':'CS120'}], []], [[], [], []], [[], [], []], [[], [], []]]);
+    })
+
+    test('Move Course across different years and terms', () => {
+        const schedule = [[[{'name':'Intro To Python', 'code':'CS120'}], [], []], [[], [], []], [[], [], []], [[], [], []]];
+        expect(moveCourse([3,1], 'CS120', schedule))
+            .toEqual([[[], [], []], [[], [], []], [[], [], []], [[], [{'name':'Intro To Python', 'code':'CS120'}], []]]);
+    })
+
+    test('Move Course from a term with multiple courses', () => {
+        const schedule = [
+            [[{'name':'Intro To Python', 'code':'CS120'}, {'name':'Data Structures', 'code':'CS220'}], [], []],
+            [[], [], []],
+            [[], [], []],
+            [[], [], []]
+        ];
+        expect(moveCourse([1,0], 'CS120', schedule))
+            .toEqual([
+                [[{'name':'Data Structures', 'code':'CS220'}], [], []],
+                [[{'name':'Intro To Python', 'code':'CS120'}], [], []],
+                [[], [], []],
+                [[], [], []]
+            ]);
+    })
+
+    test('Move Course to a term that already has courses', () => {
+        const schedule = [
+            [[{'name':'Intro To Python', 'code':'CS120'}], [], []],
+            [[{'name':'Calculus I', 'code':'MA230'}], [], []],
+            [[], [], []],
+            [[], [], []]
+        ];
+        expect(moveCourse([1,0], 'CS120', schedule))
+            .toEqual([
+                [[], [], []],
+                [[{'name':'Calculus I', 'code':'MA230'}, {'name':'Intro To Python', 'code':'CS120'}], [], []],
+                [[], [], []],
+                [[], [], []]
+            ]);
+    })
+
+    test('Does not mutate the original schedule', () => {
+        const original = [[[{ name: 'Intro To Python', code: 'CS120' }], [], []], [[], [], []], [[], [], []], [[], [], []]];
+        const updated = moveCourse([0,1], 'CS120', original);
+
+        expect(original[0][0].length).toBe(1);
+        expect(original[0][1].length).toBe(0);
+        expect(updated[0][0].length).toBe(0);
+        expect(updated[0][1].length).toBe(1);
+    })
+
+    test('Move course with case insensitivity and extra whitespace', () => {
+        const schedule = [[[{'name':'Intro To Python', 'code':'CS120'}], [], []], [[], [], []], [[], [], []], [[], [], []]];
+        expect(moveCourse([0,1], '  cs120  ', schedule))
+            .toEqual([[[], [{'name':'Intro To Python', 'code':'CS120'}], []], [[], [], []], [[], [], []], [[], [], []]]);
+    })
+
+    test('Error: Course not found in schedule', () => {
+        const schedule = [[[{'name':'Intro To Python', 'code':'CS120'}], [], []], [[], [], []], [[], [], []], [[], [], []]];
+        expect(() => moveCourse([0,1], 'MA450', schedule))
+            .toThrow("Course not found in schedule");
+    })
+
+    test('Error Catch: Target Year does not exist', () => {
+        const schedule = [[[{'name':'Intro To Python', 'code':'CS120'}], [], []], [[], [], []], [[], [], []], [[], [], []]];
+        expect(() => moveCourse([4,1], 'CS120', schedule))
+            .toThrow("Year doesn't exist in the schedule");
+    })
+
+    test('Error Catch: Target Term does not exist', () => {
+        const schedule = [[[{'name':'Intro To Python', 'code':'CS120'}], [], []], [[], [], []], [[], [], []], [[], [], []]];
+        expect(() => moveCourse([0,4], 'CS120', schedule))
+            .toThrow("Term doesn't exist in the schedule");
     })
 })
