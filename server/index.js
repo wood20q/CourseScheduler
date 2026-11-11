@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { sequelize, Course } = require('./db');
-const { addCourse } = require('./scheduleService');
+const { addCourse, removeCourse, moveCourse } = require('./scheduleService');
 
 const app = express();
 app.use(cors());
@@ -24,6 +24,28 @@ app.post('/api/schedule/addCourse', (req, res) => {
         res.json({schedule: updatedSchedule})
     } catch (error) {
         console.log("Error adding course:", error.message)
+        res.status(400).json({error: error.message})
+    }
+})
+
+app.post('/api/schedule/removeCourse', (req, res) => {
+    try {
+        const {code, schedule} = req.body
+        const updatedSchedule = removeCourse(code, schedule)
+        res.json({schedule: updatedSchedule})
+    } catch (error) {
+        console.log("Error removing course:", error.message)
+        res.status(400).json({error: error.message})
+    }
+})
+
+app.post('/api/schedule/moveCourse', (req, res) => {
+    try {
+        const {termList, code, schedule} = req.body
+        const updatedSchedule = moveCourse(termList, code, schedule)
+        res.json({schedule: updatedSchedule})
+    } catch (error) {
+        console.log("Error moving course:", error.message)
         res.status(400).json({error: error.message})
     }
 })

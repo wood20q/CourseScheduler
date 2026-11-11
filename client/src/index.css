@@ -405,3 +405,77 @@ main,
 .btn-submit:active {
   transform: scale(0.98);
 }
+
+.btn-danger {
+  padding: 0.6em 1.4em;
+  border-radius: 20px;
+  background-color: var(--red);
+  color: var(--crust);
+  border: none;
+  font-size: 0.95em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  text-align: center;
+  width: 100%;
+}
+
+.btn-danger:hover {
+  background-color: var(--maroon);
+}
+
+.btn-danger:active {
+  transform: scale(0.98);
+}
+
+.course.clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.course.clickable:hover {
+  transform: translateY(-2px);
+  border-color: var(--mauve);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.dialogSubheading {
+  color: var(--mauve);
+  font-size: 1.15em;
+  margin-top: 0.2em;
+}
+
+.dialogCourseInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.dialogCourseCredits {
+  font-size: 0.9em;
+  color: var(--subtext0);
+}
+
+.dialogCourseDescription {
+  font-size: 0.85em;
+  color: var(--subtext1);
+  line-height: 1.4;
+  background-color: var(--mantle);
+  padding: 0.7em;
+  border-radius: 12px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.dialogDivider {
+  border: none;
+  height: 1px;
+  background-color: var(--surface1);
+  margin: 0.2em 0;
+}
+
+.dialogDangerZone {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
