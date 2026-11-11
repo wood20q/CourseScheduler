@@ -36,4 +36,11 @@ function removeCourse(code, schedule) {
     return newSchedule;
 }
 
-module.exports = { addCourse, findCourse, removeCourse }
+function moveCourse(termList, code, schedule) {
+    const [yIndex, tIndex, cIndex] = findCourse(code, schedule);
+    const course = schedule[yIndex][tIndex][cIndex];
+    const scheduleWithoutCourse = removeCourse(code, schedule);
+    return addCourse(termList, course, scheduleWithoutCourse);
+}
+
+module.exports = { addCourse, findCourse, removeCourse, moveCourse }
