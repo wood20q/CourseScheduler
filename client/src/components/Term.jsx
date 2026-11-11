@@ -1,6 +1,6 @@
 import CourseCard from "./CourseCard"
 
-function Term({ termLabel, termList, onCourseClick }) {
+function Term({ termLabel, termList, yearIndex, termIndex, onCourseClick }) {
     const termCredits = termList.reduce((sum, course) => sum + course.credits, 0)
     return (
         <div className="term">
@@ -17,7 +17,7 @@ function Term({ termLabel, termList, onCourseClick }) {
                         code={course.code} 
                         credits={course.credits} 
                         description={course.description}
-                        onClickCourse={onCourseClick}
+                        onClickCourse={(courseData) => onCourseClick ? onCourseClick(courseData, [yearIndex, termIndex]) : undefined}
                     />
                 ))}
             </div>

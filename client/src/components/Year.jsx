@@ -10,7 +10,14 @@ function Year({ yearNumber, yearList, onCourseClick }) {
             </div>
             <div className="termBlock">
                 {yearList.map((termList, i) => (
-                    <Term key={i} termLabel={`Term: ${i+1}`} termList={termList} onCourseClick={onCourseClick}/>
+                    <Term 
+                        key={i} 
+                        termLabel={`Term: ${i+1}`} 
+                        termList={termList} 
+                        yearIndex={yearNumber - 1} 
+                        termIndex={i} 
+                        onCourseClick={onCourseClick}
+                    />
                 ))}
             </div>
         </div>

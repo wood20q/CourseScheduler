@@ -65,7 +65,12 @@ function App() {
         </div>
         <div className="scheduleArea">
           {schedule.map((year, i) => (
-            <Year key={i} yearNumber={i + 1} yearList={year} onCourseClick={(course) => setManagedCourse(course)}/>
+            <Year 
+              key={i} 
+              yearNumber={i + 1} 
+              yearList={year} 
+              onCourseClick={(course, termList) => setManagedCourse({ ...course, currentTerm: termList })}
+            />
           ))}
         </div>
       </main>

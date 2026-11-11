@@ -1,8 +1,11 @@
 import { useState } from "react";
 
 function ManageCourseDialog({ course, onClose, onRemove, onMove }) {
-    const [selectedYear, setSelectedYear] = useState(0);
-    const [selectedTerm, setSelectedTerm] = useState(0);
+    const initialYear = course.currentTerm ? course.currentTerm[0] : 0;
+    const initialTerm = course.currentTerm ? course.currentTerm[1] : 0;
+    const [selectedYear, setSelectedYear] = useState(initialYear);
+    const [selectedTerm, setSelectedTerm] = useState(initialTerm);
+    const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
     const handleMove = (e) => {
         e.preventDefault();
@@ -10,7 +13,7 @@ function ManageCourseDialog({ course, onClose, onRemove, onMove }) {
         onClose();
     };
 
-    const handleRemove = () => {
+    const handleConfirmRemove = () => {
         onRemove(course.code);
         onClose();
     };
@@ -23,6 +26,9 @@ function ManageCourseDialog({ course, onClose, onRemove, onMove }) {
                 <div className="dialogCourseInfo">
                     <p className="dialogCourseName"><strong>{course.code}:</strong> {course.name}</p>
                     <p className="dialogCourseCredits"><strong>Credits:</strong> {course.credits}</p>
+                    {course.currentTerm && (
+                        <p className="dialogCourseCurrentTerm"><strong>Current Location:</strong> Year {course.currentTerm[0] + 1}, Term {course.currentTerm[1] + 1}</p>
+                    )}
                     <p className="dialogCourseDescription"><strong>Description:</strong> {course.description}</p>
                 </div>
 
@@ -66,9 +72,37 @@ function ManageCourseDialog({ course, onClose, onRemove, onMove }) {
                 <hr className="dialogDivider" />
 
                 <div className="dialogDangerZone">
-                    <button type="button" className="btn-danger" onClick={handleRemove}>
-                        Remove Course from Schedule
-                    </button>
+                    {!isConfirmingDelete ? (
+                        <button 
+                            type="button" 
+                            className="btn-danger" 
+                            onClick={() => setIsConfirmingDelete(true)}
+                        >
+                            Remove Course from Schedule
+                        </button>
+                    ) : (
+                        <div className="deleteConfirmBox">
+                            <p className="deleteConfirmWarning">
+                                Are you sure you want to remove <strong>{course.code}</strong> from your schedule?
+                            </p>
+                            <div className="deleteConfirmButtons">
+                                <button 
+                                    type="button" 
+                                    className="btn-confirm-delete" 
+                                    onClick={handleConfirmRemove}
+                                >
+                                    Yes, Remove
+                                </button>
+                                <button 
+                                    type="button" 
+                                    className="btn-cancel-delete" 
+                                    onClick={() => setIsConfirmingDelete(false)}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="formGroup buttons">

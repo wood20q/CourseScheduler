@@ -451,7 +451,8 @@ main,
   gap: 0.5em;
 }
 
-.dialogCourseCredits {
+.dialogCourseCredits,
+.dialogCourseCurrentTerm {
   font-size: 0.9em;
   color: var(--subtext0);
 }
@@ -478,4 +479,65 @@ main,
   display: flex;
   flex-direction: column;
   gap: 0.4em;
+}
+
+.deleteConfirmBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  background-color: var(--mantle);
+  border: 1.5px solid var(--red);
+  padding: 0.8em 1em;
+  border-radius: 14px;
+}
+
+.deleteConfirmWarning {
+  font-size: 0.9em;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.deleteConfirmWarning strong {
+  color: var(--red);
+}
+
+.deleteConfirmButtons {
+  display: flex;
+  gap: 0.6em;
+  justify-content: flex-end;
+}
+
+.btn-confirm-delete {
+  padding: 0.45em 1em;
+  border-radius: 16px;
+  background-color: var(--red);
+  color: var(--crust);
+  border: none;
+  font-weight: bold;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-confirm-delete:hover {
+  background-color: var(--maroon);
+}
+
+.btn-confirm-delete:active {
+  transform: scale(0.98);
+}
+
+.btn-cancel-delete {
+  padding: 0.45em 1em;
+  border-radius: 16px;
+  background-color: var(--surface1);
+  color: var(--text);
+  border: none;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-cancel-delete:hover {
+  background-color: var(--surface2);
 }
