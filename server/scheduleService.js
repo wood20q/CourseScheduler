@@ -29,4 +29,11 @@ function findCourse(code, schedule) {
     throw new Error("Course not found in schedule")
 }
 
-module.exports = { addCourse, findCourse }
+function removeCourse(code, schedule) {
+    const [yIndex, tIndex, cIndex] = findCourse(code, schedule);
+    let newSchedule = schedule.map((year) => year.map((term) => [...term]));
+    newSchedule[yIndex][tIndex].splice(cIndex, 1);
+    return newSchedule;
+}
+
+module.exports = { addCourse, findCourse, removeCourse }
