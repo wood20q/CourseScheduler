@@ -1,6 +1,6 @@
 import CourseCard from "./CourseCard"
 
-function Term({ termLabel, termList }) {
+function Term({ termLabel, termList, yearIndex, termIndex, onCourseClick }) {
     const termCredits = termList.reduce((sum, course) => sum + course.credits, 0)
     return (
         <div className="term">
@@ -11,7 +11,14 @@ function Term({ termLabel, termList }) {
             <hr />
             <div className="courseArea">
                 {termList.map((course) => (
-                    <CourseCard key={course.code} name={course.name} code={course.code} credits={course.credits} description={course.description}/>
+                    <CourseCard 
+                        key={course.code} 
+                        name={course.name} 
+                        code={course.code} 
+                        credits={course.credits} 
+                        description={course.description}
+                        onClickCourse={(courseData) => onCourseClick ? onCourseClick(courseData, [yearIndex, termIndex]) : undefined}
+                    />
                 ))}
             </div>
         </div>

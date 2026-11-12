@@ -17,4 +17,30 @@ function addCourse(termList, course, oldSchedule) {
     return newSchedule
 }
 
-module.exports = { addCourse }
+function findCourse(code, schedule) {
+    for (const [yIndex, year] of schedule.entries()) {
+        for (const [tIndex, term] of year.entries()) {
+            for (const [cIndex, course] of term.entries()) {
+                if (course?.code?.trim().toLowerCase() == code.trim().toLowerCase()) return [yIndex,tIndex, cIndex]
+            }
+        }
+    }
+    
+    throw new Error("Course not found in schedule")
+}
+
+function removeCourse(code, schedule) {
+    const [yIndex, tIndex, cIndex] = findCourse(code, schedule);
+    let newSchedule = schedule.map((year) => year.map((term) => [...term]));
+    newSchedule[yIndex][tIndex].splice(cIndex, 1);
+    return newSchedule;
+}
+
+function moveCourse(termList, code, schedule) {
+    const [yIndex, tIndex, cIndex] = findCourse(code, schedule);
+    const course = schedule[yIndex][tIndex][cIndex];
+    const scheduleWithoutCourse = removeCourse(code, schedule);
+    return addCourse(termList, course, scheduleWithoutCourse);
+}
+
+module.exports = { addCourse, findCourse, removeCourse, moveCourse }
