@@ -6,20 +6,20 @@ function AvailableCourses({ courseList = [], onSelectCourse, schedule = [] }) {
 
     // 1. Gather codes of courses already in the schedule
     const placedCodes = new Set(
-        schedule.map((course) => course.code.toLowerCase().trim())
+        schedule.map((course) => course?.code?.toLowerCase().trim()).filter(Boolean)
     );
 
     // 2. Filter out already-placed courses
     const unplacedCourses = courseList.filter(
-        (course) => !placedCodes.has(course.code.toLowerCase().trim())
+        (course) => course?.code && !placedCodes.has(course.code.toLowerCase().trim())
     );
 
     // 3. Filter unplaced courses by the search term
     const displayedCourses = unplacedCourses.filter((course) => {
         const term = searchTerm.toLowerCase().trim();
         return (
-            course.code.toLowerCase().includes(term) ||
-            course.name.toLowerCase().includes(term)
+            (course.code && course.code.toLowerCase().includes(term)) ||
+            (course.name && course.name.toLowerCase().includes(term))
         );
     });
 
@@ -30,6 +30,7 @@ function AvailableCourses({ courseList = [], onSelectCourse, schedule = [] }) {
                     id="searchBox"
                     type="text"
                     placeholder="Search courses..."
+                    aria-label="Search courses"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
