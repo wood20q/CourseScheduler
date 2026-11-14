@@ -1,13 +1,27 @@
-import { useState } from "react"
-import CourseCard from "./CourseCard"
+import { useState } from "react";
+import CourseCard from "./CourseCard";
 
-function AvailableCourses({ courseList, onSelectCourse }) {
-    const [searchTerm, setSearchTerm] = useState('')
+function AvailableCourses({ courseList = [], onSelectCourse, schedule = [] }) {
+    const [searchTerm, setSearchTerm] = useState('');
 
-    const filterCourses = courseList.filter((course) => {
-        const term = searchTerm.toLowerCase().trim()
-        return course.code.toLowerCase().includes(term) || course.name.toLowerCase().includes(term)
-    })
+    // 1. Gather codes of courses already in the schedule
+    const placedCodes = new Set(
+        schedule.map((course) => course.code.toLowerCase().trim())
+    );
+
+    // 2. Filter out already-placed courses
+    const unplacedCourses = courseList.filter(
+        (course) => !placedCodes.has(course.code.toLowerCase().trim())
+    );
+
+    // 3. Filter unplaced courses by the search term
+    const displayedCourses = unplacedCourses.filter((course) => {
+        const term = searchTerm.toLowerCase().trim();
+        return (
+            course.code.toLowerCase().includes(term) ||
+            course.name.toLowerCase().includes(term)
+        );
+    });
 
     return (
         <>
@@ -24,8 +38,8 @@ function AvailableCourses({ courseList, onSelectCourse }) {
                 )}
             </form>
             <div className="coursesList">
-                {filterCourses.length > 0 ? (
-                    filterCourses.map((course) => (
+                {displayedCourses.length > 0 ? (
+                    displayedCourses.map((course) => (
                         <CourseCard 
                             key={course.code} 
                             onSelectCourse={onSelectCourse} 
@@ -36,11 +50,13 @@ function AvailableCourses({ courseList, onSelectCourse }) {
                         />
                     ))
                 ) : (
-                    <p className="noCoursesFound">No courses match "{searchTerm}"</p>
+                    <p className="noCoursesFound">
+                        {searchTerm ? `No courses match "${searchTerm}"` : "No more available courses"}
+                    </p>
                 )}
             </div>
         </>
-    )
+    );
 }
 
-export default AvailableCourses
+export default AvailableCourses;

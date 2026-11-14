@@ -60,7 +60,7 @@ function App() {
         <div className="availableCourses">
           {isLoading ? (
             <p>Loading Courses</p>
-          ) : <AvailableCourses onSelectCourse={(course) => setSelectedCourse(course)} courseList={availCourses}/>
+          ) : <AvailableCourses onSelectCourse={(course) => setSelectedCourse(course)} courseList={availCourses} schedule={schedule.flat(2)}/>
           }
         </div>
         <div className="scheduleArea">
