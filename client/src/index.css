@@ -137,21 +137,41 @@ main,
 
 #searchBox {
   flex: 1;
-  padding: 0.4em 0.6em;
+  padding: 0.4em 0.8em;
   border-radius: 25px;
-  border: 4px solid var(--mauve);
+  border: 3px solid var(--mauve);
   background-color: var(--surface0);
   color: var(--text);
+  font-size: 0.9em;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
 
+#searchBox:focus {
+  border-color: var(--pink);
 }
 
 #searchForm button {
   padding: 0.4em 0.8em;
-  border-radius: 8px;
+  border-radius: 20px;
   border: none;
   background-color: var(--mauve);
   color: var(--crust);
+  font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#searchForm button:hover {
+  background-color: var(--pink);
+}
+
+.noCoursesFound {
+  color: var(--subtext0);
+  font-size: 0.9em;
+  font-style: italic;
+  text-align: center;
+  padding: 2em 0.5em;
 }
 
 .coursesList {
