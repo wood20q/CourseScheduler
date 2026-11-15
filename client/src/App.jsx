@@ -26,6 +26,7 @@ function App() {
   })
   const [availCourses, setAvailCourses] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(null)
 
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [managedCourse, setManagedCourse] = useState(null)
@@ -39,12 +40,23 @@ function App() {
     }
   }, [schedule])
 
-  useEffect(() => {
+  const loadCourses = () => {
+    setIsLoading(true)
     fetchCourses()
-      .then((data) => setAvailCourses(data))
-      .catch((err) => console.error(err))
-      .finally(() => setIsLoading(false));
-  }, []);
+      .then((data) => {
+        setAvailCourses(data)
+        setFetchError(null)
+      })
+      .catch((err) => {
+        console.error("Error loading courses:", err)
+        setFetchError(err.message)
+      })
+      .finally(() => setIsLoading(false))
+  }
+
+  useEffect(() => {
+    loadCourses()
+  }, [])
 
   const handleAddCourse = async (termList, course) => {
     try {
@@ -98,7 +110,19 @@ function App() {
       <main className="main-container">
         <div className="availableCourses">
           {isLoading ? (
-            <p>Loading Courses</p>
+            <p>Loading Courses...</p>
+          ) : fetchError ? (
+            <div className="noCoursesFound" style={{ padding: '1em', textAlign: 'center' }}>
+              <p style={{ color: 'var(--red)', marginBottom: '0.8em' }}>{fetchError}</p>
+              <button 
+                type="button" 
+                className="btn-submit" 
+                onClick={loadCourses}
+                style={{ width: 'auto', padding: '0.4em 1.2em' }}
+              >
+                Retry
+              </button>
+            </div>
           ) : <AvailableCourses onSelectCourse={(course) => setSelectedCourse(course)} courseList={availCourses} schedule={schedule.flat(2)}/>
           }
         </div>

@@ -3,7 +3,14 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 // Fetching all courses
 export async function fetchCourses() {
     const response = await fetch(`${API_BASE_URL}/courses`)
-    if (!response.ok) throw new Error('Failed to load Courses');
+    if (!response.ok) {
+        let errorMsg = `Failed to load Courses (${response.status} ${response.statusText})`;
+        try {
+            const errorData = await response.json();
+            if (errorData?.error) errorMsg = errorData.error;
+        } catch (_) {}
+        throw new Error(errorMsg);
+    }
     return response.json()
 }
 
