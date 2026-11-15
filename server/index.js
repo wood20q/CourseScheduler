@@ -50,10 +50,16 @@ app.post('/api/schedule/moveCourse', (req, res) => {
     }
 })
 
-sequelize.authenticate()
-    .then(() => {
-        app.listen(3000, () => console.log('Server running on port 3000'));
-    })
-    .catch((err) => {
-        console.error('Unable to connect to the database:', err);
-    });
+const PORT = process.env.PORT || 3000;
+
+if (require.main === module) {
+    sequelize.authenticate()
+        .then(() => {
+            app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+        })
+        .catch((err) => {
+            console.error('Unable to connect to the database:', err);
+        });
+}
+
+module.exports = app;
