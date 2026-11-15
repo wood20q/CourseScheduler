@@ -448,6 +448,12 @@ main,
   transform: scale(0.98);
 }
 
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .course.clickable {
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
@@ -559,5 +565,150 @@ main,
 }
 
 .btn-cancel-delete:hover {
+  background-color: var(--surface2);
+}
+
+/* Nav User Section & Import/Export Button */
+.navUserSection {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+}
+
+.btn-schedule-io {
+  padding: 0.35em 0.85em;
+  border-radius: 20px;
+  border: 2px solid var(--mauve);
+  background-color: var(--surface1);
+  color: var(--mauve);
+  font-weight: 600;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-schedule-io:hover {
+  background-color: var(--mauve);
+  color: var(--crust);
+}
+
+.btn-schedule-io:active {
+  transform: scale(0.97);
+}
+
+/* Import/Export Dialog Styles */
+.ioSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+}
+
+.ioDescription {
+  font-size: 0.9em;
+  color: var(--subtext0);
+  line-height: 1.4;
+}
+
+.fileInputWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  margin-top: 0.2em;
+}
+
+.btn-file-select {
+  display: inline-block;
+  padding: 0.6em 1.2em;
+  border-radius: 20px;
+  border: 2px dashed var(--mauve);
+  background-color: var(--mantle);
+  color: var(--text);
+  font-size: 0.9em;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-file-select:hover {
+  background-color: var(--surface1);
+  border-color: var(--pink);
+}
+
+.selectedFileName {
+  font-size: 0.85em;
+  color: var(--mauve);
+  font-style: italic;
+  word-break: break-all;
+}
+
+.importErrorBox {
+  padding: 0.7em 0.9em;
+  border-radius: 12px;
+  background-color: var(--mantle);
+  border: 1.5px solid var(--red);
+  color: var(--red);
+  font-size: 0.85em;
+  line-height: 1.4;
+}
+
+.importWarningBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+  background-color: var(--mantle);
+  border: 1.5px solid var(--peach);
+  padding: 0.85em 1em;
+  border-radius: 14px;
+  margin-top: 0.3em;
+}
+
+.importWarningText {
+  font-size: 0.85em;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.importWarningText strong {
+  color: var(--peach);
+}
+
+.importWarningButtons {
+  display: flex;
+  gap: 0.6em;
+  justify-content: flex-end;
+}
+
+.btn-confirm-import {
+  padding: 0.45em 1.1em;
+  border-radius: 16px;
+  background-color: var(--peach);
+  color: var(--crust);
+  border: none;
+  font-weight: bold;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-confirm-import:hover {
+  background-color: var(--yellow);
+}
+
+.btn-confirm-import:active {
+  transform: scale(0.98);
+}
+
+.btn-cancel-import {
+  padding: 0.45em 1em;
+  border-radius: 16px;
+  background-color: var(--surface1);
+  color: var(--text);
+  border: none;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-cancel-import:hover {
   background-color: var(--surface2);
 }

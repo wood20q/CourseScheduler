@@ -3,15 +3,41 @@ import Year from './components/Year'
 import AvailableCourses from './components/AvailableCourses'
 import AddCourseDialog from './components/AddCourseDialog'
 import ManageCourseDialog from './components/ManageCourseDialog'
+import ImportExportDialog from './components/ImportExportDialog'
 import { addCourseToSchedule, removeCourseFromSchedule, moveCourseInSchedule, fetchCourses } from './services/scheduleApi'
 
+const createEmptySchedule = () => Array.from({length: 4}, () => Array.from({length: 3}, () => []))
+const studentName = "Chad Quick"
+
 function App() {
-  const [schedule, setSchedule] = useState(() => Array.from({length: 4}, () => Array.from({length: 3}, () => [])))
+  const [schedule, setSchedule] = useState(() => {
+    try {
+      const saved = localStorage.getItem('course_scheduler_data')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.length === 4 && parsed.every(y => Array.isArray(y) && y.length === 3)) {
+          return parsed
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load schedule from localStorage:", e)
+    }
+    return createEmptySchedule()
+  })
   const [availCourses, setAvailCourses] = useState([])
   const [isLoading, setIsLoading] = useState(true)
 
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [managedCourse, setManagedCourse] = useState(null)
+  const [isIODialogOpen, setIsIODialogOpen] = useState(false)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('course_scheduler_data', JSON.stringify(schedule))
+    } catch (e) {
+      console.error("Failed to save schedule to localStorage:", e)
+    }
+  }, [schedule])
 
   useEffect(() => {
     fetchCourses()
@@ -49,12 +75,25 @@ function App() {
     }
   }
 
+  const handleResetSchedule = () => {
+    setSchedule(createEmptySchedule())
+  }
+
   return (
     <div className="app-container">
       <nav className="top-nav">
         <h1>Course Scheduler</h1>
         <p>Total Credits: {schedule.flat(2).reduce((sum, course) => sum + course.credits, 0)}</p>
-        <p>Student Name: Chad Quick</p>
+        <div className="navUserSection">
+          <p>Student Name: {studentName}</p>
+          <button 
+            type="button" 
+            className="btn-schedule-io" 
+            onClick={() => setIsIODialogOpen(true)}
+          >
+            Import / Export
+          </button>
+        </div>
       </nav>
       <main className="main-container">
         <div className="availableCourses">
@@ -87,6 +126,15 @@ function App() {
           onClose={() => setManagedCourse(null)}
           onRemove={handleRemoveCourse}
           onMove={handleMoveCourse}
+        />
+      )}
+      {isIODialogOpen && (
+        <ImportExportDialog
+          schedule={schedule}
+          studentName={studentName}
+          onClose={() => setIsIODialogOpen(false)}
+          onImportSchedule={(newSchedule) => setSchedule(newSchedule)}
+          onResetSchedule={handleResetSchedule}
         />
       )}
     </div>
