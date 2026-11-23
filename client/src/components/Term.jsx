@@ -1,7 +1,8 @@
-import CourseCard from "./CourseCard"
+import CourseCard from "./CourseCard";
+import { calculateCredits } from "../utils/scheduleMigration";
 
 function Term({ termLabel, termList, yearIndex, termIndex, onCourseClick }) {
-    const termCredits = termList.reduce((sum, course) => sum + course.credits, 0)
+    const termCredits = calculateCredits(termList);
     return (
         <div className="term">
             <div className="termLabel">
@@ -13,16 +14,13 @@ function Term({ termLabel, termList, yearIndex, termIndex, onCourseClick }) {
                 {termList.map((course) => (
                     <CourseCard 
                         key={course.code} 
-                        name={course.name} 
-                        code={course.code} 
-                        credits={course.credits} 
-                        description={course.description}
+                        course={course}
                         onClickCourse={(courseData) => onCourseClick ? onCourseClick(courseData, [yearIndex, termIndex]) : undefined}
                     />
                 ))}
             </div>
         </div>
-    )
+    );
 }
 
-export default Term
+export default Term;

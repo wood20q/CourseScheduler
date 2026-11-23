@@ -1,13 +1,25 @@
 import { useState } from "react";
 import CourseCard from "./CourseCard";
 
-function AvailableCourses({ courseList = [], onSelectCourse, schedule = [] }) {
+function AvailableCourses({ 
+    courseList = [], 
+    onSelectCourse, 
+    onOpenAddTransferCourse,
+    schedule = [] 
+}) {
     const [searchTerm, setSearchTerm] = useState('');
 
     // 1. Gather codes of courses already in the schedule
+    // And codes of home courses satisfied by transfer courses!
     const placedCodes = new Set(
         schedule.map((course) => course?.code?.toLowerCase().trim()).filter(Boolean)
     );
+    // Also include any catalog course satisfied by a placed transfer course
+    schedule.forEach((course) => {
+        if (course?.satisfiesCourse) {
+            placedCodes.add(course.satisfiesCourse.toLowerCase().trim());
+        }
+    });
 
     // 2. Filter out already-placed courses
     const unplacedCourses = courseList.filter(
@@ -25,6 +37,15 @@ function AvailableCourses({ courseList = [], onSelectCourse, schedule = [] }) {
 
     return (
         <>
+            <div className="availableCoursesTop">
+                <button
+                    type="button"
+                    className="btn-add-transfer-sidebar"
+                    onClick={onOpenAddTransferCourse}
+                >
+                    + Add Transfer Course
+                </button>
+            </div>
             <form id="searchForm" onSubmit={(e) => e.preventDefault()}>
                 <input 
                     id="searchBox"
@@ -43,11 +64,8 @@ function AvailableCourses({ courseList = [], onSelectCourse, schedule = [] }) {
                     displayedCourses.map((course) => (
                         <CourseCard 
                             key={course.code} 
+                            course={course}
                             onSelectCourse={onSelectCourse} 
-                            name={course.name} 
-                            code={course.code} 
-                            credits={course.credits} 
-                            description={course.description}
                         />
                     ))
                 ) : (

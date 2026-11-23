@@ -4,9 +4,23 @@ import AvailableCourses from './components/AvailableCourses'
 import AddCourseDialog from './components/AddCourseDialog'
 import ManageCourseDialog from './components/ManageCourseDialog'
 import ImportExportDialog from './components/ImportExportDialog'
-import { addCourseToSchedule, removeCourseFromSchedule, moveCourseInSchedule, fetchCourses } from './services/scheduleApi'
+import TransferCreditsSection from './components/TransferCreditsSection'
+import AddTransferCourseDialog from './components/AddTransferCourseDialog'
+import { 
+  addCourseToSchedule as apiAddCourse, 
+  removeCourseFromSchedule as apiRemoveCourse, 
+  moveCourseInSchedule as apiMoveCourse, 
+  fetchCourses 
+} from './services/scheduleApi'
+import { 
+  createEmptySchedule, 
+  migrateSchedule, 
+  calculateTotalCredits,
+  addCourseToSchedule,
+  removeCourseFromSchedule,
+  moveCourseInSchedule
+} from './utils/scheduleMigration'
 
-const createEmptySchedule = () => Array.from({length: 4}, () => Array.from({length: 3}, () => []))
 const studentName = "Chad Quick"
 
 function App() {
@@ -14,10 +28,7 @@ function App() {
     try {
       const saved = localStorage.getItem('course_scheduler_data')
       if (saved) {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed) && parsed.length === 4 && parsed.every(y => Array.isArray(y) && y.length === 3)) {
-          return parsed
-        }
+        return migrateSchedule(JSON.parse(saved))
       }
     } catch (e) {
       console.error("Failed to load schedule from localStorage:", e)
@@ -31,6 +42,7 @@ function App() {
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [managedCourse, setManagedCourse] = useState(null)
   const [isIODialogOpen, setIsIODialogOpen] = useState(false)
+  const [isAddTransferOpen, setIsAddTransferOpen] = useState(false)
 
   useEffect(() => {
     try {
@@ -55,12 +67,21 @@ function App() {
   }
 
   useEffect(() => {
-    loadCourses()
+    fetchCourses()
+      .then((data) => {
+        setAvailCourses(data)
+        setFetchError(null)
+      })
+      .catch((err) => {
+        console.error("Error loading courses:", err)
+        setFetchError(err.message)
+      })
+      .finally(() => setIsLoading(false))
   }, [])
 
   const handleAddCourse = async (termList, course) => {
     try {
-      const updatedSchedule = await addCourseToSchedule(termList, course, schedule)
+      const updatedSchedule = await apiAddCourse(termList, course, schedule)
       setSchedule(updatedSchedule)
     } catch (error) {
       alert(`Could not add course: ${error.message}`)
@@ -68,34 +89,57 @@ function App() {
   }
 
   const handleRemoveCourse = async (code) => {
+    setSchedule((prev) => removeCourseFromSchedule(prev, code))
+    setManagedCourse(null)
     try {
-      const updatedSchedule = await removeCourseFromSchedule(code, schedule)
-      setSchedule(updatedSchedule)
-      setManagedCourse(null)
-    } catch (error) {
-      alert(`Could not remove course: ${error.message}`)
+      await apiRemoveCourse(code, schedule)
+    } catch {
+      // client-side state already updated
     }
   }
 
-  const handleMoveCourse = async (termList, code) => {
+  const handleMoveCourse = async (targetLocation, code) => {
+    setSchedule((prev) => moveCourseInSchedule(prev, code, targetLocation))
+    setManagedCourse(null)
     try {
-      const updatedSchedule = await moveCourseInSchedule(termList, code, schedule)
-      setSchedule(updatedSchedule)
-      setManagedCourse(null)
-    } catch (error) {
-      alert(`Could not move course: ${error.message}`)
+      await apiMoveCourse(targetLocation, code, schedule)
+    } catch {
+      // client-side state already updated
     }
+  }
+
+  const handleUpdateCourse = (updatedCourse) => {
+    const cleanCode = updatedCourse.code.toLowerCase().trim()
+    setSchedule((prev) => ({
+      transferCourses: (prev.transferCourses || []).map((c) =>
+        c.code.toLowerCase().trim() === cleanCode ? { ...c, ...updatedCourse } : c
+      ),
+      years: (prev.years || []).map((year) =>
+        year.map((term) =>
+          term.map((c) =>
+            c.code.toLowerCase().trim() === cleanCode ? { ...c, ...updatedCourse } : c
+          )
+        )
+      )
+    }))
+    setManagedCourse(null)
   }
 
   const handleResetSchedule = () => {
     setSchedule(createEmptySchedule())
   }
 
+  const handleAddTransferCourse = (targetLocation, newCourse) => {
+    setSchedule((prev) => addCourseToSchedule(prev, newCourse, targetLocation))
+  }
+
+  const allScheduledCourses = (schedule.transferCourses || []).concat((schedule.years || []).flat(2))
+
   return (
     <div className="app-container">
       <nav className="top-nav">
         <h1>Course Scheduler</h1>
-        <p>Total Credits: {schedule.flat(2).reduce((sum, course) => sum + course.credits, 0)}</p>
+        <p>Total Credits: {calculateTotalCredits(schedule)}</p>
         <div className="navUserSection">
           <p>Student Name: {studentName}</p>
           <button 
@@ -123,18 +167,31 @@ function App() {
                 Retry
               </button>
             </div>
-          ) : <AvailableCourses onSelectCourse={(course) => setSelectedCourse(course)} courseList={availCourses} schedule={schedule.flat(2)}/>
-          }
-        </div>
-        <div className="scheduleArea">
-          {schedule.map((year, i) => (
-            <Year 
-              key={i} 
-              yearNumber={i + 1} 
-              yearList={year} 
-              onCourseClick={(course, termList) => setManagedCourse({ ...course, currentTerm: termList })}
+          ) : (
+            <AvailableCourses 
+              onSelectCourse={(course) => setSelectedCourse(course)} 
+              onOpenAddTransferCourse={() => setIsAddTransferOpen(true)}
+              courseList={availCourses} 
+              schedule={allScheduledCourses}
             />
-          ))}
+          )}
+        </div>
+        <div className="scheduleWrapper">
+          <TransferCreditsSection 
+            transferCourses={schedule.transferCourses || []} 
+            onAddClick={() => setIsAddTransferOpen(true)}
+            onCourseClick={(course, location) => setManagedCourse({ ...course, currentTerm: location })}
+          />
+          <div className="scheduleArea">
+            {(schedule.years || []).map((year, i) => (
+              <Year 
+                key={i} 
+                yearNumber={i + 1} 
+                yearList={year} 
+                onCourseClick={(course, termList) => setManagedCourse({ ...course, currentTerm: termList })}
+              />
+            ))}
+          </div>
         </div>
       </main>
       {selectedCourse && (
@@ -144,12 +201,21 @@ function App() {
           onConfirm={handleAddCourse}
         />
       )}
+      {isAddTransferOpen && (
+        <AddTransferCourseDialog
+          catalogCourses={availCourses}
+          onClose={() => setIsAddTransferOpen(false)}
+          onConfirm={handleAddTransferCourse}
+        />
+      )}
       {managedCourse && (
         <ManageCourseDialog
           course={managedCourse}
           onClose={() => setManagedCourse(null)}
           onRemove={handleRemoveCourse}
           onMove={handleMoveCourse}
+          onUpdate={handleUpdateCourse}
+          catalogCourses={availCourses}
         />
       )}
       {isIODialogOpen && (
@@ -157,7 +223,7 @@ function App() {
           schedule={schedule}
           studentName={studentName}
           onClose={() => setIsIODialogOpen(false)}
-          onImportSchedule={(newSchedule) => setSchedule(newSchedule)}
+          onImportSchedule={(newSchedule) => setSchedule(migrateSchedule(newSchedule))}
           onResetSchedule={handleResetSchedule}
         />
       )}
