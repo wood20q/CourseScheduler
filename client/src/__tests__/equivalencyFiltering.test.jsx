@@ -133,4 +133,24 @@ describe('Issue #12 - Course Equivalency Articulation & Dynamic Catalog Filterin
     // CS101 should be filtered out
     expect(screen.queryByRole('option', { name: /CS101/i })).not.toBeInTheDocument();
   });
+
+  it('preserves the currently selected satisfies course in the dropdown even when filter text does not match it', async () => {
+    render(<App />);
+
+    const addTransferBtn = await screen.findByRole('button', { name: /\+ Add Transfer Course/i });
+    fireEvent.click(addTransferBtn);
+
+    const satisfiesSelect = screen.getByLabelText(/Satisfies Home Course/i);
+    // Select CS101
+    fireEvent.change(satisfiesSelect, { target: { value: 'CS101' } });
+    expect(satisfiesSelect.value).toBe('CS101');
+
+    // Type "MATH" into the filter input
+    const filterInput = screen.getByPlaceholderText(/Type to filter catalog courses/i);
+    fireEvent.change(filterInput, { target: { value: 'MATH' } });
+
+    // CS101 option should still be preserved so select value does not reset
+    expect(screen.getByRole('option', { name: /CS101/i })).toBeInTheDocument();
+    expect(satisfiesSelect.value).toBe('CS101');
+  });
 });

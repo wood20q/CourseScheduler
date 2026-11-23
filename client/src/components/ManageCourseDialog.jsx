@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatLocationKey, parseLocation } from "../utils/scheduleMigration";
 
 function ManageCourseDialog({ 
     course, 
@@ -10,20 +11,14 @@ function ManageCourseDialog({
 }) {
     const isTransfer = Boolean(course?.isTransfer);
 
-    // Initial location calculation
-    let initialLocation = "0,0";
-    if (course?.currentTerm === "transfer") {
-        initialLocation = "transfer";
-    } else if (Array.isArray(course?.currentTerm)) {
-        initialLocation = `${course.currentTerm[0]},${course.currentTerm[1]}`;
-    }
-
+    const initialLocation = course?.currentTerm ? formatLocationKey(course.currentTerm) : "0,0";
     const [targetLocation, setTargetLocation] = useState(initialLocation);
+    const parsedCurrent = parseLocation(course?.currentTerm);
     const [selectedYear, setSelectedYear] = useState(
-        Array.isArray(course?.currentTerm) ? course.currentTerm[0] : 0
+        parsedCurrent.type === "term" ? parsedCurrent.year : 0
     );
     const [selectedTerm, setSelectedTerm] = useState(
-        Array.isArray(course?.currentTerm) ? course.currentTerm[1] : 0
+        parsedCurrent.type === "term" ? parsedCurrent.term : 0
     );
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
@@ -39,11 +34,8 @@ function ManageCourseDialog({
     const handleMove = (e) => {
         e.preventDefault();
         if (isTransfer) {
-            if (targetLocation === "transfer") {
-                onMove("transfer", course.code);
-            } else {
-                onMove(targetLocation.split(",").map(Number), course.code);
-            }
+            const loc = targetLocation === "transfer" ? "transfer" : targetLocation.split(",").map(Number);
+            onMove(loc, course.code);
         } else {
             onMove([selectedYear, selectedTerm], course.code);
         }
@@ -69,13 +61,18 @@ function ManageCourseDialog({
             return;
         }
 
+        const rawSatisfies = editSatisfies.trim().toUpperCase();
+        const effectiveSatisfies = (!rawSatisfies || rawSatisfies === "NONE" || rawSatisfies.startsWith("NONE /") || rawSatisfies.startsWith("NONE/"))
+            ? null
+            : rawSatisfies;
+
         if (onUpdate) {
             onUpdate({
                 ...course,
                 name: trimmedName,
                 credits: numCredits,
                 institution: editInstitution.trim(),
-                satisfiesCourse: editSatisfies.trim().toUpperCase() || null,
+                satisfiesCourse: effectiveSatisfies,
                 description: editDescription.trim()
             });
         }
@@ -84,13 +81,11 @@ function ManageCourseDialog({
     };
 
     const formatCurrentLocation = () => {
-        if (course?.currentTerm === "transfer") {
+        const parsed = parseLocation(course?.currentTerm);
+        if (parsed.type === "transfer") {
             return "Pre-College / Transfer Credits";
         }
-        if (Array.isArray(course?.currentTerm)) {
-            return `Year ${course.currentTerm[0] + 1}, Term ${course.currentTerm[1] + 1}`;
-        }
-        return "Unknown";
+        return `Year ${parsed.year + 1}, Term ${parsed.term + 1}`;
     };
 
     return (

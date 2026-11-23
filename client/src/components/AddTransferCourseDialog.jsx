@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { parseLocation } from "../utils/scheduleMigration";
 
 function AddTransferCourseDialog({ onClose, onConfirm, catalogCourses = [] }) {
     const [code, setCode] = useState("");
@@ -46,11 +47,8 @@ function AddTransferCourseDialog({ onClose, onConfirm, catalogCourses = [] }) {
             isTransfer: true
         };
 
-        let parsedLocation = targetLocation;
-        if (targetLocation !== "transfer") {
-            const [y, t] = targetLocation.split(",").map(Number);
-            parsedLocation = [y, t];
-        }
+        const parsed = parseLocation(targetLocation);
+        const parsedLocation = parsed.type === "transfer" ? "transfer" : [parsed.year, parsed.term];
 
         onConfirm(parsedLocation, newCourse);
         onClose();
@@ -148,6 +146,7 @@ function AddTransferCourseDialog({ onClose, onConfirm, catalogCourses = [] }) {
                             <option value="">None / General Elective</option>
                             {catalogCourses
                                 .filter((c) => {
+                                    if (satisfiesCourse && c.code === satisfiesCourse) return true;
                                     if (!satisfiesFilter) return true;
                                     const term = satisfiesFilter.toLowerCase().trim();
                                     return (

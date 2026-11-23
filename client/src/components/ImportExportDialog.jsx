@@ -97,7 +97,7 @@ function ImportExportDialog({ schedule, studentName = "Student", onClose, onImpo
                 <div className="ioSection">
                     <h3 className="dialogSubheading">Export Schedule</h3>
                     <p className="ioDescription">
-                        Save a backup of your 4-year schedule as a JSON file to your computer.
+                        Save a backup of your complete degree plan (including pre-college transfer credits and 4-year schedule) as a JSON file to your computer.
                     </p>
                     <button type="button" className="btn-submit" onClick={handleExport}>
                         Download Schedule (.json)
@@ -110,7 +110,7 @@ function ImportExportDialog({ schedule, studentName = "Student", onClose, onImpo
                 <div className="ioSection">
                     <h3 className="dialogSubheading">Import Schedule</h3>
                     <p className="ioDescription">
-                        Load a previously exported 4-year schedule from a JSON file.
+                        Load a previously exported degree plan (supporting transfer credits and 4-year schedules) from a JSON file.
                     </p>
 
                     <div className="fileInputWrapper">
@@ -166,7 +166,7 @@ function ImportExportDialog({ schedule, studentName = "Student", onClose, onImpo
                 <div className="ioSection">
                     <h3 className="dialogSubheading">Reset Schedule</h3>
                     <p className="ioDescription">
-                        Clear all courses from all terms in your schedule. This action cannot be undone unless you have exported a backup.
+                        Clear all courses from transfer credits and all academic terms in your schedule. This action cannot be undone unless you have exported a backup.
                     </p>
 
                     {!isConfirmingReset ? (

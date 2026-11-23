@@ -1,11 +1,8 @@
 import CourseCard from "./CourseCard";
+import { calculateCredits } from "../utils/scheduleMigration";
 
 function TransferCreditsSection({ transferCourses = [], onAddClick, onCourseClick }) {
-    const rawTransferCredits = transferCourses.reduce(
-        (sum, course) => sum + (Number(course.credits) || 0),
-        0
-    );
-    const totalTransferCredits = Math.round(rawTransferCredits * 100) / 100;
+    const totalTransferCredits = calculateCredits(transferCourses);
 
     return (
         <div className="transferSectionBlock">
@@ -42,15 +39,9 @@ function TransferCreditsSection({ transferCourses = [], onAddClick, onCourseClic
                     {transferCourses.map((course) => (
                         <CourseCard
                             key={course.code}
-                            name={course.name}
-                            code={course.code}
-                            credits={course.credits}
-                            description={course.description}
-                            isTransfer={true}
-                            institution={course.institution}
-                            satisfiesCourse={course.satisfiesCourse}
+                            course={{ ...course, isTransfer: true }}
                             onClickCourse={(courseData) =>
-                                onCourseClick ? onCourseClick({ ...course, ...courseData }, 'transfer') : undefined
+                                onCourseClick ? onCourseClick(courseData, 'transfer') : undefined
                             }
                         />
                     ))}

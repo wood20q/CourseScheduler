@@ -64,11 +64,8 @@ function AvailableCourses({
                     displayedCourses.map((course) => (
                         <CourseCard 
                             key={course.code} 
+                            course={course}
                             onSelectCourse={onSelectCourse} 
-                            name={course.name} 
-                            code={course.code} 
-                            credits={course.credits} 
-                            description={course.description}
                         />
                     ))
                 ) : (

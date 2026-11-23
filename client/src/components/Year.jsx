@@ -1,8 +1,8 @@
-import Term from "./Term"
+import Term from "./Term";
+import { calculateCredits } from "../utils/scheduleMigration";
 
 function Year({ yearNumber, yearList, onCourseClick }) {
-    const rawYearCredits = yearList.flat().reduce((sum, course) => sum + (Number(course.credits) || 0), 0)
-    const yearCredits = Math.round(rawYearCredits * 100) / 100
+    const yearCredits = calculateCredits(yearList.flat());
     return (
         <div className="yearBlock">
             <div className="yearLabel">
@@ -22,7 +22,7 @@ function Year({ yearNumber, yearList, onCourseClick }) {
                 ))}
             </div>
         </div>
-    )
+    );
 }
 
-export default Year
+export default Year;

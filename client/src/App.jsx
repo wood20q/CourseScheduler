@@ -6,8 +6,20 @@ import ManageCourseDialog from './components/ManageCourseDialog'
 import ImportExportDialog from './components/ImportExportDialog'
 import TransferCreditsSection from './components/TransferCreditsSection'
 import AddTransferCourseDialog from './components/AddTransferCourseDialog'
-import { addCourseToSchedule, removeCourseFromSchedule, moveCourseInSchedule, fetchCourses } from './services/scheduleApi'
-import { createEmptySchedule, migrateSchedule, calculateTotalCredits } from './utils/scheduleMigration'
+import { 
+  addCourseToSchedule as apiAddCourse, 
+  removeCourseFromSchedule as apiRemoveCourse, 
+  moveCourseInSchedule as apiMoveCourse, 
+  fetchCourses 
+} from './services/scheduleApi'
+import { 
+  createEmptySchedule, 
+  migrateSchedule, 
+  calculateTotalCredits,
+  addCourseToSchedule,
+  removeCourseFromSchedule,
+  moveCourseInSchedule
+} from './utils/scheduleMigration'
 
 const studentName = "Chad Quick"
 
@@ -69,7 +81,7 @@ function App() {
 
   const handleAddCourse = async (termList, course) => {
     try {
-      const updatedSchedule = await addCourseToSchedule(termList, course, schedule)
+      const updatedSchedule = await apiAddCourse(termList, course, schedule)
       setSchedule(updatedSchedule)
     } catch (error) {
       alert(`Could not add course: ${error.message}`)
@@ -77,67 +89,20 @@ function App() {
   }
 
   const handleRemoveCourse = async (code) => {
-    const cleanCode = code.toLowerCase().trim()
-    setSchedule((prev) => ({
-      transferCourses: (prev.transferCourses || []).filter(
-        (c) => c.code.toLowerCase().trim() !== cleanCode
-      ),
-      years: (prev.years || []).map((year) =>
-        year.map((term) => term.filter((c) => c.code.toLowerCase().trim() !== cleanCode))
-      )
-    }))
+    setSchedule((prev) => removeCourseFromSchedule(prev, code))
     setManagedCourse(null)
     try {
-      await removeCourseFromSchedule(code, schedule)
+      await apiRemoveCourse(code, schedule)
     } catch {
       // client-side state already updated
     }
   }
 
   const handleMoveCourse = async (targetLocation, code) => {
-    const cleanCode = code.toLowerCase().trim()
-    setSchedule((prev) => {
-      let movedCourse = null
-      const nextTransfer = (prev.transferCourses || []).filter((c) => {
-        if (c.code.toLowerCase().trim() === cleanCode) {
-          movedCourse = c
-          return false
-        }
-        return true
-      })
-      const nextYears = (prev.years || []).map((year) =>
-        year.map((term) =>
-          term.filter((c) => {
-            if (c.code.toLowerCase().trim() === cleanCode) {
-              movedCourse = c
-              return false
-            }
-            return true
-          })
-        )
-      )
-
-      if (!movedCourse) return prev
-
-      if (targetLocation === 'transfer') {
-        return {
-          transferCourses: [...nextTransfer, movedCourse],
-          years: nextYears
-        }
-      }
-
-      const [y, t] = Array.isArray(targetLocation)
-        ? targetLocation
-        : targetLocation.split(',').map(Number)
-      nextYears[y][t].push(movedCourse)
-      return {
-        transferCourses: nextTransfer,
-        years: nextYears
-      }
-    })
+    setSchedule((prev) => moveCourseInSchedule(prev, code, targetLocation))
     setManagedCourse(null)
     try {
-      await moveCourseInSchedule(targetLocation, code, schedule)
+      await apiMoveCourse(targetLocation, code, schedule)
     } catch {
       // client-side state already updated
     }
@@ -165,22 +130,7 @@ function App() {
   }
 
   const handleAddTransferCourse = (targetLocation, newCourse) => {
-    if (targetLocation === 'transfer') {
-      setSchedule((prev) => ({
-        ...prev,
-        transferCourses: [...(prev.transferCourses || []), newCourse]
-      }))
-    } else if (Array.isArray(targetLocation)) {
-      setSchedule((prev) => {
-        const [y, t] = targetLocation
-        const newYears = prev.years.map((year) => year.map((term) => [...term]))
-        newYears[y][t].push(newCourse)
-        return {
-          ...prev,
-          years: newYears
-        }
-      })
-    }
+    setSchedule((prev) => addCourseToSchedule(prev, newCourse, targetLocation))
   }
 
   const allScheduledCourses = (schedule.transferCourses || []).concat((schedule.years || []).flat(2))

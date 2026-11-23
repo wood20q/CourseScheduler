@@ -33,7 +33,7 @@ describe('Schedule Schema Upgrade ({ transferCourses, years })', () => {
     expect(schedule.years[0][1]).toHaveLength(0);
   });
 
-  test('addCourse adds a transfer course to transferCourses when given "transfer" or [-1, -1]', () => {
+  test('addCourse adds a transfer course to transferCourses when given "transfer"', () => {
     const schedule = createEmptyUpgradedSchedule();
     const updated = addCourse('transfer', sampleTransferCourse, schedule);
 

@@ -4,7 +4,14 @@ import {
   migrateSchedule,
   validateSchedule,
   calculateTotalCredits,
-  isLegacySchedule
+  calculateCredits,
+  isLegacySchedule,
+  parseLocation,
+  formatLocationKey,
+  isTransferLocation,
+  addCourseToSchedule,
+  removeCourseFromSchedule,
+  moveCourseInSchedule
 } from '../utils/scheduleMigration';
 
 describe('scheduleMigration utils', () => {
@@ -87,5 +94,78 @@ describe('scheduleMigration utils', () => {
     });
     expect(() => validateSchedule(immutableModernSchedule)).not.toThrow();
     expect(validateSchedule(immutableModernSchedule)).toBeNull();
+  });
+
+  describe('calculateCredits and location utilities', () => {
+    it('calculateCredits sums and rounds properly', () => {
+      expect(calculateCredits([{ credits: 0.25 }, { credits: 0.75 }, { credits: 3 }])).toBe(4);
+      expect(calculateCredits([{ credits: '1.5' }, { credits: 0.25 }])).toBe(1.75);
+      expect(calculateCredits([])).toBe(0);
+      expect(calculateCredits(null)).toBe(0);
+    });
+
+    it('parseLocation handles transfer, arrays, and csv strings', () => {
+      expect(parseLocation('transfer')).toEqual({ type: 'transfer' });
+      expect(parseLocation([1, 2])).toEqual({ type: 'term', year: 1, term: 2 });
+      expect(parseLocation('2,1')).toEqual({ type: 'term', year: 2, term: 1 });
+      expect(parseLocation(null)).toEqual({ type: 'transfer' });
+    });
+
+    it('formatLocationKey formats keys consistently', () => {
+      expect(formatLocationKey('transfer')).toBe('transfer');
+      expect(formatLocationKey([0, 1])).toBe('0,1');
+      expect(formatLocationKey('0,1')).toBe('0,1');
+    });
+
+    it('isTransferLocation identifies transfer targets', () => {
+      expect(isTransferLocation('transfer')).toBe(true);
+      expect(isTransferLocation([0, 0])).toBe(false);
+      expect(isTransferLocation('0,0')).toBe(false);
+    });
+  });
+
+  describe('pure schedule state operations', () => {
+    const baseSchedule = {
+      transferCourses: [{ code: 'AP-CALC', name: 'Calc', credits: 4, isTransfer: true }],
+      years: [
+        [[{ code: 'CS101', name: 'Intro CS', credits: 3 }], [], []],
+        [[], [], []],
+        [[], [], []],
+        [[], [], []]
+      ]
+    };
+
+    it('removeCourseFromSchedule removes course from transfer or term without mutating input', () => {
+      const removedTransfer = removeCourseFromSchedule(baseSchedule, 'AP-CALC');
+      expect(removedTransfer.transferCourses).toHaveLength(0);
+      expect(removedTransfer.years[0][0]).toHaveLength(1);
+      expect(baseSchedule.transferCourses).toHaveLength(1);
+
+      const removedTerm = removeCourseFromSchedule(baseSchedule, 'CS101');
+      expect(removedTerm.years[0][0]).toHaveLength(0);
+      expect(baseSchedule.years[0][0]).toHaveLength(1);
+    });
+
+    it('addCourseToSchedule adds course to transfer or specific term', () => {
+      const newCourse = { code: 'CS120', name: 'Prog II', credits: 4 };
+      const withTransfer = addCourseToSchedule(baseSchedule, newCourse, 'transfer');
+      expect(withTransfer.transferCourses).toHaveLength(2);
+      expect(withTransfer.transferCourses[1].code).toBe('CS120');
+
+      const withTerm = addCourseToSchedule(baseSchedule, newCourse, [2, 1]);
+      expect(withTerm.years[2][1]).toHaveLength(1);
+      expect(withTerm.years[2][1][0].code).toBe('CS120');
+    });
+
+    it('moveCourseInSchedule moves course between sections', () => {
+      const movedToTerm = moveCourseInSchedule(baseSchedule, 'AP-CALC', [1, 0]);
+      expect(movedToTerm.transferCourses).toHaveLength(0);
+      expect(movedToTerm.years[1][0]).toHaveLength(1);
+      expect(movedToTerm.years[1][0][0].code).toBe('AP-CALC');
+
+      const movedToTransfer = moveCourseInSchedule(baseSchedule, 'CS101', 'transfer');
+      expect(movedToTransfer.years[0][0]).toHaveLength(0);
+      expect(movedToTransfer.transferCourses).toHaveLength(2);
+    });
   });
 });

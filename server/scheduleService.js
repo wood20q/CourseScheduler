@@ -7,7 +7,7 @@ function addCourse(termList, course, oldSchedule) {
             years: oldSchedule.years.map((year) => year.map((term) => [...term]))
         };
 
-        if (termList === 'transfer' || (Array.isArray(termList) && termList[0] === -1)) {
+        if (termList === 'transfer') {
             newSchedule.transferCourses.push(course);
             return newSchedule;
         }

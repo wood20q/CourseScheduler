@@ -94,6 +94,42 @@ describe('Issue #13 - Manage Transfer Courses: Overview Details, Inline Editing,
     expect(saved.transferCourses[0].credits).toBe(5);
   });
 
+  it('clears course equivalency to null when user enters None or None / General Elective in edit dialog', async () => {
+    const initialSchedule = {
+      transferCourses: [
+        {
+          code: 'AP-CS',
+          name: 'AP Computer Science A',
+          credits: 4,
+          satisfiesCourse: 'CS101',
+          isTransfer: true
+        }
+      ],
+      years: Array.from({ length: 4 }, () => Array.from({ length: 3 }, () => []))
+    };
+    localStorage.setItem('course_scheduler_data', JSON.stringify(initialSchedule));
+
+    render(<App />);
+
+    const card = await screen.findByText('AP-CS');
+    fireEvent.click(card);
+
+    fireEvent.click(screen.getByRole('button', { name: /Edit Details/i }));
+
+    const satisfiesInput = screen.getByLabelText(/Edit Satisfies Course/i);
+    fireEvent.change(satisfiesInput, { target: { value: 'None / General Elective' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await waitFor(() => {
+      const saved = JSON.parse(localStorage.getItem('course_scheduler_data'));
+      expect(saved.transferCourses[0].satisfiesCourse).toBeNull();
+    });
+
+    // CS101 should now be restored in Available Courses
+    expect(screen.getByText('CS101')).toBeInTheDocument();
+  });
+
   it('allows editing transfer course credits to 0.75 and 0.25', async () => {
     const initialSchedule = {
       transferCourses: [
