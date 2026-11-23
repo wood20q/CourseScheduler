@@ -164,6 +164,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Screenshot scripts
-scripts/take_screenshots.js

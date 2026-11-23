@@ -1,93 +1,108 @@
 # CourseScheduler 🎓
 
-CourseScheduler is an interactive, modern 4-year degree planner designed for college students to effortlessly organize, customize, and track their academic journey.
+CourseScheduler is an interactive, modern degree planner designed for university students to effortlessly organize, customize, and track their academic journey across pre-college transfer credits and four academic years.
 
-Built with a responsive Catppuccin Mocha theme, CourseScheduler provides a unified interface to browse available courses, place them across terms and academic years, monitor credit totals in real time, and export/import schedules for easy backup and sharing.
+Built with a responsive Catppuccin Mocha theme, CourseScheduler provides a unified interface to record transfer coursework, establish course equivalencies, browse available catalog courses, place classes across 12 academic terms, monitor fractional credit totals in real time, and export/import complete degree plans for safe archiving and sharing.
 
 ---
 
 ## 📸 Visual Tour
 
-### 1. Main Dashboard & 4-Year Schedule
-View your entire college trajectory across 4 academic years and 3 terms (Fall, Spring, Summer), with live total credit counts and the available courses catalog.
+### 1. Main Dashboard & Degree Planner
+View your complete academic trajectory—including a dedicated **Pre-College / Transfer Credits Section** above Year 1 and the 12-term 4-year grid—with live total credit calculations and an available catalog sidebar.
 
 ![Main Dashboard](docs/screenshots/01-overview.png)
 
 ---
 
-### 2. Live Course Search & Filtering
-Search for courses by code or title in the sidebar. Courses already placed in your schedule are automatically filtered out to prevent duplicate placement.
+### 2. Live Course Search & Dynamic Equivalency Filtering
+Search for courses by code or title. Courses already placed on the schedule—or fulfilled through transfer course equivalencies—are automatically filtered out to prevent duplicate enrollments.
 
 ![Search and Filtering](docs/screenshots/02-search-filter.png)
 
 ---
 
-### 3. Adding Courses to Schedule
-Click **Add Course to Schedule** on any available course card to select your desired Year (1–4) and Term (1–3).
+### 3. Adding Catalog Courses to Terms
+Click **Add Course to Schedule** on any available catalog course card to select your target Academic Year (1–4) and Term (1–3).
 
 ![Add Course Dialog](docs/screenshots/03-add-course-dialog.png)
 
 ---
 
-### 4. Managing, Moving, and Removing Courses
-Click any placed course on your schedule grid to inspect course details, move it to another term or year, or delete it with an inline confirmation prompt.
+### 4. Adding Transfer Courses & Course Equivalency Articulation
+Click **+ Add Transfer Course** to record external coursework (AP exams, dual enrollment, or college transfers). Enter Course Code, Title, Credits (with `0.25`, `0.5`, `0.75` fractional support), Originating Institution, Notes, and map it to an equivalent home Catalog Course via a searchable dropdown.
 
-![Manage Course Dialog](docs/screenshots/04-manage-course-dialog.png)
+![Add Transfer Course Dialog](docs/screenshots/04-add-transfer-course-dialog.png)
 
 ---
 
-### 5. Schedule Backups, Import & Reset
-Open the **Import / Export** dialog from the top navigation bar to download a personalized JSON backup, restore a previous schedule with validation checks, or reset your planner to empty.
+### 5. Managing & Inline Editing Placed Courses
+Click any course card on your board to inspect full articulation details. For transfer courses, edit titles, credits, institutions, descriptions, or satisfied courses inline, move courses between the pre-college section and academic terms, or delete them with an explicit confirmation step (`Yes, Remove Course`).
 
-![Import / Export Dialog](docs/screenshots/05-import-export-dialog.png)
+![Manage Course Dialog](docs/screenshots/05-manage-course-dialog.png)
+
+---
+
+### 6. Degree Plan Backups, Import & Reset
+Open the **Import / Export** dialog to download a personalized JSON backup of your entire degree plan, restore previous plans with automatic backward compatibility for legacy 4x3 array exports, or reset your planner to empty.
+
+![Import / Export Dialog](docs/screenshots/06-import-export-dialog.png)
 
 ---
 
 ## ✨ Features
 
+- **Pre-College Transfer Credits Section:** Dedicated container positioned above Year 1 for AP exams, IB credits, and high school dual-enrollment coursework.
+- **Course Equivalency Articulation:** Map transfer credits to specific home catalog courses, automatically fulfilling prerequisites and hiding satisfied courses from the catalog.
+- **Fractional Credits Support:** Full precision for `0.25`, `0.5`, `0.75`, and whole credit values with exact floating-point rounding.
 - **4-Year Term Grid:** 12 structured terms organized into 4 academic years (Terms 1, 2, and 3).
-- **Dynamic Credit Tracker:** Automatic calculation of total credits across all placed courses.
-- **Available Courses Catalog:** Backed by an SQLite database with instant course search and unplaced filtering.
-- **Course Management:** Add courses into any term, move them between terms/years, or delete them with confirmation safeguards.
-- **Persistent Local Storage:** Schedules automatically persist in browser `localStorage`, ensuring progress is never lost on refresh.
-- **JSON Import / Export:** Download timestamped backups (e.g., `Chad_Quick_Schedule_YYYY-MM-DD.json`) and restore them anytime with overwrite verification.
+- **Dynamic Credit Tracker:** Real-time aggregation of total credits across both pre-college transfer credits and 4-year coursework.
+- **Available Courses Catalog:** Backed by an SQLite database with instant live search and dynamic articulation filtering.
+- **Complete Course Lifecycle Management:** Add, inspect, edit inline, move across any term or pre-college section, and remove courses with confirmation prompts.
+- **Pure Client-Side Persistence:** Degree plans automatically persist in browser `localStorage`, ensuring progress is private and never lost across reloads.
+- **Backward-Compatible JSON Import / Export:** Download timestamped backups (e.g., `Student_Schedule_YYYY-MM-DD.json`) with an automatic decoder that seamlessly upgrades legacy 4x3 array exports to the modern schema.
+- **Catppuccin Mocha Dark Theme:** Elegant dark palette with rounded schedule corners, clear typography, and focused modal dialogs.
 - **Vercel Multi-Service Ready:** Configured with `vercel.json` to deploy both Vite frontend and Express backend as a unified project.
 
 ---
 
 ## 🚀 How to Use CourseScheduler
 
-### 1. Adding a Course
-1. Browse the **Available Courses** list in the left sidebar or use the search bar at the top of the sidebar.
-2. Click the **Add Course to Schedule** button on the course card.
+### 1. Adding a Transfer Course
+1. Click **+ Add Transfer Course** at the top of the Available Courses sidebar (or **+ Add Transfer Credits** in the empty Pre-College container).
+2. Enter the **Course Code** (e.g., `AP-CALC`), **Course Title** (e.g., `AP Calculus BC`), and **Credits** (e.g., `1` or `0.75`).
+3. *(Optional)* Enter the **Originating Institution** (e.g., `College Board`) and notes.
+4. *(Optional)* In **Satisfies Home Course**, use the filter input to search for and select the equivalent catalog course (e.g., `MATH101`) or choose **Unlisted Course Code...** to enter a custom home course code.
+5. Select the **Target Location** (defaults to *Pre-College / Transfer Credits*, or choose any academic year term).
+6. Click **Add Transfer Course**. The course appears with a **Transfer** badge, updates total credits, and hides any satisfied catalog course from the available list.
+
+### 2. Adding a Catalog Course
+1. Browse the **Available Courses** list in the sidebar or use the search box.
+2. Click **Add Course to Schedule** on the course card.
 3. Choose your target **Year** (Year 1 to Year 4) and **Term** (Term 1, 2, or 3).
-4. Click **Add Course** to place it on the board. The credit counter will update immediately.
+4. Click **Add Course**.
 
-### 2. Searching & Filtering Courses
-- Type any course code (e.g., `CS`, `MATH`) or keyword (e.g., `Python`, `General`) into the search bar.
-- Click **Clear** or delete the text to reset the filter.
-- Courses placed anywhere on your schedule are automatically removed from the available sidebar. If you remove a course from your schedule, it instantly reappears in the sidebar.
-
-### 3. Moving or Deleting a Course
+### 3. Inspecting, Editing, and Moving Courses
 1. Click directly on any course card in your schedule.
-2. **To move:** Select the new target Year and Term under **Move Course**, then click **Move Course**.
-3. **To delete:** Click **Delete Course**, then confirm by clicking **Yes, Remove Course**. The course will be removed from your schedule and returned to the available courses list.
+2. **To edit details (Transfer Courses):** Click **Edit Details**, update the name, credits, institution, satisfied course, or notes, and click **Save Changes**.
+3. **To move:** Select the new target section (Pre-College or any Year/Term) under **Move Course**, then click **Move Course**.
+4. **To delete:** Click **Remove Course from Schedule**, then confirm with **Yes, Remove Course**. Any previously satisfied catalog course is immediately restored to the available courses list.
 
 ### 4. Backing Up and Exporting
-1. Click the **Import / Export** button next to the student name in the top navigation.
+1. Click the **Import / Export** button in the top navigation bar.
 2. Under **Export Schedule**, click **Download Schedule (.json)**.
-3. A clean JSON backup formatted with your name and date will be downloaded to your computer.
+3. A clean JSON backup containing both your transfer credits and 4-year schedule will download to your computer.
 
-### 5. Importing a Saved Schedule
+### 5. Importing a Saved Plan
 1. Open the **Import / Export** dialog.
-2. Under **Import Schedule**, click **Choose Schedule File (.json)** and select your backup file.
+2. Under **Import Schedule**, click **Choose Schedule File (.json)** and select your backup file (both new object schemas and legacy 4x3 array files are automatically validated and decoded).
 3. Review the confirmation prompt showing the course count comparison.
 4. Click **Yes, Replace Schedule** to load the schedule.
 
 ### 6. Resetting the Schedule
 1. Open the **Import / Export** dialog.
 2. Under **Reset Schedule**, click **Clear Entire Schedule**.
-3. Confirm with **Yes, Clear Schedule** to clear all 4 years and start fresh.
+3. Confirm with **Yes, Clear Schedule** to reset both transfer credits and all academic terms to an empty state.
 
 ---
 
@@ -97,8 +112,19 @@ Open the **Import / Export** dialog from the top navigation bar to download a pe
 CourseScheduler/
 ├── client/                     # Vite + React frontend
 │   ├── src/
-│   │   ├── components/         # React components (Year, Term, CourseCard, Dialogs)
+│   │   ├── components/         # React components
+│   │   │   ├── AddCourseDialog.jsx
+│   │   │   ├── AddTransferCourseDialog.jsx
+│   │   │   ├── AvailableCourses.jsx
+│   │   │   ├── CourseCard.jsx
+│   │   │   ├── ImportExportDialog.jsx
+│   │   │   ├── ManageCourseDialog.jsx
+│   │   │   ├── Term.jsx
+│   │   │   ├── TransferCreditsSection.jsx
+│   │   │   └── Year.jsx
 │   │   ├── services/           # scheduleApi.js (API client)
+│   │   ├── utils/              # scheduleMigration.js (schema decoder, locations & credits)
+│   │   ├── __tests__/          # Frontend test suite (Vitest + React Testing Library)
 │   │   ├── App.jsx             # Root application component & state management
 │   │   ├── index.css           # Catppuccin Mocha styling
 │   │   └── main.jsx            # Entry point
@@ -106,7 +132,7 @@ CourseScheduler/
 │   └── package.json
 ├── server/                     # Express.js backend
 │   ├── models/                 # Sequelize models (course.js)
-│   ├── __tests__/              # Backend test suite (Jest)
+│   ├── __tests__/              # Backend test suite (Jest + Supertest)
 │   ├── database.sqlite         # SQLite database file
 │   ├── db.js                   # Sequelize connection & model initialization
 │   ├── index.js                # Express app & API routes
@@ -114,7 +140,10 @@ CourseScheduler/
 │   ├── setup.js                # Database seeder script
 │   └── package.json
 ├── docs/
+│   ├── adr/                    # Architecture Decision Records
 │   └── screenshots/            # UI screenshots for documentation
+├── scripts/
+│   └── take_screenshots.js     # Headless Chromium screenshot automation
 ├── vercel.json                 # Vercel multi-service deployment configuration
 └── README.md
 ```
@@ -124,7 +153,7 @@ CourseScheduler/
 ## 💻 Local Setup & Development
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (v18 or higher recommended)
+- [Node.js](https://nodejs.org/) (v18, v20, or v22 recommended)
 - `npm` (comes with Node.js)
 
 ### 1. Clone the Repository
@@ -161,18 +190,43 @@ Open your browser at `http://localhost:5173`. Any API calls to `/api` are automa
 
 ## 🧪 Running Tests
 
-### Backend Tests (Jest)
+### Frontend Tests (Vitest & React Testing Library)
+```bash
+cd client
+npm test
+```
+Runs 36 comprehensive tests across 5 test suites covering schedule migration, transfer course addition, course equivalency articulation, dynamic catalog filtering, inline editing, moving, deletion, and fractional credit handling.
+
+### Backend Tests (Jest & Supertest)
 ```bash
 cd server
 npm test
 ```
-Runs 40 comprehensive unit and integration tests covering scheduling immutability, error handling, edge cases, whitespace handling, and boundary checks.
+Runs 49 comprehensive unit and integration tests covering scheduling immutability, schema compatibility, error handling, edge cases, whitespace handling, and boundary checks.
 
-### Frontend Build Verification
+### Code Quality & Build Verification
 ```bash
-cd client
-npm run build
+# Frontend linter
+cd client && npm run lint
+
+# Frontend production build
+cd client && npm run build
 ```
+
+---
+
+## 📷 Generating Screenshots
+
+To re-generate all UI documentation screenshots:
+```bash
+# Build the client first
+cd client && npm run build
+
+# Run the screenshot automation script from the repository root
+cd ..
+node scripts/take_screenshots.js
+```
+The script boots the local services, drives a headless Chromium browser through each application flow, and outputs high-resolution screenshots to `docs/screenshots/`.
 
 ---
 
