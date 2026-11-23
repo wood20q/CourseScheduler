@@ -6,6 +6,7 @@ function AddTransferCourseDialog({ onClose, onConfirm, catalogCourses = [] }) {
     const [credits, setCredits] = useState("");
     const [institution, setInstitution] = useState("");
     const [satisfiesCourse, setSatisfiesCourse] = useState("");
+    const [customSatisfies, setCustomSatisfies] = useState("");
     const [description, setDescription] = useState("");
     const [targetLocation, setTargetLocation] = useState("transfer");
     const [validationError, setValidationError] = useState("");
@@ -30,12 +31,16 @@ function AddTransferCourseDialog({ onClose, onConfirm, catalogCourses = [] }) {
             return;
         }
 
+        const effectiveSatisfies = satisfiesCourse === "CUSTOM"
+            ? customSatisfies.trim().toUpperCase()
+            : satisfiesCourse.trim().toUpperCase();
+
         const newCourse = {
             code: trimmedCode,
             name: trimmedName,
             credits: numCredits,
             institution: institution.trim(),
-            satisfiesCourse: satisfiesCourse.trim().toUpperCase() || null,
+            satisfiesCourse: effectiveSatisfies || null,
             description: description.trim(),
             isTransfer: true
         };
@@ -124,7 +129,18 @@ function AddTransferCourseDialog({ onClose, onConfirm, catalogCourses = [] }) {
                                     {c.code} - {c.name}
                                 </option>
                             ))}
+                            <option value="CUSTOM">Custom Course Code...</option>
                         </select>
+                        {satisfiesCourse === "CUSTOM" && (
+                            <input
+                                style={{ marginTop: "0.5em" }}
+                                type="text"
+                                placeholder="Enter custom course code (e.g. PHIL200)"
+                                value={customSatisfies}
+                                onChange={(e) => setCustomSatisfies(e.target.value)}
+                                autoFocus
+                            />
+                        )}
                     </div>
 
                     <div className="formGroup">
