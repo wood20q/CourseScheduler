@@ -28,15 +28,25 @@ export function isModernSchedule(data) {
 export function migrateSchedule(data) {
   if (isModernSchedule(data)) {
     return {
-      transferCourses: Array.isArray(data.transferCourses) ? data.transferCourses : [],
-      years: data.years
+      transferCourses: Array.isArray(data.transferCourses)
+        ? data.transferCourses.map((c) => ({ ...c, credits: Number(c.credits) || 0 }))
+        : [],
+      years: data.years.map((year) =>
+        year.map((term) =>
+          term.map((c) => ({ ...c, credits: Number(c.credits) || 0 }))
+        )
+      )
     };
   }
 
   if (isLegacySchedule(data)) {
     return {
       transferCourses: [],
-      years: data
+      years: data.map((year) =>
+        year.map((term) =>
+          term.map((c) => ({ ...c, credits: Number(c.credits) || 0 }))
+        )
+      )
     };
   }
 
@@ -47,7 +57,9 @@ function validateCourse(course, locationName) {
   if (!course || typeof course !== 'object' || !course.code || !(course.name || course.title)) {
     return `Invalid course found in ${locationName}: each course requires a code and title/name.`;
   }
-  course.credits = Number(course.credits) || 0;
+  if (course.credits !== undefined && isNaN(Number(course.credits))) {
+    return `Invalid course found in ${locationName}: credits must be a valid number.`;
+  }
   return null;
 }
 

@@ -90,17 +90,17 @@ describe('Issue #12 - Course Equivalency Articulation & Dynamic Catalog Filterin
     expect(availableContainer).not.toHaveTextContent('MATH101');
   });
 
-  it('allows custom code entry for Satisfies Home Course and permits custom equivalency', async () => {
+  it('allows unlisted course code entry for Satisfies Home Course and permits equivalency', async () => {
     render(<App />);
 
     const addTransferBtn = await screen.findByRole('button', { name: /\+ Add Transfer Course/i });
     fireEvent.click(addTransferBtn);
 
     const satisfiesSelect = screen.getByLabelText(/Satisfies Home Course/i);
-    fireEvent.change(satisfiesSelect, { target: { value: 'CUSTOM' } });
+    fireEvent.change(satisfiesSelect, { target: { value: 'UNLISTED' } });
 
-    const customInput = screen.getByPlaceholderText(/Enter custom course code/i);
-    fireEvent.change(customInput, { target: { value: 'PHIL200' } });
+    const unlistedInput = screen.getByPlaceholderText(/Enter unlisted course code/i);
+    fireEvent.change(unlistedInput, { target: { value: 'PHIL200' } });
 
     fireEvent.change(screen.getByLabelText(/Course Code/i), { target: { value: 'AP-PHIL' } });
     fireEvent.change(screen.getByLabelText(/Course Title/i), { target: { value: 'AP Philosophy' } });

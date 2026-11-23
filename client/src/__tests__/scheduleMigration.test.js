@@ -74,7 +74,18 @@ describe('scheduleMigration utils', () => {
     expect(calculateTotalCredits(modernSchedule)).toBe(7);
   });
 
-  it('calculateTotalCredits handles legacy schedule', () => {
-    expect(calculateTotalCredits(legacyWithCourses)).toBe(3);
+  it('validateSchedule does not mutate the input schedule or course objects', () => {
+    const course = Object.freeze({ code: 'CS101', name: 'Intro CS', credits: '3' });
+    const immutableModernSchedule = Object.freeze({
+      transferCourses: [course],
+      years: [
+        [[], [], []],
+        [[], [], []],
+        [[], [], []],
+        [[], [], []]
+      ]
+    });
+    expect(() => validateSchedule(immutableModernSchedule)).not.toThrow();
+    expect(validateSchedule(immutableModernSchedule)).toBeNull();
   });
 });

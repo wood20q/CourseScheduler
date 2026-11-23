@@ -7,7 +7,7 @@ function AddTransferCourseDialog({ onClose, onConfirm, catalogCourses = [] }) {
     const [institution, setInstitution] = useState("");
     const [satisfiesCourse, setSatisfiesCourse] = useState("");
     const [satisfiesFilter, setSatisfiesFilter] = useState("");
-    const [customSatisfies, setCustomSatisfies] = useState("");
+    const [unlistedSatisfies, setUnlistedSatisfies] = useState("");
     const [description, setDescription] = useState("");
     const [targetLocation, setTargetLocation] = useState("transfer");
     const [validationError, setValidationError] = useState("");
@@ -32,8 +32,8 @@ function AddTransferCourseDialog({ onClose, onConfirm, catalogCourses = [] }) {
             return;
         }
 
-        const effectiveSatisfies = satisfiesCourse === "CUSTOM"
-            ? customSatisfies.trim().toUpperCase()
+        const effectiveSatisfies = satisfiesCourse === "UNLISTED"
+            ? unlistedSatisfies.trim().toUpperCase()
             : satisfiesCourse.trim().toUpperCase();
 
         const newCourse = {
@@ -160,15 +160,15 @@ function AddTransferCourseDialog({ onClose, onConfirm, catalogCourses = [] }) {
                                         {c.code} - {c.name}
                                     </option>
                                 ))}
-                            <option value="CUSTOM">Custom Course Code...</option>
+                            <option value="UNLISTED">Unlisted Course Code...</option>
                         </select>
-                        {satisfiesCourse === "CUSTOM" && (
+                        {satisfiesCourse === "UNLISTED" && (
                             <input
                                 style={{ marginTop: "0.5em" }}
                                 type="text"
-                                placeholder="Enter custom course code (e.g. PHIL200)"
-                                value={customSatisfies}
-                                onChange={(e) => setCustomSatisfies(e.target.value)}
+                                placeholder="Enter unlisted course code (e.g. PHIL200)"
+                                value={unlistedSatisfies}
+                                onChange={(e) => setUnlistedSatisfies(e.target.value)}
                                 autoFocus
                             />
                         )}

@@ -195,7 +195,7 @@ describe('Issue #13 - Manage Transfer Courses: Overview Details, Inline Editing,
     fireEvent.click(removeBtn);
 
     // Confirm deletion
-    const confirmBtn = screen.getByRole('button', { name: /Yes, Remove/i });
+    const confirmBtn = screen.getByRole('button', { name: /^Yes, Remove Course$/i });
     fireEvent.click(confirmBtn);
 
     // AP-CS should be gone

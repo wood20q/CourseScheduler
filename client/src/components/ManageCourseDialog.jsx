@@ -311,7 +311,7 @@ function ManageCourseDialog({
                                     className="btn-confirm-delete" 
                                     onClick={handleConfirmRemove}
                                 >
-                                    Yes, Remove
+                                    Yes, Remove Course
                                 </button>
                                 <button 
                                     type="button" 
