@@ -161,8 +161,8 @@ function ManageCourseDialog({
                                 id="edit-credits"
                                 aria-label="Edit Credits"
                                 type="number"
-                                min="0.5"
-                                step="0.5"
+                                min="0.25"
+                                step="0.25"
                                 value={editCredits}
                                 onChange={(e) => setEditCredits(e.target.value)}
                                 required

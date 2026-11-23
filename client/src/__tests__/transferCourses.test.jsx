@@ -98,4 +98,28 @@ describe('Issue #11 - Pre-College Transfer Credits Section & Transfer Course Cre
     expect(saved.years[1][2][0].code).toBe('CC-CS1');
     expect(saved.years[1][2][0].isTransfer).toBe(true);
   });
+
+  it('supports creating transfer courses with fractional credits like 0.25 and 0.75', async () => {
+    render(<App />);
+
+    const addTransferBtn = await screen.findByRole('button', { name: /\+ Add Transfer Course/i });
+    fireEvent.click(addTransferBtn);
+
+    // Verify step and min allow 0.25
+    const creditsInput = screen.getByLabelText(/Credits/i);
+    expect(creditsInput).toHaveAttribute('step', '0.25');
+    expect(creditsInput).toHaveAttribute('min', '0.25');
+
+    fireEvent.change(screen.getByLabelText(/Course Code/i), { target: { value: 'SEMINAR-1' } });
+    fireEvent.change(screen.getByLabelText(/Course Title/i), { target: { value: 'Freshman Seminar' } });
+    fireEvent.change(creditsInput, { target: { value: '0.25' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /^Add Transfer Course$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('SEMINAR-1')).toBeInTheDocument();
+      expect(screen.getByText(/^Credits:\s*0\.25$/i)).toBeInTheDocument();
+      expect(screen.getByText(/Total Credits:\s*0\.25/i)).toBeInTheDocument();
+    });
+  });
 });

@@ -115,7 +115,8 @@ export function validateSchedule(data) {
 export function calculateTotalCredits(schedule) {
   if (!schedule) return 0;
   if (Array.isArray(schedule)) {
-    return schedule.flat(2).reduce((sum, course) => sum + (Number(course?.credits) || 0), 0);
+    const sum = schedule.flat(2).reduce((total, course) => total + (Number(course?.credits) || 0), 0);
+    return Math.round(sum * 100) / 100;
   }
   const transferTotal = (schedule.transferCourses || []).reduce(
     (sum, course) => sum + (Number(course?.credits) || 0),
@@ -125,5 +126,5 @@ export function calculateTotalCredits(schedule) {
     (sum, course) => sum + (Number(course?.credits) || 0),
     0
   );
-  return transferTotal + yearsTotal;
+  return Math.round((transferTotal + yearsTotal) * 100) / 100;
 }

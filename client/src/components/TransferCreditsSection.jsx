@@ -1,10 +1,11 @@
 import CourseCard from "./CourseCard";
 
 function TransferCreditsSection({ transferCourses = [], onAddClick, onCourseClick }) {
-    const totalTransferCredits = transferCourses.reduce(
+    const rawTransferCredits = transferCourses.reduce(
         (sum, course) => sum + (Number(course.credits) || 0),
         0
     );
+    const totalTransferCredits = Math.round(rawTransferCredits * 100) / 100;
 
     return (
         <div className="transferSectionBlock">

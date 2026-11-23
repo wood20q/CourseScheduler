@@ -1,7 +1,8 @@
 import Term from "./Term"
 
 function Year({ yearNumber, yearList, onCourseClick }) {
-    const yearCredits = yearList.flat().reduce((sum, course) => sum + course.credits, 0)
+    const rawYearCredits = yearList.flat().reduce((sum, course) => sum + (Number(course.credits) || 0), 0)
+    const yearCredits = Math.round(rawYearCredits * 100) / 100
     return (
         <div className="yearBlock">
             <div className="yearLabel">

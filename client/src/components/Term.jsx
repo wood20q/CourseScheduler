@@ -1,7 +1,8 @@
 import CourseCard from "./CourseCard"
 
 function Term({ termLabel, termList, yearIndex, termIndex, onCourseClick }) {
-    const termCredits = termList.reduce((sum, course) => sum + (Number(course.credits) || 0), 0)
+    const rawTermCredits = termList.reduce((sum, course) => sum + (Number(course.credits) || 0), 0)
+    const termCredits = Math.round(rawTermCredits * 100) / 100
     return (
         <div className="term">
             <div className="termLabel">

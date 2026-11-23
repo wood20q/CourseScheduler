@@ -97,9 +97,9 @@ function AddTransferCourseDialog({ onClose, onConfirm, catalogCourses = [] }) {
                         <input
                             id="transfer-credits"
                             type="number"
-                            min="0.5"
-                            step="0.5"
-                            placeholder="e.g. 3 or 4"
+                            min="0.25"
+                            step="0.25"
+                            placeholder="e.g. 0.25, 0.75, 3, or 4"
                             value={credits}
                             onChange={(e) => setCredits(e.target.value)}
                             required

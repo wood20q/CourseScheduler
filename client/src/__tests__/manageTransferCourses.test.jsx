@@ -94,6 +94,41 @@ describe('Issue #13 - Manage Transfer Courses: Overview Details, Inline Editing,
     expect(saved.transferCourses[0].credits).toBe(5);
   });
 
+  it('allows editing transfer course credits to 0.75 and 0.25', async () => {
+    const initialSchedule = {
+      transferCourses: [
+        {
+          code: 'LAB-1',
+          name: 'Physics Lab',
+          credits: 1,
+          isTransfer: true
+        }
+      ],
+      years: Array.from({ length: 4 }, () => Array.from({ length: 3 }, () => []))
+    };
+    localStorage.setItem('course_scheduler_data', JSON.stringify(initialSchedule));
+
+    render(<App />);
+
+    const card = await screen.findByText('LAB-1');
+    fireEvent.click(card);
+
+    const editBtn = screen.getByRole('button', { name: /Edit Details/i });
+    fireEvent.click(editBtn);
+
+    const creditsInput = screen.getByLabelText(/Edit Credits/i);
+    expect(creditsInput).toHaveAttribute('step', '0.25');
+    expect(creditsInput).toHaveAttribute('min', '0.25');
+
+    fireEvent.change(creditsInput, { target: { value: '0.75' } });
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/^Credits:\s*0\.75$/i)).toBeInTheDocument();
+      expect(screen.getByText(/Total Credits:\s*0\.75/i)).toBeInTheDocument();
+    });
+  });
+
   it('moves transfer course between Pre-College and Year/Term slots', async () => {
     const initialSchedule = {
       transferCourses: [
