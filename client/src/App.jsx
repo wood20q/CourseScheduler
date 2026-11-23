@@ -226,20 +226,22 @@ function App() {
             />
           )}
         </div>
-        <div className="scheduleArea">
+        <div className="scheduleWrapper">
           <TransferCreditsSection 
             transferCourses={schedule.transferCourses || []} 
             onAddClick={() => setIsAddTransferOpen(true)}
             onCourseClick={(course, location) => setManagedCourse({ ...course, currentTerm: location })}
           />
-          {(schedule.years || []).map((year, i) => (
-            <Year 
-              key={i} 
-              yearNumber={i + 1} 
-              yearList={year} 
-              onCourseClick={(course, termList) => setManagedCourse({ ...course, currentTerm: termList })}
-            />
-          ))}
+          <div className="scheduleArea">
+            {(schedule.years || []).map((year, i) => (
+              <Year 
+                key={i} 
+                yearNumber={i + 1} 
+                yearList={year} 
+                onCourseClick={(course, termList) => setManagedCourse({ ...course, currentTerm: termList })}
+              />
+            ))}
+          </div>
         </div>
       </main>
       {selectedCourse && (

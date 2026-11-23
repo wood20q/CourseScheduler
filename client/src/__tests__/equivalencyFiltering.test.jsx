@@ -113,4 +113,24 @@ describe('Issue #12 - Course Equivalency Articulation & Dynamic Catalog Filterin
       expect(screen.getByText(/PHIL200/)).toBeInTheDocument();
     });
   });
+
+  it('filters Satisfies Home Course dropdown options as user types in the filter input', async () => {
+    render(<App />);
+
+    const addTransferBtn = await screen.findByRole('button', { name: /\+ Add Transfer Course/i });
+    fireEvent.click(addTransferBtn);
+
+    // Initial state: all courses are options
+    expect(screen.getByRole('option', { name: /CS101/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /MATH101/i })).toBeInTheDocument();
+
+    // Type "MATH" into the filter input
+    const filterInput = screen.getByPlaceholderText(/Type to filter catalog courses/i);
+    fireEvent.change(filterInput, { target: { value: 'MATH' } });
+
+    // MATH101 should still be an option
+    expect(screen.getByRole('option', { name: /MATH101/i })).toBeInTheDocument();
+    // CS101 should be filtered out
+    expect(screen.queryByRole('option', { name: /CS101/i })).not.toBeInTheDocument();
+  });
 });

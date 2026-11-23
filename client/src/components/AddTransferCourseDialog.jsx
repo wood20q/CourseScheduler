@@ -6,6 +6,7 @@ function AddTransferCourseDialog({ onClose, onConfirm, catalogCourses = [] }) {
     const [credits, setCredits] = useState("");
     const [institution, setInstitution] = useState("");
     const [satisfiesCourse, setSatisfiesCourse] = useState("");
+    const [satisfiesFilter, setSatisfiesFilter] = useState("");
     const [customSatisfies, setCustomSatisfies] = useState("");
     const [description, setDescription] = useState("");
     const [targetLocation, setTargetLocation] = useState("transfer");
@@ -116,19 +117,49 @@ function AddTransferCourseDialog({ onClose, onConfirm, catalogCourses = [] }) {
                         />
                     </div>
 
-                    <div className="formGroup">
+                    <div className="formGroup" id="satisfiesGroup">
                         <label htmlFor="transfer-satisfies">Satisfies Home Course:</label>
+                        <div className="satisfiesFilterWrapper">
+                            <input
+                                id="satisfies-filter"
+                                type="text"
+                                className="satisfiesFilterInput"
+                                placeholder="Type to filter catalog courses..."
+                                aria-label="Filter catalog courses"
+                                value={satisfiesFilter}
+                                onChange={(e) => setSatisfiesFilter(e.target.value)}
+                            />
+                            {satisfiesFilter && (
+                                <button
+                                    type="button"
+                                    className="btnClearFilter"
+                                    onClick={() => setSatisfiesFilter("")}
+                                    title="Clear filter"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
                         <select
                             id="transfer-satisfies"
                             value={satisfiesCourse}
                             onChange={(e) => setSatisfiesCourse(e.target.value)}
                         >
                             <option value="">None / General Elective</option>
-                            {catalogCourses.map((c) => (
-                                <option key={c.code} value={c.code}>
-                                    {c.code} - {c.name}
-                                </option>
-                            ))}
+                            {catalogCourses
+                                .filter((c) => {
+                                    if (!satisfiesFilter) return true;
+                                    const term = satisfiesFilter.toLowerCase().trim();
+                                    return (
+                                        c.code?.toLowerCase().includes(term) ||
+                                        c.name?.toLowerCase().includes(term)
+                                    );
+                                })
+                                .map((c) => (
+                                    <option key={c.code} value={c.code}>
+                                        {c.code} - {c.name}
+                                    </option>
+                                ))}
                             <option value="CUSTOM">Custom Course Code...</option>
                         </select>
                         {satisfiesCourse === "CUSTOM" && (

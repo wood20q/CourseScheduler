@@ -187,15 +187,28 @@ main,
   margin-top: 0;
 }
 
-/* Setting Schedule Grid */
-.scheduleArea {
+.scheduleWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2em;
   min-height: 0;
   min-width: 0;
   width: 100%;
   height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 0.25em 0.5em 0;
+}
+
+/* Setting Schedule Grid */
+.scheduleArea {
+  min-height: 520px;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
   overflow: hidden;
   display: grid;
-  /* grid-template-rows: repeat(4, minmax(0, 1fr)); Removed to allow for modulation */
+  grid-template-rows: repeat(4, minmax(0, 1fr));
   background-color: var(--mauve);
   border-radius: 25px;
   gap: var(--grid-outline);
@@ -367,6 +380,8 @@ main,
   font-size: 0.95em;
 }
 
+.formGroup input,
+.formGroup textarea,
 .formGroup select {
   padding: 0.6em 0.8em;
   border-radius: 12px;
@@ -375,12 +390,30 @@ main,
   border: 2px solid var(--surface2);
   font-size: 1em;
   outline: none;
-  cursor: pointer;
-  transition: border-color 0.2s ease;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.formGroup input:focus,
+.formGroup textarea:focus,
 .formGroup select:focus {
   border-color: var(--mauve);
+  box-shadow: 0 0 0 2px rgba(203, 166, 247, 0.2);
+}
+
+.formGroup input::placeholder,
+.formGroup textarea::placeholder {
+  color: var(--subtext0);
+  opacity: 0.7;
+}
+
+.formGroup select {
+  cursor: pointer;
+}
+
+.formGroup input[type="number"]::-webkit-inner-spin-button,
+.formGroup input[type="number"]::-webkit-outer-spin-button {
+  filter: invert(0.8);
 }
 
 .formGroup.buttons {
@@ -715,11 +748,12 @@ main,
 
 /* Pre-College / Transfer Credits Section Styles */
 .transferSectionBlock {
+  flex-shrink: 0;
   background-color: var(--mantle);
   border: 1.5px solid var(--surface2);
   border-radius: 16px;
   padding: 1.2em 1.4em;
-  margin-bottom: 1.5em;
+  margin-bottom: 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -901,4 +935,35 @@ main,
   border-radius: 12px;
   border: 1px solid var(--surface2);
   margin-bottom: 1em;
+}
+
+/* Searchable / Filterable Course Dropdown Styles */
+.satisfiesFilterWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.35em;
+}
+
+.satisfiesFilterInput {
+  width: 100%;
+  padding-right: 2.2em !important;
+  font-size: 0.9em !important;
+}
+
+.btnClearFilter {
+  position: absolute;
+  right: 0.65em;
+  background: none;
+  border: none;
+  color: var(--subtext0);
+  cursor: pointer;
+  font-size: 0.95em;
+  padding: 0.2em;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+
+.btnClearFilter:hover {
+  color: var(--pink);
 }
