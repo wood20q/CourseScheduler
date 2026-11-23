@@ -177,7 +177,7 @@ function AddTransferCourseDialog({ onClose, onConfirm, catalogCourses = [] }) {
                         <label htmlFor="transfer-description">Description:</label>
                         <textarea
                             id="transfer-description"
-                            rows={3}
+                            rows={2}
                             placeholder="Optional notes or course description"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
