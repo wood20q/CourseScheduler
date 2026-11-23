@@ -55,7 +55,16 @@ function App() {
   }
 
   useEffect(() => {
-    loadCourses()
+    fetchCourses()
+      .then((data) => {
+        setAvailCourses(data)
+        setFetchError(null)
+      })
+      .catch((err) => {
+        console.error("Error loading courses:", err)
+        setFetchError(err.message)
+      })
+      .finally(() => setIsLoading(false))
   }, [])
 
   const handleAddCourse = async (termList, course) => {
@@ -68,23 +77,87 @@ function App() {
   }
 
   const handleRemoveCourse = async (code) => {
+    const cleanCode = code.toLowerCase().trim()
+    setSchedule((prev) => ({
+      transferCourses: (prev.transferCourses || []).filter(
+        (c) => c.code.toLowerCase().trim() !== cleanCode
+      ),
+      years: (prev.years || []).map((year) =>
+        year.map((term) => term.filter((c) => c.code.toLowerCase().trim() !== cleanCode))
+      )
+    }))
+    setManagedCourse(null)
     try {
-      const updatedSchedule = await removeCourseFromSchedule(code, schedule)
-      setSchedule(updatedSchedule)
-      setManagedCourse(null)
-    } catch (error) {
-      alert(`Could not remove course: ${error.message}`)
+      await removeCourseFromSchedule(code, schedule)
+    } catch {
+      // client-side state already updated
     }
   }
 
-  const handleMoveCourse = async (termList, code) => {
+  const handleMoveCourse = async (targetLocation, code) => {
+    const cleanCode = code.toLowerCase().trim()
+    setSchedule((prev) => {
+      let movedCourse = null
+      const nextTransfer = (prev.transferCourses || []).filter((c) => {
+        if (c.code.toLowerCase().trim() === cleanCode) {
+          movedCourse = c
+          return false
+        }
+        return true
+      })
+      const nextYears = (prev.years || []).map((year) =>
+        year.map((term) =>
+          term.filter((c) => {
+            if (c.code.toLowerCase().trim() === cleanCode) {
+              movedCourse = c
+              return false
+            }
+            return true
+          })
+        )
+      )
+
+      if (!movedCourse) return prev
+
+      if (targetLocation === 'transfer') {
+        return {
+          transferCourses: [...nextTransfer, movedCourse],
+          years: nextYears
+        }
+      }
+
+      const [y, t] = Array.isArray(targetLocation)
+        ? targetLocation
+        : targetLocation.split(',').map(Number)
+      nextYears[y][t].push(movedCourse)
+      return {
+        transferCourses: nextTransfer,
+        years: nextYears
+      }
+    })
+    setManagedCourse(null)
     try {
-      const updatedSchedule = await moveCourseInSchedule(termList, code, schedule)
-      setSchedule(updatedSchedule)
-      setManagedCourse(null)
-    } catch (error) {
-      alert(`Could not move course: ${error.message}`)
+      await moveCourseInSchedule(targetLocation, code, schedule)
+    } catch {
+      // client-side state already updated
     }
+  }
+
+  const handleUpdateCourse = (updatedCourse) => {
+    const cleanCode = updatedCourse.code.toLowerCase().trim()
+    setSchedule((prev) => ({
+      transferCourses: (prev.transferCourses || []).map((c) =>
+        c.code.toLowerCase().trim() === cleanCode ? { ...c, ...updatedCourse } : c
+      ),
+      years: (prev.years || []).map((year) =>
+        year.map((term) =>
+          term.map((c) =>
+            c.code.toLowerCase().trim() === cleanCode ? { ...c, ...updatedCourse } : c
+          )
+        )
+      )
+    }))
+    setManagedCourse(null)
   }
 
   const handleResetSchedule = () => {
@@ -189,6 +262,8 @@ function App() {
           onClose={() => setManagedCourse(null)}
           onRemove={handleRemoveCourse}
           onMove={handleMoveCourse}
+          onUpdate={handleUpdateCourse}
+          catalogCourses={availCourses}
         />
       )}
       {isIODialogOpen && (

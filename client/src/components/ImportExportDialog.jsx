@@ -52,7 +52,7 @@ function ImportExportDialog({ schedule, studentName = "Student", onClose, onImpo
                     setPendingSchedule(parsed);
                     setError(null);
                 }
-            } catch (err) {
+            } catch {
                 setError("Failed to parse JSON file. Please ensure it is a valid .json file.");
                 setPendingSchedule(null);
             }

@@ -859,3 +859,46 @@ main,
   margin-bottom: 1em;
   font-size: 0.85em;
 }
+
+/* Manage Course Dialog Extensions */
+.dialogHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8em;
+}
+
+.btn-edit-details {
+  background-color: var(--surface1);
+  color: var(--teal);
+  border: 1px solid var(--teal);
+  border-radius: 14px;
+  padding: 0.35em 0.85em;
+  font-size: 0.82em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-edit-details:hover {
+  background-color: var(--teal);
+  color: var(--crust);
+}
+
+.dialogCourseTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5em;
+}
+
+.inlineEditForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8em;
+  background-color: var(--surface0);
+  padding: 1em;
+  border-radius: 12px;
+  border: 1px solid var(--surface2);
+  margin-bottom: 1em;
+}

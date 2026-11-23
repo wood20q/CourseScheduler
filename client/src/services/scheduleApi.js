@@ -8,7 +8,9 @@ export async function fetchCourses() {
         try {
             const errorData = await response.json();
             if (errorData?.error) errorMsg = errorData.error;
-        } catch (_) {}
+        } catch {
+            // keep standard HTTP status message if JSON parsing fails
+        }
         throw new Error(errorMsg);
     }
     return response.json()
