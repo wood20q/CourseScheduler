@@ -5,8 +5,8 @@ import AddCourseDialog from './components/AddCourseDialog'
 import ManageCourseDialog from './components/ManageCourseDialog'
 import ImportExportDialog from './components/ImportExportDialog'
 import { addCourseToSchedule, removeCourseFromSchedule, moveCourseInSchedule, fetchCourses } from './services/scheduleApi'
+import { createEmptySchedule, migrateSchedule, calculateTotalCredits } from './utils/scheduleMigration'
 
-const createEmptySchedule = () => Array.from({length: 4}, () => Array.from({length: 3}, () => []))
 const studentName = "Chad Quick"
 
 function App() {
@@ -14,10 +14,7 @@ function App() {
     try {
       const saved = localStorage.getItem('course_scheduler_data')
       if (saved) {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed) && parsed.length === 4 && parsed.every(y => Array.isArray(y) && y.length === 3)) {
-          return parsed
-        }
+        return migrateSchedule(JSON.parse(saved))
       }
     } catch (e) {
       console.error("Failed to load schedule from localStorage:", e)
@@ -91,11 +88,13 @@ function App() {
     setSchedule(createEmptySchedule())
   }
 
+  const allScheduledCourses = (schedule.transferCourses || []).concat((schedule.years || []).flat(2))
+
   return (
     <div className="app-container">
       <nav className="top-nav">
         <h1>Course Scheduler</h1>
-        <p>Total Credits: {schedule.flat(2).reduce((sum, course) => sum + course.credits, 0)}</p>
+        <p>Total Credits: {calculateTotalCredits(schedule)}</p>
         <div className="navUserSection">
           <p>Student Name: {studentName}</p>
           <button 
@@ -123,11 +122,11 @@ function App() {
                 Retry
               </button>
             </div>
-          ) : <AvailableCourses onSelectCourse={(course) => setSelectedCourse(course)} courseList={availCourses} schedule={schedule.flat(2)}/>
+          ) : <AvailableCourses onSelectCourse={(course) => setSelectedCourse(course)} courseList={availCourses} schedule={allScheduledCourses}/>
           }
         </div>
         <div className="scheduleArea">
-          {schedule.map((year, i) => (
+          {(schedule.years || []).map((year, i) => (
             <Year 
               key={i} 
               yearNumber={i + 1} 
@@ -157,7 +156,7 @@ function App() {
           schedule={schedule}
           studentName={studentName}
           onClose={() => setIsIODialogOpen(false)}
-          onImportSchedule={(newSchedule) => setSchedule(newSchedule)}
+          onImportSchedule={(newSchedule) => setSchedule(migrateSchedule(newSchedule))}
           onResetSchedule={handleResetSchedule}
         />
       )}

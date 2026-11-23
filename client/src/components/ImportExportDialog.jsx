@@ -1,26 +1,10 @@
 import { useState } from "react";
+import { validateSchedule, migrateSchedule } from "../utils/scheduleMigration";
 
-function validateSchedule(data) {
-    if (!Array.isArray(data) || data.length !== 4) {
-        return "Invalid schedule format: must be an array of 4 years.";
-    }
-    for (let y = 0; y < 4; y++) {
-        if (!Array.isArray(data[y]) || data[y].length !== 3) {
-            return `Invalid format in Year ${y + 1}: each year must have 3 terms.`;
-        }
-        for (let t = 0; t < 3; t++) {
-            if (!Array.isArray(data[y][t])) {
-                return `Invalid format in Year ${y + 1}, Term ${t + 1}: term must be a list of courses.`;
-            }
-            for (const course of data[y][t]) {
-                if (!course || typeof course !== 'object' || !course.code || !course.name) {
-                    return `Invalid course found in Year ${y + 1}, Term ${t + 1}: each course requires a code and name.`;
-                }
-                course.credits = Number(course.credits) || 0;
-            }
-        }
-    }
-    return null;
+function getCoursesCount(sched) {
+    if (!sched) return 0;
+    if (Array.isArray(sched)) return sched.flat(2).length;
+    return (sched.transferCourses || []).length + (sched.years || []).flat(2).length;
 }
 
 function ImportExportDialog({ schedule, studentName = "Student", onClose, onImportSchedule, onResetSchedule }) {
@@ -29,11 +13,12 @@ function ImportExportDialog({ schedule, studentName = "Student", onClose, onImpo
     const [error, setError] = useState(null);
     const [isConfirmingReset, setIsConfirmingReset] = useState(false);
 
-    const currentCourseCount = schedule.flat(2).length;
-    const newCourseCount = pendingSchedule ? pendingSchedule.flat(2).length : 0;
+    const currentCourseCount = getCoursesCount(schedule);
+    const newCourseCount = pendingSchedule ? getCoursesCount(pendingSchedule) : 0;
 
     const handleExport = () => {
-        const jsonString = JSON.stringify(schedule, null, 2);
+        const normalized = migrateSchedule(schedule);
+        const jsonString = JSON.stringify(normalized, null, 2);
         const blob = new Blob([jsonString], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -85,7 +70,7 @@ function ImportExportDialog({ schedule, studentName = "Student", onClose, onImpo
 
     const handleConfirmImport = () => {
         if (!pendingSchedule) return;
-        onImportSchedule(pendingSchedule);
+        onImportSchedule(migrateSchedule(pendingSchedule));
         onClose();
     };
 
