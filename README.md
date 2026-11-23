@@ -37,7 +37,7 @@ Click **+ Add Transfer Course** to record external coursework (AP exams, dual en
 ---
 
 ### 5. Managing & Inline Editing Placed Courses
-Click any course card on your board to inspect full articulation details. For transfer courses, edit titles, credits, institutions, descriptions, or satisfied courses inline, move courses between the pre-college section and academic terms, or delete them with an explicit confirmation step (`Yes, Remove Course`).
+Click any course card on your board to inspect full course details, move courses between the pre-college section and academic terms, or delete them with an explicit confirmation step (`Yes, Remove Course`). For transfer courses, click **Edit Details** to open the dedicated inline edit view and update titles, credits, institutions, descriptions, or satisfied courses.
 
 ![Manage Course Dialog](docs/screenshots/05-manage-course-dialog.png)
 
@@ -83,8 +83,8 @@ Open the **Import / Export** dialog to download a personalized JSON backup of yo
 4. Click **Add Course**.
 
 ### 3. Inspecting, Editing, and Moving Courses
-1. Click directly on any course card in your schedule.
-2. **To edit details (Transfer Courses):** Click **Edit Details**, update the name, credits, institution, satisfied course, or notes, and click **Save Changes**.
+1. Click directly on any course card in your schedule to view **Course Details**.
+2. **To edit details (Transfer Courses):** Click **Edit Details**, update the title, credits, institution, satisfied course, or notes, and click **Save Changes** (or **Cancel Edit**).
 3. **To move:** Select the new target section (Pre-College or any Year/Term) under **Move Course**, then click **Move Course**.
 4. **To delete:** Click **Remove Course from Schedule**, then confirm with **Yes, Remove Course**. Any previously satisfied catalog course is immediately restored to the available courses list.
 
@@ -136,14 +136,18 @@ CourseScheduler/
 │   ├── database.sqlite         # SQLite database file
 │   ├── db.js                   # Sequelize connection & model initialization
 │   ├── index.js                # Express app & API routes
+│   ├── initialCourses.js       # Default catalog course seed data
 │   ├── scheduleService.js      # Pure scheduling logic (add, remove, move)
 │   ├── setup.js                # Database seeder script
 │   └── package.json
 ├── docs/
 │   ├── adr/                    # Architecture Decision Records
+│   ├── agents/                 # Agent guidelines and tracker configurations
 │   └── screenshots/            # UI screenshots for documentation
 ├── scripts/
 │   └── take_screenshots.js     # Headless Chromium screenshot automation
+├── AGENTS.md                   # Agent system instructions
+├── GLOSSARY.md                 # Ubiquitous domain language & terminology
 ├── vercel.json                 # Vercel multi-service deployment configuration
 └── README.md
 ```
