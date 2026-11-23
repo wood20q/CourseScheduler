@@ -712,3 +712,150 @@ main,
 .btn-cancel-import:hover {
   background-color: var(--surface2);
 }
+
+/* Pre-College / Transfer Credits Section Styles */
+.transferSectionBlock {
+  background-color: var(--mantle);
+  border: 1.5px solid var(--surface2);
+  border-radius: 16px;
+  padding: 1.2em 1.4em;
+  margin-bottom: 1.5em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.transferSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1em;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid var(--surface1);
+}
+
+.transferSectionInfo h1 {
+  font-size: 1.4em;
+  color: var(--teal);
+  margin-bottom: 0.2em;
+}
+
+.transferSectionInfo p {
+  font-size: 0.95em;
+  color: var(--subtext0);
+}
+
+.btn-add-transfer-credit {
+  background-color: var(--teal);
+  color: var(--crust);
+  border: none;
+  border-radius: 20px;
+  padding: 0.45em 1.1em;
+  font-size: 0.85em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-add-transfer-credit:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.transferEmptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.8em 1em;
+  border: 2px dashed var(--surface2);
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.02);
+  text-align: center;
+  gap: 0.8em;
+}
+
+.transferEmptyText {
+  color: var(--subtext0);
+  font-size: 0.95em;
+  max-width: 480px;
+}
+
+.btn-add-transfer-empty {
+  background-color: var(--surface1);
+  color: var(--teal);
+  border: 1.5px solid var(--teal);
+  border-radius: 20px;
+  padding: 0.45em 1.2em;
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-add-transfer-empty:hover {
+  background-color: var(--teal);
+  color: var(--crust);
+}
+
+.transferCourseGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+}
+
+.transferBadge {
+  background-color: var(--teal);
+  color: var(--crust);
+  font-size: 0.7em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.2em 0.55em;
+  border-radius: 10px;
+  display: inline-block;
+  align-self: flex-start;
+}
+
+.courseHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.availableCoursesTop {
+  padding: 0 0 0.8em 0;
+}
+
+.btn-add-transfer-sidebar {
+  width: 100%;
+  background-color: var(--teal);
+  color: var(--crust);
+  border: none;
+  border-radius: 12px;
+  padding: 0.7em 1em;
+  font-weight: bold;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-add-transfer-sidebar:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.institution, .satisfiesCourse {
+  font-size: 0.85em;
+  color: var(--subtext0);
+  margin-top: 0.2em;
+}
+
+.formErrorBox {
+  background-color: var(--mantle);
+  border: 1.5px solid var(--red);
+  color: var(--red);
+  padding: 0.6em 0.9em;
+  border-radius: 10px;
+  margin-bottom: 1em;
+  font-size: 0.85em;
+}

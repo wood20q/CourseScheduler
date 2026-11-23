@@ -4,6 +4,8 @@ import AvailableCourses from './components/AvailableCourses'
 import AddCourseDialog from './components/AddCourseDialog'
 import ManageCourseDialog from './components/ManageCourseDialog'
 import ImportExportDialog from './components/ImportExportDialog'
+import TransferCreditsSection from './components/TransferCreditsSection'
+import AddTransferCourseDialog from './components/AddTransferCourseDialog'
 import { addCourseToSchedule, removeCourseFromSchedule, moveCourseInSchedule, fetchCourses } from './services/scheduleApi'
 import { createEmptySchedule, migrateSchedule, calculateTotalCredits } from './utils/scheduleMigration'
 
@@ -28,6 +30,7 @@ function App() {
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [managedCourse, setManagedCourse] = useState(null)
   const [isIODialogOpen, setIsIODialogOpen] = useState(false)
+  const [isAddTransferOpen, setIsAddTransferOpen] = useState(false)
 
   useEffect(() => {
     try {
@@ -88,6 +91,25 @@ function App() {
     setSchedule(createEmptySchedule())
   }
 
+  const handleAddTransferCourse = (targetLocation, newCourse) => {
+    if (targetLocation === 'transfer') {
+      setSchedule((prev) => ({
+        ...prev,
+        transferCourses: [...(prev.transferCourses || []), newCourse]
+      }))
+    } else if (Array.isArray(targetLocation)) {
+      setSchedule((prev) => {
+        const [y, t] = targetLocation
+        const newYears = prev.years.map((year) => year.map((term) => [...term]))
+        newYears[y][t].push(newCourse)
+        return {
+          ...prev,
+          years: newYears
+        }
+      })
+    }
+  }
+
   const allScheduledCourses = (schedule.transferCourses || []).concat((schedule.years || []).flat(2))
 
   return (
@@ -122,10 +144,21 @@ function App() {
                 Retry
               </button>
             </div>
-          ) : <AvailableCourses onSelectCourse={(course) => setSelectedCourse(course)} courseList={availCourses} schedule={allScheduledCourses}/>
-          }
+          ) : (
+            <AvailableCourses 
+              onSelectCourse={(course) => setSelectedCourse(course)} 
+              onOpenAddTransferCourse={() => setIsAddTransferOpen(true)}
+              courseList={availCourses} 
+              schedule={allScheduledCourses}
+            />
+          )}
         </div>
         <div className="scheduleArea">
+          <TransferCreditsSection 
+            transferCourses={schedule.transferCourses || []} 
+            onAddClick={() => setIsAddTransferOpen(true)}
+            onCourseClick={(course, location) => setManagedCourse({ ...course, currentTerm: location })}
+          />
           {(schedule.years || []).map((year, i) => (
             <Year 
               key={i} 
@@ -141,6 +174,13 @@ function App() {
           course={selectedCourse}
           onClose={() => setSelectedCourse(null)}
           onConfirm={handleAddCourse}
+        />
+      )}
+      {isAddTransferOpen && (
+        <AddTransferCourseDialog
+          catalogCourses={availCourses}
+          onClose={() => setIsAddTransferOpen(false)}
+          onConfirm={handleAddTransferCourse}
         />
       )}
       {managedCourse && (

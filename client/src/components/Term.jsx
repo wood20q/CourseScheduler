@@ -1,7 +1,7 @@
 import CourseCard from "./CourseCard"
 
 function Term({ termLabel, termList, yearIndex, termIndex, onCourseClick }) {
-    const termCredits = termList.reduce((sum, course) => sum + course.credits, 0)
+    const termCredits = termList.reduce((sum, course) => sum + (Number(course.credits) || 0), 0)
     return (
         <div className="term">
             <div className="termLabel">
@@ -17,6 +17,9 @@ function Term({ termLabel, termList, yearIndex, termIndex, onCourseClick }) {
                         code={course.code} 
                         credits={course.credits} 
                         description={course.description}
+                        isTransfer={course.isTransfer}
+                        institution={course.institution}
+                        satisfiesCourse={course.satisfiesCourse}
                         onClickCourse={(courseData) => onCourseClick ? onCourseClick(courseData, [yearIndex, termIndex]) : undefined}
                     />
                 ))}
