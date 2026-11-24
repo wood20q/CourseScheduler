@@ -310,12 +310,27 @@ main,
   cursor: pointer;
 }
 
-.scheduleArea .course > :not(.code, .credits) {
+.scheduleArea .course > :not(.code, .credits, .courseHeader, .req-flag-container-b) {
   display: none;
 }
 
+.scheduleArea .course .name {
+  display: none;
+}
+
+.scheduleArea .course .courseHeader {
+  grid-area: courseHeader;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+}
+
 .scheduleArea .course {
-  grid-template-areas: "courseCode courseCredits";
+  grid-template-areas: 
+    "courseBanner courseBanner"
+    "courseHeader courseHeader"
+    "courseCode courseCredits";
 }
 
 /* Add Course Dialog Styles */
@@ -1108,12 +1123,24 @@ main,
   opacity: 0.9;
 }
 
+.course:hover,
+.course:focus-within {
+  z-index: 50;
+}
+
 /* Variant A: Inline Status Pill & Popover */
 .req-flag-container-a {
   position: relative;
   display: inline-flex;
   align-items: center;
   margin-left: 0.5em;
+  z-index: 60;
+}
+
+.req-flag-container-a:hover,
+.req-flag-container-a:focus-within,
+.req-flag-container-a.is-open {
+  z-index: 100;
 }
 
 .req-badge-pill {
@@ -1143,19 +1170,56 @@ main,
   border: 1.5px solid var(--yellow);
 }
 
-.req-popover-a {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  left: auto;
-  width: 270px;
+.req-popover-portal {
+  position: fixed;
+  width: 280px;
   background-color: var(--surface0);
   border: 1.5px solid var(--surface2);
   border-radius: 8px;
   padding: 0.85em;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75);
-  z-index: 10000;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85);
+  z-index: 99999;
   text-align: left;
+  animation: popoverFadeIn 0.15s ease-out;
+  pointer-events: auto;
+}
+
+@keyframes popoverFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.req-popover-a {
+  display: block;
+  width: 280px;
+  background-color: var(--surface0);
+  border: 1.5px solid var(--surface2);
+  border-radius: 8px;
+  padding: 0.85em;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85);
+  z-index: 99999;
+  text-align: left;
+}
+
+.req-flag-container-a:hover .req-popover-a,
+.req-flag-container-a:focus-within .req-popover-a,
+.req-popover-a.is-open {
+  display: block !important;
+}
+
+.req-popover-a::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  height: 12px;
 }
 
 .req-popover-a::after {
@@ -1399,4 +1463,34 @@ main,
 .btn-revoke-waiver {
   background-color: var(--surface2) !important;
   color: var(--text) !important;
+}
+
+.empty-schedule-prototype-banner {
+  background-color: var(--surface0);
+  border: 1.5px dashed var(--yellow);
+  color: var(--text);
+  padding: 0.75em 1.2em;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  font-size: 0.88em;
+  font-weight: 500;
+  margin-bottom: 0.5em;
+}
+
+.btn-load-inline-demo {
+  background-color: var(--yellow);
+  color: var(--crust);
+  border: none;
+  border-radius: 6px;
+  padding: 0.3em 0.8em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.btn-load-inline-demo:hover {
+  opacity: 0.9;
 }

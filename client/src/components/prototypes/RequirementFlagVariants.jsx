@@ -1,59 +1,162 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 /**
- * Variant A: Inline Status Pill with Floating Hover/Click Popover
- * Lightweight badge that expands a floating popover downward upon hover or click.
+ * Variant A: Inline Status Pill with Floating Portal Popover
+ * Rendered via createPortal to body to ensure it NEVER clips against term/schedule overflow.
+ * Supports instant hover preview and click to pin open.
  */
 export function VariantAFlag({ validation }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isClicked, setIsClicked] = useState(false);
+  const [coords, setCoords] = useState(null);
+  const badgeRef = useRef(null);
+  const popoverRef = useRef(null);
+
   if (!validation || !validation.hasFlag) return null;
 
   const isWaived = validation.overallStatus === 'WAIVED';
+  const isSatisfied = validation.overallStatus === 'SATISFIED';
+
+  let badgeClass = 'unsatisfied';
+  let badgeLabel = '⚠️ Missing Req';
+  let headerLabel = 'Unsatisfied Prerequisite / Corequisite';
+
+  if (isWaived) {
+    badgeClass = 'waived';
+    badgeLabel = '🏷️ Waived';
+    headerLabel = 'Requirement Waived';
+  } else if (isSatisfied) {
+    badgeClass = 'satisfied';
+    badgeLabel = '✓ Req Met';
+    headerLabel = 'Requirements Satisfied';
+  }
+
   const tooltipText = isWaived 
     ? 'Requirement Waived by override' 
-    : `Missing requirements: ${validation.missingSummary}`;
+    : isSatisfied
+      ? 'All prerequisite and corequisite requirements are satisfied.'
+      : `Missing requirements: ${validation.missingSummary}`;
+
+  const isOpen = isHovered || isClicked;
+
+  const updateCoords = () => {
+    if (!badgeRef.current) return;
+    const rect = badgeRef.current.getBoundingClientRect();
+    const popoverWidth = 280;
+    let left = rect.left + rect.width / 2 - popoverWidth / 2;
+    if (left < 12) left = 12;
+    if (typeof window !== 'undefined' && left + popoverWidth > window.innerWidth - 12) {
+      left = window.innerWidth - popoverWidth - 12;
+    }
+
+    const windowHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+    const openAbove = rect.bottom + 140 > windowHeight && rect.top > 150;
+    const top = openAbove ? (rect.top - 8) : (rect.bottom + 8);
+
+    setCoords({ top, left, openAbove });
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      updateCoords();
+      const handleScrollOrResize = () => updateCoords();
+      window.addEventListener('scroll', handleScrollOrResize, true);
+      window.addEventListener('resize', handleScrollOrResize);
+      return () => {
+        window.removeEventListener('scroll', handleScrollOrResize, true);
+        window.removeEventListener('resize', handleScrollOrResize);
+      };
+    }
+  }, [isOpen]);
+
+  // Click outside to unpin
+  useEffect(() => {
+    if (!isClicked) return;
+    const handleOutsideClick = (e) => {
+      if (
+        badgeRef.current && !badgeRef.current.contains(e.target) &&
+        popoverRef.current && !popoverRef.current.contains(e.target)
+      ) {
+        setIsClicked(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [isClicked]);
+
+  const popoverNode = isOpen && (
+    <div 
+      ref={popoverRef}
+      className={`req-popover-portal req-popover-a ${isClicked ? 'is-pinned is-open' : ''} ${coords?.openAbove ? 'open-above' : 'open-below'}`} 
+      style={{
+        position: 'fixed',
+        top: coords?.openAbove ? 'auto' : `${coords?.top ?? 0}px`,
+        bottom: coords?.openAbove ? `${(typeof window !== 'undefined' ? window.innerHeight : 800) - coords.top}px` : 'auto',
+        left: `${coords?.left ?? 0}px`,
+        width: '280px',
+        zIndex: 99999
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="req-popover-header">
+        <span>{headerLabel}</span>
+        <button 
+          type="button" 
+          className="btn-popover-close"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsClicked(false);
+            setIsHovered(false);
+          }}
+          title="Close"
+        >
+          ✕
+        </button>
+      </div>
+      <div className="req-popover-body">
+        <p><strong>Status:</strong> {validation.missingSummary}</p>
+        <p className="req-popover-hint">
+          {isWaived 
+            ? 'Course has an approved requirement waiver on this schedule.' 
+            : isSatisfied
+              ? 'Prerequisites completed in prior terms or transfer credits.'
+              : 'Prerequisites must be completed in an earlier term or satisfied via transfer credits.'}
+        </p>
+      </div>
+    </div>
+  );
 
   return (
     <div 
-      className="req-flag-container-a"
-      onMouseEnter={() => setIsOpen(true)}
-      onMouseLeave={() => setIsOpen(false)}
+      ref={badgeRef}
+      className={`req-flag-container-a ${isClicked ? 'is-clicked is-open' : ''}`}
+      onMouseEnter={() => {
+        updateCoords();
+        setIsHovered(true);
+      }}
+      onMouseLeave={() => setIsHovered(false)}
       onClick={(e) => {
         e.stopPropagation();
-        setIsOpen(prev => !prev);
+        updateCoords();
+        setIsClicked(prev => !prev);
       }}
     >
       <span 
-        className={`req-badge-pill ${isWaived ? 'waived' : 'unsatisfied'}`}
+        className={`req-badge-pill ${badgeClass}`}
         title={tooltipText}
+        tabIndex={0}
+        onFocus={() => {
+          updateCoords();
+          setIsHovered(true);
+        }}
+        onBlur={() => setIsHovered(false)}
       >
-        {isWaived ? '🏷️ Waived' : '⚠️ Missing Req'}
+        {badgeLabel}
       </span>
-      {isOpen && (
-        <div className="req-popover-a" onClick={(e) => e.stopPropagation()}>
-          <div className="req-popover-header">
-            <span>{isWaived ? 'Requirement Waived' : 'Unsatisfied Prerequisite / Corequisite'}</span>
-            <button 
-              type="button" 
-              className="btn-popover-close"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsOpen(false);
-              }}
-            >
-              ✕
-            </button>
-          </div>
-          <div className="req-popover-body">
-            <p><strong>Status:</strong> {validation.missingSummary}</p>
-            <p className="req-popover-hint">
-              {isWaived 
-                ? 'Course has an approved requirement waiver on this schedule.' 
-                : 'Prerequisites must be completed in an earlier term or satisfied via transfer credits.'}
-            </p>
-          </div>
-        </div>
-      )}
+      {typeof document !== 'undefined' && createPortal(popoverNode, document.body)}
     </div>
   );
 }
@@ -67,11 +170,23 @@ export function VariantBStrip({ validation }) {
   if (!validation || !validation.hasFlag) return null;
 
   const isWaived = validation.overallStatus === 'WAIVED';
+  const isSatisfied = validation.overallStatus === 'SATISFIED';
+
+  let bannerClass = 'unsatisfied';
+  let bannerText = '⚠️ Unsatisfied Requirements';
+
+  if (isWaived) {
+    bannerClass = 'waived';
+    bannerText = '🏷️ Requirement Waived';
+  } else if (isSatisfied) {
+    bannerClass = 'satisfied';
+    bannerText = '✓ Requirements Met';
+  }
 
   return (
     <div className="req-flag-container-b" onClick={(e) => e.stopPropagation()}>
-      <div className={`req-banner-b ${isWaived ? 'waived' : 'unsatisfied'}`}>
-        <span>{isWaived ? '🏷️ Requirement Waived' : '⚠️ Unsatisfied Requirements'}</span>
+      <div className={`req-banner-b ${bannerClass}`}>
+        <span>{bannerText}</span>
         <button 
           type="button" 
           className="btn-drawer-toggle-b"
@@ -82,7 +197,7 @@ export function VariantBStrip({ validation }) {
       </div>
       {isOpen && (
         <div className="req-drawer-b">
-          <p className="drawer-summary"><strong>Missing:</strong> {validation.missingSummary}</p>
+          <p className="drawer-summary"><strong>Summary:</strong> {validation.missingSummary}</p>
           <div className="drawer-rules">
             <span>• Prereqs: earlier term required</span>
             <span>• Coreqs: concurrent or earlier term</span>
@@ -101,16 +216,28 @@ export function VariantCChip({ validation, onInspect, course }) {
   if (!validation || !validation.hasFlag) return null;
 
   const isWaived = validation.overallStatus === 'WAIVED';
+  const isSatisfied = validation.overallStatus === 'SATISFIED';
+
+  let chipClass = 'unsatisfied';
+  let chipText = '⚠️ Missing Requirements';
+
+  if (isWaived) {
+    chipClass = 'waived';
+    chipText = '🏷️ Waived';
+  } else if (isSatisfied) {
+    chipClass = 'satisfied';
+    chipText = '✓ Requirements';
+  }
 
   return (
     <div className="req-flag-container-c" onClick={(e) => e.stopPropagation()}>
       <button 
         type="button" 
-        className={`req-action-chip-c ${isWaived ? 'waived' : 'unsatisfied'}`}
+        className={`req-action-chip-c ${chipClass}`}
         onClick={() => onInspect && onInspect(course, validation)}
         title="Click to view detailed requirement audit and resolution options"
       >
-        {isWaived ? '🏷️ Waived' : '⚠️ Missing Requirements'}
+        {chipText}
       </button>
     </div>
   );
@@ -122,6 +249,18 @@ export function VariantCChip({ validation, onInspect, course }) {
 export function RequirementInspectorModal({ course, validation, onClose, onToggleWaiver }) {
   if (!course || !validation) return null;
   const isWaived = validation.overallStatus === 'WAIVED';
+  const isSatisfied = validation.overallStatus === 'SATISFIED';
+
+  let statusBadgeClass = 'unsatisfied';
+  let statusBadgeText = 'UNSATISFIED (Prerequisites or Corequisites Missing)';
+
+  if (isWaived) {
+    statusBadgeClass = 'waived';
+    statusBadgeText = 'WAIVED (Permitted on Schedule by Override)';
+  } else if (isSatisfied) {
+    statusBadgeClass = 'satisfied';
+    statusBadgeText = 'SATISFIED (All Requirements Fulfilled)';
+  }
 
   return (
     <div className="dialogOverlay" onClick={onClose}>
@@ -136,8 +275,8 @@ export function RequirementInspectorModal({ course, validation, onClose, onToggl
 
         <div className="inspector-status-card">
           <div className="inspector-status-title">Current Evaluation Status:</div>
-          <div className={`inspector-status-badge ${isWaived ? 'waived' : 'unsatisfied'}`}>
-            {isWaived ? 'WAIVED (Permitted on Schedule)' : 'UNSATISFIED (Prerequisites or Corequisites Missing)'}
+          <div className={`inspector-status-badge ${statusBadgeClass}`}>
+            {statusBadgeText}
           </div>
           <p className="inspector-missing-text">
             <strong>Diagnostic:</strong> {validation.missingSummary}

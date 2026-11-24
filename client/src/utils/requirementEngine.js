@@ -190,6 +190,8 @@ export function validateSchedule(schedule, catalogCourses = []) {
         const prereqResult = evaluateDNF(catCourse?.prerequisites, priorCodes, isWaived);
         const coreqResult = evaluateDNF(catCourse?.corequisites, concurrentCodes, isWaived);
 
+        const hasRequirements = normalizeDNF(catCourse?.prerequisites).length > 0 || normalizeDNF(catCourse?.corequisites).length > 0;
+
         let overallStatus = 'SATISFIED';
         if (prereqResult.status === 'UNSATISFIED' || coreqResult.status === 'UNSATISFIED') {
           overallStatus = 'UNSATISFIED';
@@ -206,14 +208,17 @@ export function validateSchedule(schedule, catalogCourses = []) {
           prereqResult,
           coreqResult,
           overallStatus,
-          hasFlag: overallStatus === 'UNSATISFIED' || overallStatus === 'WAIVED',
+          hasRequirements,
+          hasFlag: hasRequirements,
+          isUnsatisfied: overallStatus === 'UNSATISFIED',
+          isWaived: overallStatus === 'WAIVED',
           missingSummary: prereqResult.status === 'UNSATISFIED' 
             ? `Prereq: ${prereqResult.missingSummary}`
             : coreqResult.status === 'UNSATISFIED' 
               ? `Coreq: ${coreqResult.missingSummary}`
               : overallStatus === 'WAIVED'
-                ? 'Waived'
-                : 'Satisfied'
+                ? 'Waived by override'
+                : 'All requirements satisfied'
         });
       });
     });

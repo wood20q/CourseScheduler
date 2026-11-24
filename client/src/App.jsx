@@ -329,6 +329,15 @@ function App() {
             onAddClick={() => setIsAddTransferOpen(true)}
             onCourseClick={(course, location) => setManagedCourse({ ...course, currentTerm: location })}
           />
+          {allScheduledCourses.length === 0 && (
+            <div className="empty-schedule-prototype-banner">
+              <span>💡 Schedule is currently empty. Click</span>
+              <button type="button" className="btn-load-inline-demo" onClick={handleLoadDemo}>
+                ⚡ Load Test Courses
+              </button>
+              <span>to preview prerequisite, corequisite, and waiver flags!</span>
+            </div>
+          )}
           <div className="scheduleArea">
             {enrichedYears.map((year, i) => (
               <Year 
