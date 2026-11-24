@@ -36,18 +36,31 @@ const CATALOG_REQUIREMENTS = {
   MATH310: { prerequisites: [['MATH101', 'MATH105'], ['MATH303', 'MATH304']] }
 }
 
+const FALLBACK_CATALOG = [
+  { id: 1, name: "Intro to Python", code: "CS120", credits: 1, description: "Intro to structured and object-oriented programming..." },
+  { id: 2, name: "Data Structures and Algorithms", code: "CS220", credits: 1, description: "In-depth study of data structures, complexity, and sorting." },
+  { id: 3, name: "Calculus I", code: "MATH101", credits: 1, description: "Fundamentals of limits, derivatives, and integrals." },
+  { id: 10, name: "General Physics", code: "PHYS200", credits: 1, description: "Calculus-based mechanics, thermodynamics, and waves." },
+  { id: 16, name: "Software Engineering", code: "CS350", credits: 1, description: "Methodologies for software design, testing, agile development, and team project management." },
+  { id: 19, name: "Cybersecurity Fundamentals", code: "CS240", credits: 1, description: "Core concepts of network security, cryptography, vulnerability assessment, and defense strategies." }
+]
+
 const createDemoSchedule = () => ({
   transferCourses: [
     { code: 'AP-CALC', name: 'AP Calculus BC Exam', credits: 1, satisfiesCourse: 'MATH101' }
   ],
   years: [
     [
-      [{ code: 'CS220', name: 'Data Structures and Algorithms', credits: 1 }],
-      [{ code: 'PHYS200', name: 'General Physics', credits: 1 }],
-      [{ code: 'CS120', name: 'Intro to Python', credits: 1 }]
+      // Year 1 Term 1: CS220 (Missing CS120! Unsatisfied)
+      [{ code: 'CS220', name: 'Data Structures and Algorithms', credits: 1, description: 'Requires CS120' }],
+      // Year 1 Term 2: PHYS200 (Corequisite satisfied concurrently via AP-CALC)
+      [{ code: 'PHYS200', name: 'General Physics', credits: 1, description: 'Corequisite with MATH101' }],
+      // Year 1 Term 3: CS120
+      [{ code: 'CS120', name: 'Intro to Python', credits: 1, description: 'Intro course' }]
     ],
     [
-      [{ code: 'CS350', name: 'Software Engineering', credits: 1, isWaived: true }],
+      // Year 2 Term 1: CS350 (Software Engineering - Waived!)
+      [{ code: 'CS350', name: 'Software Engineering', credits: 1, isWaived: true, description: 'Requires CS220 and CS240 (Waived)' }],
       [],
       []
     ],
@@ -60,7 +73,8 @@ function App() {
   const [variant, setVariant] = useState(() => {
     try {
       const params = new URLSearchParams(window.location.search)
-      return params.get('variant') || 'A'
+      const v = (params.get('variant') || 'A').toUpperCase()
+      return ['A', 'B', 'C'].includes(v) ? v : 'A'
     } catch {
       return 'A'
     }
@@ -77,27 +91,46 @@ function App() {
     }
     return createEmptySchedule()
   })
+
   const [availCourses, setAvailCourses] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [fetchError, setFetchError] = useState(null)
 
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [managedCourse, setManagedCourse] = useState(null)
-  const [inspectedRequirement, setInspectedRequirement] = useState(null) // { course, validation }
+  const [inspectedRequirement, setInspectedRequirement] = useState(null)
   const [isIODialogOpen, setIsIODialogOpen] = useState(false)
   const [isAddTransferOpen, setIsAddTransferOpen] = useState(false)
 
-  // Sync variant to URL
+  // Sync variant selection to state and URL search params
   const handleSelectVariant = (newVariant) => {
-    setVariant(newVariant)
+    const upper = String(newVariant || 'A').toUpperCase()
+    setVariant(upper)
     try {
       const url = new URL(window.location.href)
-      url.searchParams.set('variant', newVariant)
+      url.searchParams.set('variant', upper)
       window.history.replaceState({}, '', url.toString())
     } catch (e) {
       console.warn("Could not update URL param:", e)
     }
   }
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      try {
+        const params = new URLSearchParams(window.location.search)
+        const v = (params.get('variant') || 'A').toUpperCase()
+        if (['A', 'B', 'C'].includes(v)) {
+          setVariant(v)
+        }
+      } catch {
+        // ignore
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
 
   useEffect(() => {
     try {
@@ -136,7 +169,8 @@ function App() {
 
   // Augmented catalog with prerequisite/corequisite rules
   const catalogWithRules = useMemo(() => {
-    return (availCourses || []).map(c => ({
+    const baseList = (availCourses && availCourses.length > 0) ? availCourses : FALLBACK_CATALOG
+    return baseList.map(c => ({
       ...c,
       prerequisites: c.prerequisites || CATALOG_REQUIREMENTS[c.code]?.prerequisites || [],
       corequisites: c.corequisites || CATALOG_REQUIREMENTS[c.code]?.corequisites || []
@@ -215,7 +249,13 @@ function App() {
   }
 
   const handleLoadDemo = () => {
-    setSchedule(createDemoSchedule())
+    const demo = createDemoSchedule()
+    setSchedule(demo)
+    try {
+      localStorage.setItem('course_scheduler_data', JSON.stringify(demo))
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   const handleAddTransferCourse = (targetLocation, newCourse) => {
@@ -239,6 +279,8 @@ function App() {
       })
     })
   }, [schedule.years, validationResult.diagnosticsMap, variant])
+
+  const totalFlaggedCount = (validationResult.summary.unsatisfiedCount || 0) + (validationResult.summary.waivedCount || 0)
 
   return (
     <div className="app-container">
@@ -347,6 +389,7 @@ function App() {
         currentVariant={variant}
         onSelectVariant={handleSelectVariant}
         onLoadDemoSchedule={handleLoadDemo}
+        flaggedCount={totalFlaggedCount}
       />
     </div>
   )

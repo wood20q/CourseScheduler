@@ -285,7 +285,8 @@ main,
     "courseDescription courseDescription"
     "addCourseButton addCourseButton";
   max-width: 100%;
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
   word-break: break-word;
 }
 
@@ -991,32 +992,47 @@ main,
 
 .prototype-switcher-bar {
   position: fixed;
-  bottom: 20px;
+  bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
   background-color: var(--crust);
   border: 1px solid var(--surface2);
   border-radius: 9999px;
-  padding: 0.5em 1.2em;
+  padding: 0.4em 0.8em;
   display: flex;
   align-items: center;
-  gap: 1em;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  gap: 0.75em;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65);
   z-index: 9999;
+  user-select: none;
 }
 
-.switcher-label {
-  font-size: 0.75em;
+.switcher-info {
+  display: flex;
+  flex-direction: column;
+  padding-left: 0.4em;
+  line-height: 1.2;
+}
+
+.switcher-title {
+  font-size: 0.68em;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--subtext0);
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.switcher-controls {
+.switcher-flag-count {
+  font-size: 0.78em;
+  color: var(--yellow);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.switcher-tabs {
   display: flex;
   align-items: center;
-  gap: 0.5em;
+  gap: 0.35em;
 }
 
 .switcher-arrow-btn {
@@ -1039,26 +1055,53 @@ main,
   border-color: var(--text);
 }
 
-.switcher-current-badge {
-  font-weight: 700;
-  font-size: 0.85em;
-  color: var(--yellow);
-  padding: 0.25em 0.7em;
+.switcher-tab-btn {
   background-color: var(--surface0);
-  border-radius: 6px;
+  color: var(--subtext1);
   border: 1px solid var(--surface1);
+  border-radius: 20px;
+  padding: 0.35em 0.75em;
+  font-size: 0.8em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.switcher-tab-btn:hover {
+  background-color: var(--surface1);
+  color: var(--text);
+}
+
+.switcher-tab-btn.active {
+  background-color: var(--blue);
+  color: var(--crust);
+  font-weight: 700;
+  border-color: var(--blue);
+}
+
+.tab-pill {
+  font-weight: 700;
+}
+
+.tab-text {
+  font-size: 0.9em;
+  opacity: 0.9;
 }
 
 .switcher-demo-btn {
-  background-color: var(--blue);
+  background-color: var(--mauve);
   color: var(--crust);
   border: none;
-  border-radius: 6px;
-  padding: 0.35em 0.8em;
+  border-radius: 18px;
+  padding: 0.4em 0.85em;
   font-size: 0.8em;
   font-weight: 700;
   cursor: pointer;
   transition: opacity 0.15s ease;
+  white-space: nowrap;
 }
 
 .switcher-demo-btn:hover {
@@ -1068,7 +1111,8 @@ main,
 /* Variant A: Inline Status Pill & Popover */
 .req-flag-container-a {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   margin-left: 0.5em;
 }
 
@@ -1080,45 +1124,48 @@ main,
   font-weight: 700;
   text-transform: uppercase;
   cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.req-badge-pill:hover {
+  transform: scale(1.05);
 }
 
 .req-badge-pill.unsatisfied {
-  background-color: rgba(243, 139, 168, 0.2);
+  background-color: rgba(243, 139, 168, 0.25);
   color: var(--red);
-  border: 1px solid var(--red);
+  border: 1.5px solid var(--red);
 }
 
 .req-badge-pill.waived {
-  background-color: rgba(249, 226, 175, 0.2);
+  background-color: rgba(249, 226, 175, 0.25);
   color: var(--yellow);
-  border: 1px solid var(--yellow);
+  border: 1.5px solid var(--yellow);
 }
 
 .req-popover-a {
   position: absolute;
-  bottom: 125%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 250px;
+  top: calc(100% + 8px);
+  right: 0;
+  left: auto;
+  width: 270px;
   background-color: var(--surface0);
-  border: 1px solid var(--surface2);
+  border: 1.5px solid var(--surface2);
   border-radius: 8px;
   padding: 0.85em;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-  z-index: 1000;
-  pointer-events: none;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75);
+  z-index: 10000;
   text-align: left;
 }
 
 .req-popover-a::after {
   content: "";
   position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -6px;
+  bottom: 100%;
+  right: 18px;
   border-width: 6px;
   border-style: solid;
-  border-color: var(--surface0) transparent transparent transparent;
+  border-color: transparent transparent var(--surface0) transparent;
 }
 
 .req-popover-header {
@@ -1126,6 +1173,21 @@ main,
   font-weight: 700;
   color: var(--red);
   margin-bottom: 0.4em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-popover-close {
+  background: none;
+  border: none;
+  color: var(--subtext0);
+  cursor: pointer;
+  font-size: 0.9em;
+  padding: 0 0.2em;
+}
+.btn-popover-close:hover {
+  color: var(--text);
 }
 
 .req-popover-body {
@@ -1151,9 +1213,9 @@ main,
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.3em 0.6em;
-  border-radius: 4px;
-  font-size: 0.72em;
+  padding: 0.35em 0.65em;
+  border-radius: 6px;
+  font-size: 0.75em;
   font-weight: 700;
 }
 

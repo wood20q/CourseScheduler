@@ -13,7 +13,7 @@ function Term({ termLabel, termList, yearIndex, termIndex, onCourseClick, onInsp
             <div className="courseArea">
                 {termList.map((course) => (
                     <CourseCard 
-                        key={course.code} 
+                        key={`${course.code}-${course.variant || 'A'}`} 
                         course={course}
                         onClickCourse={(courseData) => onCourseClick ? onCourseClick(courseData, [yearIndex, termIndex]) : undefined}
                         onInspectRequirement={onInspectRequirement}

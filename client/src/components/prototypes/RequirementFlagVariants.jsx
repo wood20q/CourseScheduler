@@ -1,35 +1,54 @@
 import { useState } from 'react';
 
 /**
- * Variant A: Inline Status Pill with Floating Hover Popover
- * Lightweight, non-intrusive badge next to title that reveals full diagnostics on hover.
+ * Variant A: Inline Status Pill with Floating Hover/Click Popover
+ * Lightweight badge that expands a floating popover downward upon hover or click.
  */
 export function VariantAFlag({ validation }) {
-  const [isHovered, setIsHovered] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   if (!validation || !validation.hasFlag) return null;
 
   const isWaived = validation.overallStatus === 'WAIVED';
+  const tooltipText = isWaived 
+    ? 'Requirement Waived by override' 
+    : `Missing requirements: ${validation.missingSummary}`;
 
   return (
     <div 
       className="req-flag-container-a"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={(e) => e.stopPropagation()}
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsOpen(prev => !prev);
+      }}
     >
-      <span className={`req-badge-pill ${isWaived ? 'waived' : 'unsatisfied'}`}>
+      <span 
+        className={`req-badge-pill ${isWaived ? 'waived' : 'unsatisfied'}`}
+        title={tooltipText}
+      >
         {isWaived ? '🏷️ Waived' : '⚠️ Missing Req'}
       </span>
-      {isHovered && (
-        <div className="req-popover-a">
+      {isOpen && (
+        <div className="req-popover-a" onClick={(e) => e.stopPropagation()}>
           <div className="req-popover-header">
-            {isWaived ? 'Requirement Waived' : 'Unsatisfied Prerequisite / Corequisite'}
+            <span>{isWaived ? 'Requirement Waived' : 'Unsatisfied Prerequisite / Corequisite'}</span>
+            <button 
+              type="button" 
+              className="btn-popover-close"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpen(false);
+              }}
+            >
+              ✕
+            </button>
           </div>
           <div className="req-popover-body">
             <p><strong>Status:</strong> {validation.missingSummary}</p>
             <p className="req-popover-hint">
               {isWaived 
-                ? 'Course has an approved waiver on this schedule.' 
+                ? 'Course has an approved requirement waiver on this schedule.' 
                 : 'Prerequisites must be completed in an earlier term or satisfied via transfer credits.'}
             </p>
           </div>
