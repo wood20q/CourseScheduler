@@ -69,7 +69,10 @@ function CourseCard({
                 />
             )}
 
-            <p className="credits">Credits: {credits}</p>
+            <p className="credits" title={`${credits} Credit${credits === 1 ? '' : 's'}`}>
+                <span className="credits-full">Credits: {credits}</span>
+                <span className="credits-compact">{credits} cr</span>
+            </p>
             {satisfiesCourse && <p className="satisfiesCourse"><strong>Satisfies:</strong> {satisfiesCourse}</p>}
             <p className="description">{description}</p>
             {/* Will only be there when its in available courses */}

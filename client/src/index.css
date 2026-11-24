@@ -263,8 +263,8 @@ main,
 
 .courseArea {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 0.75em;
+  grid-template-columns: 1fr;
+  gap: 0.55em;
   min-width: 0;
 }
 
@@ -316,12 +316,14 @@ main,
   flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.35em;
+  gap: 0.4em;
   margin-top: 0.5em;
   padding: 0.45em 0.75em;
   border-radius: 14px;
   min-height: 42px;
   box-sizing: border-box;
+  width: 100%;
+  overflow: hidden;
 }
 
 .scheduleArea .course:has(.req-flag-container-b) {
@@ -345,13 +347,22 @@ main,
   display: inline-flex;
   align-items: center;
   margin: 0;
-  flex-shrink: 0;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .scheduleArea .course .req-flag-container-b {
   width: 100%;
   order: -1;
   margin-bottom: 0.3em;
+}
+
+.credits-compact {
+  display: none;
+}
+
+.credits-full {
+  display: inline;
 }
 
 .scheduleArea .course .credits {
@@ -361,6 +372,14 @@ main,
   color: var(--subtext0);
   margin-left: auto;
   flex-shrink: 0;
+}
+
+.scheduleArea .course .credits-full {
+  display: none !important;
+}
+
+.scheduleArea .course .credits-compact {
+  display: inline !important;
 }
 
 /* Add Course Dialog Styles */
@@ -1181,6 +1200,9 @@ main,
   transition: transform 0.12s ease, filter 0.12s ease;
   white-space: nowrap;
   line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .req-badge-pill:hover {
