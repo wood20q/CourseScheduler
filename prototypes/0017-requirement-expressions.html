@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logic Prototype: Requirement Expression Schema & Evaluator</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --success-bg: #ecfdf5;
+      --success-border: #a7f3d0;
+      --success-text: #065f46;
+      --warning-bg: #fffbeb;
+      --warning-border: #fde68a;
+      --warning-text: #92400e;
+      --danger-bg: #fef2f2;
+      --danger-border: #fecaca;
+      --danger-text: #991b1b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 2rem 1rem;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    header {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    header p {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .question-box {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: #eff6ff;
+      border-left: 4px solid var(--accent);
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .panel {
+      background: var(--card-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+    }
+    .panel-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .state-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .state-item {
+      background: var(--bg);
+      padding: 1rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+    .state-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+    .state-value {
+      font-size: 1rem;
+      font-weight: 500;
+      word-break: break-word;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .badge-success { background: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
+    .badge-warning { background: var(--warning-bg); color: var(--warning-text); border-color: var(--warning-border); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger-text); border-color: var(--danger-border); }
+
+    .tag {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      background: #e2e8f0;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-family: monospace;
+      margin-right: 0.3rem;
+      margin-bottom: 0.3rem;
+    }
+    .tag-equiv {
+      background: #e0e7ff;
+      color: #3730a3;
+      border: 1px dashed #818cf8;
+    }
+
+    .options-list {
+      margin-top: 0.5rem;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .options-item {
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .options-item.satisfied { background: var(--success-bg); border-left: 3px solid #10b981; }
+    .options-item.missing { background: var(--danger-bg); border-left: 3px solid #ef4444; }
+
+    .buttons-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.5rem 0.85rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+      transition: all 0.15s ease;
+    }
+    button:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+    button.primary {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+    button.primary:hover {
+      background: var(--accent-hover);
+    }
+    button.active {
+      background: #e0e7ff;
+      border-color: #6366f1;
+      color: #312e81;
+      font-weight: 600;
+    }
+    button.danger {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #991b1b;
+    }
+    button.danger:hover {
+      background: #fecaca;
+    }
+
+    .tabs-header {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1rem;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+    }
+    .tab-btn.active {
+      color: var(--accent);
+      background: #eff6ff;
+      font-weight: 600;
+    }
+    .scenario-desc {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      background: var(--bg);
+      border-radius: 6px;
+    }
+    .stepper {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: var(--muted);
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    .step-action-desc {
+      flex: 1;
+      font-size: 0.85rem;
+    }
+    .activity-log {
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+      font-family: monospace;
+      color: var(--muted);
+      background: var(--bg);
+      padding: 0.5rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Logic Prototype: Course Requirement Expressions</h1>
+      <p>Throwaway logic prototype testing Disjunctive Normal Form (DNF) representation, expression parsing, and satisfaction evaluation for prerequisites and corequisites.</p>
+      <div class="question-box">
+        <strong>Ticket #17 Question:</strong> How should prerequisite and corequisite expressions supporting AND / OR groupings (e.g. <code>(MA 101 AND MA 105) OR (MA 303 AND MA 304)</code>) be structured in catalog data, validated, and evaluated against a student's completed courses?
+      </div>
+    </header>
+
+    <!-- Current State -->
+    <section class="panel">
+      <div class="panel-title">
+        <span>Current Evaluation State</span>
+        <span id="status-badge" class="badge">Evaluating...</span>
+      </div>
+      <div class="state-grid">
+        <div class="state-item">
+          <div class="state-label">Target Course Being Checked</div>
+          <div class="state-value" id="target-course-info">—</div>
+        </div>
+        <div class="state-item">
+          <div class="state-label">Requirement Expression (Formatted)</div>
+          <div class="state-value" id="req-formatted" style="font-family: monospace; color: var(--accent);">—</div>
+        </div>
+        <div class="state-item">
+          <div class="state-label">Canonical DNF Schema (JSON)</div>
+          <div class="state-value" style="font-size: 0.8rem; font-family: monospace;" id="req-raw-json">—</div>
+        </div>
+        <div class="state-item">
+          <div class="state-label">Requirement Waiver Status</div>
+          <div class="state-value" id="waiver-info">—</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 1rem;">
+        <div class="state-label">Student Completed Coursework & Equivalencies</div>
+        <div id="completed-tags" style="min-height: 28px; margin-top: 0.25rem;">—</div>
+      </div>
+
+      <div style="margin-top: 1rem;">
+        <div class="state-label">Satisfaction Options Breakdown</div>
+        <ul class="options-list" id="options-breakdown"></ul>
+      </div>
+
+      <div class="activity-log" id="last-action-log">Ready. Click any action or walkthrough below.</div>
+    </section>
+
+    <!-- Free Play Controls -->
+    <section class="panel">
+      <div class="panel-title">Free Play Controls</div>
+
+      <div style="margin-bottom: 1rem;">
+        <div class="state-label" style="margin-bottom: 0.5rem;">Select Target Course to Check:</div>
+        <div class="buttons-grid" id="course-selector-buttons"></div>
+      </div>
+
+      <div style="margin-bottom: 1rem;">
+        <div class="state-label" style="margin-bottom: 0.5rem;">Toggle Student's Completed Courses:</div>
+        <div class="buttons-grid" id="course-toggle-buttons"></div>
+      </div>
+
+      <div style="margin-bottom: 1rem;">
+        <div class="state-label" style="margin-bottom: 0.5rem;">Transfer Courses (Pre-College Equivalencies):</div>
+        <div class="buttons-grid">
+          <button id="btn-toggle-ap-math" type="button">AP Calc Exam (Equiv: MATH101)</button>
+          <button id="btn-toggle-cc-cs" type="button">CC Dual-Enrollment (Equiv: CS120)</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="state-label" style="margin-bottom: 0.5rem;">Overrides & Reset:</div>
+        <div class="buttons-grid">
+          <button id="btn-toggle-waiver" type="button" class="primary">Toggle Requirement Waiver</button>
+          <button id="btn-reset" type="button" class="danger">Reset Schedule State</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Guided Walkthroughs -->
+    <section class="panel">
+      <div class="panel-title">Guided Walkthroughs</div>
+      <div class="tabs-header" id="walkthrough-tabs"></div>
+      <div class="scenario-desc" id="walkthrough-desc"></div>
+      <div class="stepper" id="walkthrough-steps"></div>
+    </section>
+  </div>
+
+  <!-- PURE LOGIC MODULE (Throwaway page surrounds it; this module is portable) -->
+  <script>
+    /**
+     * RequirementExpressionModule
+     * Pure, portable domain module for requirement expression parsing, normalization, and evaluation.
+     */
+    const RequirementExpressionModule = (() => {
+      /**
+       * Normalizes any requirement input (string, array of strings, or DNF array of arrays)
+       * into canonical DNF (Disjunctive Normal Form): Array<Array<string>>
+       * Example: [["MA101", "MA105"], ["MA303", "MA304"]] -> (MA101 AND MA105) OR (MA303 AND MA304)
+       */
+      function normalize(req) {
+        if (!req) return [];
+        if (typeof req === 'string') {
+          return parseString(req);
+        }
+        if (Array.isArray(req)) {
+          if (req.length === 0) return [];
+          // If already DNF array of arrays: [["A", "B"], ["C"]]
+          if (Array.isArray(req[0])) {
+            return req.map(clause => clause.map(code => code.trim().toUpperCase()));
+          }
+          // Flat array of strings treated as a single AND clause: ["A", "B"] -> [["A", "B"]]
+          return [req.map(code => code.trim().toUpperCase())];
+        }
+        return [];
+      }
+
+      /**
+       * Parses expressions like "(MA 101 AND MA 105) OR (MA 303 AND MA 304)"
+       * or comma-delimited lists like "CS120, MATH101" into canonical DNF.
+       */
+      function parseString(exprStr) {
+        const clean = exprStr.trim();
+        if (!clean) return [];
+
+        // Check for top-level OR separation
+        const orClauses = clean.split(/\s+OR\s+|\s*\|\s*/i);
+        return orClauses.map(clause => {
+          const stripped = clause.replace(/^\(|\)$/g, '').trim();
+          const andItems = stripped.split(/\s+AND\s+|\s*,\s*|\s*&\s*/i);
+          return andItems.map(c => c.trim().toUpperCase()).filter(Boolean);
+        }).filter(clause => clause.length > 0);
+      }
+
+      /**
+       * Formats a canonical DNF array into human-readable text.
+       */
+      function format(dnf) {
+        if (!dnf || dnf.length === 0) return 'None (Open Enrollment)';
+        const formattedClauses = dnf.map(clause => {
+          if (clause.length === 1) return clause[0];
+          return `(${clause.join(' AND ')})`;
+        });
+        return formattedClauses.join(' OR ');
+      }
+
+      /**
+       * Evaluates a requirement against a student's completed courses / satisfied codes.
+       * 
+       * @param {Array<Array<string>>|string|Array<string>} requirement - The prerequisite/corequisite expression
+       * @param {Set<string>|Array<string>} satisfiedCodes - Set of course codes already completed/transferred
+       * @param {boolean} isWaived - Whether an explicit waiver was granted
+       * @returns {Object} Structured diagnostic evaluation result
+       */
+      function evaluate(requirement, satisfiedCodes, isWaived = false) {
+        const dnf = normalize(requirement);
+        const codeSet = satisfiedCodes instanceof Set 
+          ? satisfiedCodes 
+          : new Set((satisfiedCodes || []).map(c => c.toUpperCase().trim()));
+
+        if (dnf.length === 0) {
+          return {
+            isSatisfied: true,
+            isWaived: false,
+            status: 'SATISFIED',
+            dnf,
+            formatted: 'None',
+            options: [],
+            missingSummary: 'No requirements needed'
+          };
+        }
+
+        const evaluatedOptions = dnf.map(clause => {
+          const missing = clause.filter(code => !codeSet.has(code));
+          return {
+            required: clause,
+            missing,
+            isSatisfied: missing.length === 0
+          };
+        });
+
+        const satisfiedClauseExists = evaluatedOptions.some(opt => opt.isSatisfied);
+        const overallSatisfied = satisfiedClauseExists || isWaived;
+
+        let status = 'UNSATISFIED';
+        if (satisfiedClauseExists) {
+          status = 'SATISFIED';
+        } else if (isWaived) {
+          status = 'WAIVED';
+        }
+
+        // Generate missing summary
+        let missingSummary = '';
+        if (satisfiedClauseExists) {
+          missingSummary = 'All required courses fulfilled';
+        } else if (isWaived) {
+          missingSummary = 'Requirements waived by override';
+        } else {
+          missingSummary = evaluatedOptions
+            .map(opt => `Need: ${opt.missing.join(' AND ')}`)
+            .join(' OR ');
+        }
+
+        return {
+          isSatisfied: overallSatisfied,
+          isWaived: Boolean(isWaived),
+          status,
+          dnf,
+          formatted: format(dnf),
+          options: evaluatedOptions,
+          missingSummary
+        };
+      }
+
+      return {
+        normalize,
+        parseString,
+        format,
+        evaluate
+      };
+    })();
+  </script>
+
+  <!-- DEMO SHELL & WALKTHROUGH LOGIC -->
+  <script>
+    // Sample Catalog Courses with various requirement structures
+    const CATALOG = [
+      {
+        code: 'CS120',
+        name: 'Intro to Python',
+        prereq: [] // Open enrollment
+      },
+      {
+        code: 'CS220',
+        name: 'Data Structures and Algorithms',
+        prereq: ['CS120'] // Single prerequisite
+      },
+      {
+        code: 'CS350',
+        name: 'Software Engineering',
+        prereq: ['CS220', 'CS240'] // Conjunction: CS220 AND CS240
+      },
+      {
+        code: 'MATH310',
+        name: 'Advanced Mathematical Modeling',
+        // User's specific example: (MA 101 AND MA 105) OR (MA 303 AND MA 304)
+        prereq: [['MATH101', 'MATH105'], ['MATH303', 'MATH304']]
+      },
+      {
+        code: 'PHYS200',
+        name: 'General Physics',
+        prereq: [['MATH101'], ['MATH105']] // Alternative: MATH101 OR MATH105
+      }
+    ];
+
+    const AVAILABLE_TOGGLES = [
+      'CS120', 'CS220', 'CS240', 'MATH101', 'MATH105', 'MATH303', 'MATH304'
+    ];
+
+    // Prototype State
+    let state = {
+      selectedCourseCode: 'MATH310',
+      completedCourses: new Set(),
+      transferEquivalencies: new Map(), // transferId -> satisfiesCourseCode
+      isWaived: false,
+      lastAction: 'Initialized prototype'
+    };
+
+    function getEffectiveSatisfiedCodes() {
+      const set = new Set(state.completedCourses);
+      for (const satisfies of state.transferEquivalencies.values()) {
+        if (satisfies) set.add(satisfies.toUpperCase().trim());
+      }
+      return set;
+    }
+
+    function render() {
+      const course = CATALOG.find(c => c.code === state.selectedCourseCode) || CATALOG[0];
+      const effectiveCodes = getEffectiveSatisfiedCodes();
+      const evalResult = RequirementExpressionModule.evaluate(course.prereq, effectiveCodes, state.isWaived);
+
+      // Render Badge
+      const badge = document.getElementById('status-badge');
+      badge.className = 'badge';
+      if (evalResult.status === 'SATISFIED') {
+        badge.classList.add('badge-success');
+        badge.textContent = 'Requirements Satisfied';
+      } else if (evalResult.status === 'WAIVED') {
+        badge.classList.add('badge-warning');
+        badge.textContent = 'Waived (Unsatisfied Requirements Overridden)';
+      } else {
+        badge.classList.add('badge-danger');
+        badge.textContent = 'Unsatisfied Requirements';
+      }
+
+      // Target course info
+      document.getElementById('target-course-info').textContent = `${course.code}: ${course.name}`;
+      document.getElementById('req-formatted').textContent = evalResult.formatted;
+      document.getElementById('req-raw-json').textContent = JSON.stringify(evalResult.dnf);
+      
+      const waiverInfo = document.getElementById('waiver-info');
+      waiverInfo.textContent = state.isWaived ? 'Active (Waived on Schedule)' : 'None (Strict Checking)';
+      waiverInfo.style.color = state.isWaived ? 'var(--warning-text)' : 'inherit';
+
+      // Completed courses tags
+      const completedDiv = document.getElementById('completed-tags');
+      completedDiv.innerHTML = '';
+      if (state.completedCourses.size === 0 && state.transferEquivalencies.size === 0) {
+        completedDiv.innerHTML = '<span style="color: var(--muted); font-size: 0.85rem;">None (No courses completed yet)</span>';
+      } else {
+        state.completedCourses.forEach(code => {
+          const tag = document.createElement('span');
+          tag.className = 'tag';
+          tag.textContent = code;
+          completedDiv.appendChild(tag);
+        });
+        state.transferEquivalencies.forEach((satisfies, name) => {
+          const tag = document.createElement('span');
+          tag.className = 'tag tag-equiv';
+          tag.textContent = `${name} ➔ ${satisfies}`;
+          completedDiv.appendChild(tag);
+        });
+      }
+
+      // Options breakdown
+      const optionsUl = document.getElementById('options-breakdown');
+      optionsUl.innerHTML = '';
+      if (evalResult.options.length === 0) {
+        const li = document.createElement('li');
+        li.className = 'options-item satisfied';
+        li.innerHTML = '<span>No prerequisite restrictions</span><span>✓ Met</span>';
+        optionsUl.appendChild(li);
+      } else {
+        evalResult.options.forEach((opt, idx) => {
+          const li = document.createElement('li');
+          li.className = `options-item ${opt.isSatisfied ? 'satisfied' : 'missing'}`;
+          const requiredStr = opt.required.join(' AND ');
+          const statusText = opt.isSatisfied 
+            ? '✓ Met' 
+            : `Missing: ${opt.missing.join(', ')}`;
+          li.innerHTML = `<span><strong>Option ${idx + 1}:</strong> ${requiredStr}</span><span>${statusText}</span>`;
+          optionsUl.appendChild(li);
+        });
+      }
+
+      // Log
+      document.getElementById('last-action-log').textContent = `Last action: ${state.lastAction}`;
+
+      // Update button active classes
+      document.querySelectorAll('#course-selector-buttons button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.code === state.selectedCourseCode);
+      });
+      document.querySelectorAll('#course-toggle-buttons button').forEach(btn => {
+        btn.classList.toggle('active', state.completedCourses.has(btn.dataset.code));
+      });
+
+      const btnAp = document.getElementById('btn-toggle-ap-math');
+      btnAp.classList.toggle('active', state.transferEquivalencies.has('AP-CALC'));
+
+      const btnCc = document.getElementById('btn-toggle-cc-cs');
+      btnCc.classList.toggle('active', state.transferEquivalencies.has('CC-CS'));
+
+      const btnWaiver = document.getElementById('btn-toggle-waiver');
+      btnWaiver.classList.toggle('active', state.isWaived);
+      btnWaiver.textContent = state.isWaived ? 'Revoke Requirement Waiver' : 'Apply Requirement Waiver';
+    }
+
+    // Build buttons
+    function initUI() {
+      const courseBtnContainer = document.getElementById('course-selector-buttons');
+      CATALOG.forEach(c => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.code = c.code;
+        btn.textContent = `${c.code}`;
+        btn.title = c.name;
+        btn.onclick = () => {
+          state.selectedCourseCode = c.code;
+          state.lastAction = `Switched target course to ${c.code}`;
+          render();
+        };
+        courseBtnContainer.appendChild(btn);
+      });
+
+      const toggleBtnContainer = document.getElementById('course-toggle-buttons');
+      AVAILABLE_TOGGLES.forEach(code => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.code = code;
+        btn.textContent = `+ ${code}`;
+        btn.onclick = () => {
+          if (state.completedCourses.has(code)) {
+            state.completedCourses.delete(code);
+            state.lastAction = `Removed completed course ${code}`;
+          } else {
+            state.completedCourses.add(code);
+            state.lastAction = `Added completed course ${code}`;
+          }
+          render();
+        };
+        toggleBtnContainer.appendChild(btn);
+      });
+
+      document.getElementById('btn-toggle-ap-math').onclick = () => {
+        if (state.transferEquivalencies.has('AP-CALC')) {
+          state.transferEquivalencies.delete('AP-CALC');
+          state.lastAction = 'Removed AP Calc transfer equivalency';
+        } else {
+          state.transferEquivalencies.set('AP-CALC', 'MATH101');
+          state.lastAction = 'Added AP Calc exam (satisfies MATH101)';
+        }
+        render();
+      };
+
+      document.getElementById('btn-toggle-cc-cs').onclick = () => {
+        if (state.transferEquivalencies.has('CC-CS')) {
+          state.transferEquivalencies.delete('CC-CS');
+          state.lastAction = 'Removed Community College CS transfer equivalency';
+        } else {
+          state.transferEquivalencies.set('CC-CS', 'CS120');
+          state.lastAction = 'Added CC Intro to Programming (satisfies CS120)';
+        }
+        render();
+      };
+
+      document.getElementById('btn-toggle-waiver').onclick = () => {
+        state.isWaived = !state.isWaived;
+        state.lastAction = state.isWaived ? 'Granted requirement waiver' : 'Revoked requirement waiver';
+        render();
+      };
+
+      document.getElementById('btn-reset').onclick = () => {
+        state.completedCourses.clear();
+        state.transferEquivalencies.clear();
+        state.isWaived = false;
+        state.lastAction = 'Reset all completed courses and waivers';
+        render();
+      };
+
+      initWalkthroughs();
+      render();
+    }
+
+    // Guided Walkthroughs
+    const WALKTHROUGHS = [
+      {
+        id: 'and-or-logic',
+        title: 'User Scenario: (MA 101 & MA 105) OR (MA 303 & MA 304)',
+        desc: 'Testing the user\'s required example: MATH310 requires either (MATH101 AND MATH105) or (MATH303 AND MATH304). Watch how completing one side leaves it unsatisfied until both are taken, or switching to the alternative branch fulfills it.',
+        steps: [
+          {
+            label: '1. Select MATH310 as Target Course',
+            action: () => {
+              state.selectedCourseCode = 'MATH310';
+              state.completedCourses.clear();
+              state.transferEquivalencies.clear();
+              state.isWaived = false;
+              state.lastAction = 'Walkthrough: Selected MATH310 (Unsatisfied)';
+            }
+          },
+          {
+            label: '2. Complete MATH101 only',
+            action: () => {
+              state.completedCourses.add('MATH101');
+              state.lastAction = 'Walkthrough: Added MATH101 (Option 1 still needs MATH105)';
+            }
+          },
+          {
+            label: '3. Complete Alternative Track: Add MATH303 & MATH304',
+            action: () => {
+              state.completedCourses.add('MATH303');
+              state.completedCourses.add('MATH304');
+              state.lastAction = 'Walkthrough: Added MATH303 & MATH304 (Option 2 fulfilled -> Satisfied!)';
+            }
+          }
+        ]
+      },
+      {
+        id: 'transfer-equiv',
+        title: 'Transfer Course Equivalency Fulfills Prerequisite',
+        desc: 'Demonstrates a student who completed an external AP Calc examination. The course equivalency satisfies the home MATH101 prerequisite for General Physics (PHYS200).',
+        steps: [
+          {
+            label: '1. Select PHYS200 (Requires MATH101 OR MATH105)',
+            action: () => {
+              state.selectedCourseCode = 'PHYS200';
+              state.completedCourses.clear();
+              state.transferEquivalencies.clear();
+              state.isWaived = false;
+              state.lastAction = 'Walkthrough: Selected PHYS200 (Unsatisfied)';
+            }
+          },
+          {
+            label: '2. Add Pre-College AP Calc Credit (Equiv: MATH101)',
+            action: () => {
+              state.transferEquivalencies.set('AP-CALC', 'MATH101');
+              state.lastAction = 'Walkthrough: Articulated AP Calc to MATH101 (Satisfied!)';
+            }
+          }
+        ]
+      },
+      {
+        id: 'waiver-override',
+        title: 'Waiving Unsatisfied Requirements',
+        desc: 'A student needs to enroll in CS350 (Software Engineering) without taking CS240. The user applies a Requirement Waiver, transitioning status from Unsatisfied to Waived.',
+        steps: [
+          {
+            label: '1. Select CS350 (Requires CS220 AND CS240)',
+            action: () => {
+              state.selectedCourseCode = 'CS350';
+              state.completedCourses = new Set(['CS220']);
+              state.transferEquivalencies.clear();
+              state.isWaived = false;
+              state.lastAction = 'Walkthrough: CS350 with CS220 (Missing CS240)';
+            }
+          },
+          {
+            label: '2. Apply Requirement Waiver',
+            action: () => {
+              state.isWaived = true;
+              state.lastAction = 'Walkthrough: Granted waiver for CS350 (Status: Waived)';
+            }
+          }
+        ]
+      }
+    ];
+
+    let currentWalkthroughIndex = 0;
+
+    function initWalkthroughs() {
+      const tabsHeader = document.getElementById('walkthrough-tabs');
+      tabsHeader.innerHTML = '';
+      WALKTHROUGHS.forEach((w, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `tab-btn ${idx === currentWalkthroughIndex ? 'active' : ''}`;
+        btn.textContent = w.title;
+        btn.onclick = () => {
+          currentWalkthroughIndex = idx;
+          renderWalkthrough();
+        };
+        tabsHeader.appendChild(btn);
+      });
+      renderWalkthrough();
+    }
+
+    function renderWalkthrough() {
+      const w = WALKTHROUGHS[currentWalkthroughIndex];
+      document.querySelectorAll('#walkthrough-tabs .tab-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx === currentWalkthroughIndex);
+      });
+      document.getElementById('walkthrough-desc').textContent = w.desc;
+
+      const stepsContainer = document.getElementById('walkthrough-steps');
+      stepsContainer.innerHTML = '';
+      w.steps.forEach((step, sIdx) => {
+        const div = document.createElement('div');
+        div.className = 'step-item';
+        div.innerHTML = `
+          <div class="step-num">${sIdx + 1}</div>
+          <div class="step-action-desc">${step.label}</div>
+          <button type="button" class="primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">Run Step</button>
+        `;
+        div.querySelector('button').onclick = () => {
+          step.action();
+          render();
+        };
+        stepsContainer.appendChild(div);
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', initUI);
+  </script>
+</body>
+</html>
