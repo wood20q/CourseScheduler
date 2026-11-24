@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import Year from './components/Year'
 import AvailableCourses from './components/AvailableCourses'
 import AddCourseDialog from './components/AddCourseDialog'
@@ -6,6 +6,8 @@ import ManageCourseDialog from './components/ManageCourseDialog'
 import ImportExportDialog from './components/ImportExportDialog'
 import TransferCreditsSection from './components/TransferCreditsSection'
 import AddTransferCourseDialog from './components/AddTransferCourseDialog'
+import PrototypeSwitcher from './components/PrototypeSwitcher'
+import { RequirementInspectorModal } from './components/prototypes/RequirementFlagVariants'
 import { 
   addCourseToSchedule as apiAddCourse, 
   removeCourseFromSchedule as apiRemoveCourse, 
@@ -20,10 +22,50 @@ import {
   removeCourseFromSchedule,
   moveCourseInSchedule
 } from './utils/scheduleMigration'
+import { validateSchedule } from './utils/requirementEngine'
 
 const studentName = "Chad Quick"
 
+const CATALOG_REQUIREMENTS = {
+  CS220: { prerequisites: ['CS120'] },
+  CS240: { prerequisites: ['CS120'] },
+  CS350: { prerequisites: ['CS220', 'CS240'] },
+  CS310: { prerequisites: ['CS220'] },
+  MATH215: { prerequisites: ['MATH101'] },
+  PHYS200: { corequisites: ['MATH101'] },
+  MATH310: { prerequisites: [['MATH101', 'MATH105'], ['MATH303', 'MATH304']] }
+}
+
+const createDemoSchedule = () => ({
+  transferCourses: [
+    { code: 'AP-CALC', name: 'AP Calculus BC Exam', credits: 1, satisfiesCourse: 'MATH101' }
+  ],
+  years: [
+    [
+      [{ code: 'CS220', name: 'Data Structures and Algorithms', credits: 1 }],
+      [{ code: 'PHYS200', name: 'General Physics', credits: 1 }],
+      [{ code: 'CS120', name: 'Intro to Python', credits: 1 }]
+    ],
+    [
+      [{ code: 'CS350', name: 'Software Engineering', credits: 1, isWaived: true }],
+      [],
+      []
+    ],
+    [[], [], []],
+    [[], [], []]
+  ]
+})
+
 function App() {
+  const [variant, setVariant] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      return params.get('variant') || 'A'
+    } catch {
+      return 'A'
+    }
+  })
+
   const [schedule, setSchedule] = useState(() => {
     try {
       const saved = localStorage.getItem('course_scheduler_data')
@@ -41,8 +83,21 @@ function App() {
 
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [managedCourse, setManagedCourse] = useState(null)
+  const [inspectedRequirement, setInspectedRequirement] = useState(null) // { course, validation }
   const [isIODialogOpen, setIsIODialogOpen] = useState(false)
   const [isAddTransferOpen, setIsAddTransferOpen] = useState(false)
+
+  // Sync variant to URL
+  const handleSelectVariant = (newVariant) => {
+    setVariant(newVariant)
+    try {
+      const url = new URL(window.location.href)
+      url.searchParams.set('variant', newVariant)
+      window.history.replaceState({}, '', url.toString())
+    } catch (e) {
+      console.warn("Could not update URL param:", e)
+    }
+  }
 
   useEffect(() => {
     try {
@@ -78,6 +133,20 @@ function App() {
       })
       .finally(() => setIsLoading(false))
   }, [])
+
+  // Augmented catalog with prerequisite/corequisite rules
+  const catalogWithRules = useMemo(() => {
+    return (availCourses || []).map(c => ({
+      ...c,
+      prerequisites: c.prerequisites || CATALOG_REQUIREMENTS[c.code]?.prerequisites || [],
+      corequisites: c.corequisites || CATALOG_REQUIREMENTS[c.code]?.corequisites || []
+    }))
+  }, [availCourses])
+
+  // Real-time schedule validation
+  const validationResult = useMemo(() => {
+    return validateSchedule(schedule, catalogWithRules)
+  }, [schedule, catalogWithRules])
 
   const handleAddCourse = async (termList, course) => {
     try {
@@ -125,8 +194,28 @@ function App() {
     setManagedCourse(null)
   }
 
+  const handleToggleWaiver = (courseCode) => {
+    const cleanCode = courseCode.toLowerCase().trim()
+    setSchedule((prev) => ({
+      transferCourses: (prev.transferCourses || []).map((c) =>
+        c.code.toLowerCase().trim() === cleanCode ? { ...c, isWaived: !c.isWaived } : c
+      ),
+      years: (prev.years || []).map((year) =>
+        year.map((term) =>
+          term.map((c) =>
+            c.code.toLowerCase().trim() === cleanCode ? { ...c, isWaived: !c.isWaived } : c
+          )
+        )
+      )
+    }))
+  }
+
   const handleResetSchedule = () => {
     setSchedule(createEmptySchedule())
+  }
+
+  const handleLoadDemo = () => {
+    setSchedule(createDemoSchedule())
   }
 
   const handleAddTransferCourse = (targetLocation, newCourse) => {
@@ -134,6 +223,22 @@ function App() {
   }
 
   const allScheduledCourses = (schedule.transferCourses || []).concat((schedule.years || []).flat(2))
+
+  // Enriched schedule for rendering with diagnostics and variant
+  const enrichedYears = useMemo(() => {
+    return (schedule.years || []).map((year, yIdx) => {
+      return year.map((term, tIdx) => {
+        return term.map((course, cIdx) => {
+          const diag = validationResult.diagnosticsMap.get(`term-${yIdx}-${tIdx}-${cIdx}`)
+          return {
+            ...course,
+            validation: diag,
+            variant
+          }
+        })
+      })
+    })
+  }, [schedule.years, validationResult.diagnosticsMap, variant])
 
   return (
     <div className="app-container">
@@ -171,7 +276,7 @@ function App() {
             <AvailableCourses 
               onSelectCourse={(course) => setSelectedCourse(course)} 
               onOpenAddTransferCourse={() => setIsAddTransferOpen(true)}
-              courseList={availCourses} 
+              courseList={catalogWithRules} 
               schedule={allScheduledCourses}
             />
           )}
@@ -183,12 +288,13 @@ function App() {
             onCourseClick={(course, location) => setManagedCourse({ ...course, currentTerm: location })}
           />
           <div className="scheduleArea">
-            {(schedule.years || []).map((year, i) => (
+            {enrichedYears.map((year, i) => (
               <Year 
                 key={i} 
                 yearNumber={i + 1} 
                 yearList={year} 
                 onCourseClick={(course, termList) => setManagedCourse({ ...course, currentTerm: termList })}
+                onInspectRequirement={(course, validation) => setInspectedRequirement({ course, validation })}
               />
             ))}
           </div>
@@ -203,7 +309,7 @@ function App() {
       )}
       {isAddTransferOpen && (
         <AddTransferCourseDialog
-          catalogCourses={availCourses}
+          catalogCourses={catalogWithRules}
           onClose={() => setIsAddTransferOpen(false)}
           onConfirm={handleAddTransferCourse}
         />
@@ -215,7 +321,7 @@ function App() {
           onRemove={handleRemoveCourse}
           onMove={handleMoveCourse}
           onUpdate={handleUpdateCourse}
-          catalogCourses={availCourses}
+          catalogCourses={catalogWithRules}
         />
       )}
       {isIODialogOpen && (
@@ -227,6 +333,21 @@ function App() {
           onResetSchedule={handleResetSchedule}
         />
       )}
+      {inspectedRequirement && (
+        <RequirementInspectorModal
+          course={inspectedRequirement.course}
+          validation={inspectedRequirement.validation}
+          onClose={() => setInspectedRequirement(null)}
+          onToggleWaiver={handleToggleWaiver}
+        />
+      )}
+
+      {/* Floating Prototype Switcher for Ticket #19 */}
+      <PrototypeSwitcher 
+        currentVariant={variant}
+        onSelectVariant={handleSelectVariant}
+        onLoadDemoSchedule={handleLoadDemo}
+      />
     </div>
   )
 }

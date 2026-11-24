@@ -1,7 +1,7 @@
 import Term from "./Term";
 import { calculateCredits } from "../utils/scheduleMigration";
 
-function Year({ yearNumber, yearList, onCourseClick }) {
+function Year({ yearNumber, yearList, onCourseClick, onInspectRequirement }) {
     const yearCredits = calculateCredits(yearList.flat());
     return (
         <div className="yearBlock">
@@ -18,6 +18,7 @@ function Year({ yearNumber, yearList, onCourseClick }) {
                         yearIndex={yearNumber - 1} 
                         termIndex={i} 
                         onCourseClick={onCourseClick}
+                        onInspectRequirement={onInspectRequirement}
                     />
                 ))}
             </div>

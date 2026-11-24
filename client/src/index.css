@@ -984,3 +984,357 @@ main,
 .btnClearFilter:hover {
   color: var(--pink);
 }
+
+/* ==========================================================================
+   Prototype #19: Unsatisfied Requirement Flag & Card Alert UI Styles
+   ========================================================================== */
+
+.prototype-switcher-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--crust);
+  border: 1px solid var(--surface2);
+  border-radius: 9999px;
+  padding: 0.5em 1.2em;
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+}
+
+.switcher-label {
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--subtext0);
+  font-weight: 600;
+}
+
+.switcher-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.switcher-arrow-btn {
+  background-color: var(--surface0);
+  color: var(--text);
+  border: 1px solid var(--surface2);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8em;
+  transition: all 0.15s ease;
+}
+
+.switcher-arrow-btn:hover {
+  background-color: var(--surface1);
+  border-color: var(--text);
+}
+
+.switcher-current-badge {
+  font-weight: 700;
+  font-size: 0.85em;
+  color: var(--yellow);
+  padding: 0.25em 0.7em;
+  background-color: var(--surface0);
+  border-radius: 6px;
+  border: 1px solid var(--surface1);
+}
+
+.switcher-demo-btn {
+  background-color: var(--blue);
+  color: var(--crust);
+  border: none;
+  border-radius: 6px;
+  padding: 0.35em 0.8em;
+  font-size: 0.8em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.switcher-demo-btn:hover {
+  opacity: 0.9;
+}
+
+/* Variant A: Inline Status Pill & Popover */
+.req-flag-container-a {
+  position: relative;
+  display: inline-block;
+  margin-left: 0.5em;
+}
+
+.req-badge-pill {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  border-radius: 9999px;
+  font-size: 0.7em;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.req-badge-pill.unsatisfied {
+  background-color: rgba(243, 139, 168, 0.2);
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+
+.req-badge-pill.waived {
+  background-color: rgba(249, 226, 175, 0.2);
+  color: var(--yellow);
+  border: 1px solid var(--yellow);
+}
+
+.req-popover-a {
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 250px;
+  background-color: var(--surface0);
+  border: 1px solid var(--surface2);
+  border-radius: 8px;
+  padding: 0.85em;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  pointer-events: none;
+  text-align: left;
+}
+
+.req-popover-a::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -6px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: var(--surface0) transparent transparent transparent;
+}
+
+.req-popover-header {
+  font-size: 0.8em;
+  font-weight: 700;
+  color: var(--red);
+  margin-bottom: 0.4em;
+}
+
+.req-popover-body {
+  font-size: 0.75em;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.req-popover-hint {
+  color: var(--subtext0);
+  margin-top: 0.5em;
+  font-size: 0.7em;
+  font-style: italic;
+}
+
+/* Variant B: Header Banner & Collapsible Drawer */
+.req-flag-container-b {
+  width: 100%;
+  margin-bottom: 0.6em;
+}
+
+.req-banner-b {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3em 0.6em;
+  border-radius: 4px;
+  font-size: 0.72em;
+  font-weight: 700;
+}
+
+.req-banner-b.unsatisfied {
+  background-color: var(--red);
+  color: var(--crust);
+}
+
+.req-banner-b.waived {
+  background-color: var(--peach);
+  color: var(--crust);
+}
+
+.btn-drawer-toggle-b {
+  background-color: rgba(0, 0, 0, 0.25);
+  border: none;
+  color: inherit;
+  padding: 0.15em 0.45em;
+  border-radius: 3px;
+  font-size: 0.75em;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.req-drawer-b {
+  background-color: var(--surface0);
+  border: 1px solid var(--surface2);
+  border-radius: 4px;
+  padding: 0.6em;
+  margin-top: 0.35em;
+  font-size: 0.75em;
+  color: var(--text);
+  text-align: left;
+}
+
+.drawer-summary {
+  margin-bottom: 0.4em;
+}
+
+.drawer-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  font-size: 0.7em;
+  color: var(--subtext0);
+}
+
+/* Variant C: Action Chip & Inspector Modal */
+.req-flag-container-c {
+  display: inline-block;
+  margin-left: auto;
+}
+
+.req-action-chip-c {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25em 0.6em;
+  border-radius: 6px;
+  font-size: 0.7em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.req-action-chip-c.unsatisfied {
+  background-color: rgba(243, 139, 168, 0.2);
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+
+.req-action-chip-c.unsatisfied:hover {
+  background-color: var(--red);
+  color: var(--crust);
+}
+
+.req-action-chip-c.waived {
+  background-color: rgba(249, 226, 175, 0.2);
+  color: var(--yellow);
+  border: 1px solid var(--yellow);
+}
+
+.req-action-chip-c.waived:hover {
+  background-color: var(--yellow);
+  color: var(--crust);
+}
+
+/* Card highlight borders */
+.course.has-unsatisfied-req {
+  border-left: 4px solid var(--red) !important;
+}
+
+.course.has-waived-req {
+  border-left: 4px solid var(--yellow) !important;
+}
+
+/* Inspector Modal */
+.req-inspector-modal {
+  max-width: 500px;
+  width: 90%;
+}
+
+.inspector-status-card {
+  background-color: var(--surface0);
+  border-radius: 6px;
+  padding: 1em;
+  margin: 1em 0;
+  border: 1px solid var(--surface1);
+}
+
+.inspector-status-title {
+  font-size: 0.75em;
+  text-transform: uppercase;
+  color: var(--subtext0);
+  font-weight: 700;
+}
+
+.inspector-status-badge {
+  display: inline-block;
+  padding: 0.3em 0.8em;
+  border-radius: 9999px;
+  font-size: 0.78em;
+  font-weight: 700;
+  margin-top: 0.5em;
+}
+
+.inspector-status-badge.unsatisfied {
+  background-color: rgba(243, 139, 168, 0.25);
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+
+.inspector-status-badge.waived {
+  background-color: rgba(249, 226, 175, 0.25);
+  color: var(--yellow);
+  border: 1px solid var(--yellow);
+}
+
+.inspector-missing-text {
+  margin-top: 0.6em;
+  font-size: 0.85em;
+  color: var(--text);
+}
+
+.inspector-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1em;
+  margin-top: 1em;
+}
+
+.inspector-section {
+  background-color: var(--surface0);
+  padding: 0.8em;
+  border-radius: 6px;
+  border: 1px solid var(--surface1);
+}
+
+.inspector-section h3 {
+  font-size: 0.85em;
+  color: var(--subtext1);
+  margin-bottom: 0.3em;
+}
+
+.inspector-desc {
+  font-size: 0.7em;
+  color: var(--subtext0);
+  margin-bottom: 0.5em;
+}
+
+.inspector-value {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.btn-apply-waiver {
+  background-color: var(--yellow) !important;
+  color: var(--crust) !important;
+}
+
+.btn-revoke-waiver {
+  background-color: var(--surface2) !important;
+  color: var(--text) !important;
+}

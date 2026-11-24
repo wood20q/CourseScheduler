@@ -1,7 +1,7 @@
 import CourseCard from "./CourseCard";
 import { calculateCredits } from "../utils/scheduleMigration";
 
-function Term({ termLabel, termList, yearIndex, termIndex, onCourseClick }) {
+function Term({ termLabel, termList, yearIndex, termIndex, onCourseClick, onInspectRequirement }) {
     const termCredits = calculateCredits(termList);
     return (
         <div className="term">
@@ -16,6 +16,7 @@ function Term({ termLabel, termList, yearIndex, termIndex, onCourseClick }) {
                         key={course.code} 
                         course={course}
                         onClickCourse={(courseData) => onCourseClick ? onCourseClick(courseData, [yearIndex, termIndex]) : undefined}
+                        onInspectRequirement={onInspectRequirement}
                     />
                 ))}
             </div>

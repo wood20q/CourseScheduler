@@ -1,3 +1,9 @@
+import { 
+  VariantAFlag, 
+  VariantBStrip, 
+  VariantCChip 
+} from './prototypes/RequirementFlagVariants';
+
 function CourseCard({ 
     course,
     code: propCode, 
@@ -7,6 +13,9 @@ function CourseCard({
     isTransfer: propIsTransfer, 
     institution: propInstitution, 
     satisfiesCourse: propSatisfiesCourse, 
+    validation: propValidation,
+    variant: propVariant,
+    onInspectRequirement,
     onSelectCourse, 
     onClickCourse 
 }) {
@@ -17,17 +26,38 @@ function CourseCard({
     const isTransfer = course?.isTransfer ?? propIsTransfer;
     const institution = course?.institution ?? propInstitution;
     const satisfiesCourse = course?.satisfiesCourse ?? propSatisfiesCourse;
+    const validation = course?.validation ?? propValidation;
+    const variant = course?.variant ?? propVariant ?? 'A';
 
-    const courseObj = course || { name, code, credits, description, isTransfer, institution, satisfiesCourse };
+    const courseObj = course || { name, code, credits, description, isTransfer, institution, satisfiesCourse, validation };
+
+    let cardExtraClass = '';
+    if (validation?.hasFlag) {
+        if (validation.overallStatus === 'UNSATISFIED') {
+            cardExtraClass = ' has-unsatisfied-req';
+        } else if (validation.overallStatus === 'WAIVED') {
+            cardExtraClass = ' has-waived-req';
+        }
+    }
 
     return (
         <div 
-            className={`course ${onClickCourse ? 'clickable' : ''}`}
+            className={`course ${onClickCourse ? 'clickable' : ''}${cardExtraClass}`}
             onClick={onClickCourse ? () => onClickCourse(courseObj) : undefined}
         >
+            {variant === 'B' && <VariantBStrip validation={validation} />}
+
             <div className="courseHeader">
                 <h1 className="name">{name}</h1>
                 {isTransfer && <span className="transferBadge">Transfer</span>}
+                {variant === 'A' && <VariantAFlag validation={validation} />}
+                {variant === 'C' && (
+                    <VariantCChip 
+                        validation={validation} 
+                        course={courseObj} 
+                        onInspect={onInspectRequirement} 
+                    />
+                )}
             </div>
             <h3 className="code">{code}</h3>
             <p className="credits">Credits: {credits}</p>
@@ -49,4 +79,4 @@ function CourseCard({
     )
 }
 
-export default CourseCard
+export default CourseCard;
