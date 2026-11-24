@@ -310,27 +310,57 @@ main,
   cursor: pointer;
 }
 
-.scheduleArea .course > :not(.code, .credits, .courseHeader, .req-flag-container-b) {
-  display: none;
-}
-
-.scheduleArea .course .name {
-  display: none;
-}
-
-.scheduleArea .course .courseHeader {
-  grid-area: courseHeader;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  width: 100%;
-}
-
 .scheduleArea .course {
-  grid-template-areas: 
-    "courseBanner courseBanner"
-    "courseHeader courseHeader"
-    "courseCode courseCredits";
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35em;
+  margin-top: 0.5em;
+  padding: 0.45em 0.75em;
+  border-radius: 14px;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+
+.scheduleArea .course:has(.req-flag-container-b) {
+  flex-wrap: wrap;
+}
+
+.scheduleArea .course > :not(.code, .credits, .req-flag-container-a, .req-flag-container-c, .req-flag-container-b) {
+  display: none !important;
+}
+
+.scheduleArea .course .code {
+  font-size: 1.05em;
+  font-weight: 700;
+  margin: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.scheduleArea .course .req-flag-container-a,
+.scheduleArea .course .req-flag-container-c {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.scheduleArea .course .req-flag-container-b {
+  width: 100%;
+  order: -1;
+  margin-bottom: 0.3em;
+}
+
+.scheduleArea .course .credits {
+  font-size: 0.85em;
+  margin: 0;
+  white-space: nowrap;
+  color: var(--subtext0);
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 /* Add Course Dialog Styles */
@@ -1128,46 +1158,52 @@ main,
   z-index: 50;
 }
 
-/* Variant A: Inline Status Pill & Popover */
+/* Variant A: Rounded Status Pill & Inspector Modal (Single-line) */
 .req-flag-container-a {
   position: relative;
   display: inline-flex;
   align-items: center;
-  margin-left: 0.5em;
-  z-index: 60;
-}
-
-.req-flag-container-a:hover,
-.req-flag-container-a:focus-within,
-.req-flag-container-a.is-open {
-  z-index: 100;
+  z-index: 10;
 }
 
 .req-badge-pill {
-  display: inline-block;
-  padding: 0.2em 0.6em;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18em 0.55em;
   border-radius: 9999px;
-  font-size: 0.7em;
+  font-size: 0.68em;
   font-weight: 700;
   text-transform: uppercase;
   cursor: pointer;
-  transition: transform 0.1s ease;
+  background: none;
+  font-family: inherit;
+  border: 1.5px solid transparent;
+  transition: transform 0.12s ease, filter 0.12s ease;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
 .req-badge-pill:hover {
   transform: scale(1.05);
+  filter: brightness(1.15);
 }
 
 .req-badge-pill.unsatisfied {
-  background-color: rgba(243, 139, 168, 0.25);
+  background-color: rgba(243, 139, 168, 0.22);
   color: var(--red);
-  border: 1.5px solid var(--red);
+  border-color: var(--red);
 }
 
 .req-badge-pill.waived {
-  background-color: rgba(249, 226, 175, 0.25);
+  background-color: rgba(249, 226, 175, 0.22);
   color: var(--yellow);
-  border: 1.5px solid var(--yellow);
+  border-color: var(--yellow);
+}
+
+.req-badge-pill.satisfied {
+  background-color: rgba(166, 227, 161, 0.22);
+  color: var(--green);
+  border-color: var(--green);
 }
 
 .req-popover-portal {

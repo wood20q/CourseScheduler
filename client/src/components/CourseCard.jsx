@@ -50,16 +50,25 @@ function CourseCard({
             <div className="courseHeader">
                 <h1 className="name">{name}</h1>
                 {isTransfer && <span className="transferBadge">Transfer</span>}
-                {variant === 'A' && <VariantAFlag validation={validation} />}
-                {variant === 'C' && (
-                    <VariantCChip 
-                        validation={validation} 
-                        course={courseObj} 
-                        onInspect={onInspectRequirement} 
-                    />
-                )}
             </div>
+
             <h3 className="code">{code}</h3>
+
+            {variant === 'A' && (
+                <VariantAFlag 
+                    validation={validation} 
+                    course={courseObj} 
+                    onInspect={onInspectRequirement} 
+                />
+            )}
+            {variant === 'C' && (
+                <VariantCChip 
+                    validation={validation} 
+                    course={courseObj} 
+                    onInspect={onInspectRequirement} 
+                />
+            )}
+
             <p className="credits">Credits: {credits}</p>
             {satisfiesCourse && <p className="satisfiesCourse"><strong>Satisfies:</strong> {satisfiesCourse}</p>}
             <p className="description">{description}</p>

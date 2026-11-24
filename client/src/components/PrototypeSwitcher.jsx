@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 export const VARIANTS = [
-  { key: 'A', name: 'Pill & Popover', desc: 'Inline Pill & Popover' },
+  { key: 'A', name: 'Pill & Modal (Single-line)', desc: 'Rounded Pill & Inspector Modal (Single-line)' },
   { key: 'B', name: 'Banner & Drawer', desc: 'Header Banner & Drawer' },
   { key: 'C', name: 'Action & Modal', desc: 'Action Chip & Modal' }
 ];

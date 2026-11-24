@@ -32,20 +32,21 @@ describe('Requirement Flag Variants', () => {
     description: 'In-depth study of algorithms'
   };
 
-  describe('Variant A (Pill & Popover)', () => {
-    it('renders unsatisfied pill badge and shows popover on hover', () => {
-      render(<VariantAFlag validation={sampleValidation} />);
+  describe('Variant A (Pill & Modal)', () => {
+    it('renders unsatisfied rounded pill badge and triggers onInspect on click', () => {
+      const onInspect = vi.fn();
+      render(<VariantAFlag validation={sampleValidation} course={course} onInspect={onInspect} />);
       const badge = screen.getByText('⚠️ Missing Req');
       expect(badge).toBeInTheDocument();
+      expect(badge.tagName).toBe('BUTTON');
 
-      // Trigger hover
-      fireEvent.mouseEnter(badge.parentElement);
-      expect(screen.getByText('Unsatisfied Prerequisite / Corequisite')).toBeInTheDocument();
-      expect(screen.getByText(/Prereq: CS120/)).toBeInTheDocument();
+      // Click pill to open inspector modal
+      fireEvent.click(badge);
+      expect(onInspect).toHaveBeenCalledWith(course, sampleValidation);
     });
 
     it('renders waived pill badge for waived courses', () => {
-      render(<VariantAFlag validation={waivedValidation} />);
+      render(<VariantAFlag validation={waivedValidation} course={course} />);
       expect(screen.getByText('🏷️ Waived')).toBeInTheDocument();
     });
   });
