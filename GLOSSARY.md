@@ -27,3 +27,19 @@ _Avoid_: Degree audit, curriculum table, calendar
 **Term**:
 An academic session (Fall, Spring, or Summer) within a designated academic year holding a collection of planned courses.
 _Avoid_: Semester, quarter, period, block
+
+**Prerequisite**:
+Coursework that must be completed in an academic term strictly prior to the enrolled course, or satisfied via Pre-College Transfer Credits.
+_Avoid_: Prereq, prior requirement, entry course
+
+**Corequisite**:
+Coursework that must be taken either concurrently in the same academic term or completed in an earlier term, or satisfied via Pre-College Transfer Credits.
+_Avoid_: Coreq, co-course, parallel requirement
+
+**Requirement Waiver**:
+An explicit exemption applied to a scheduled course permitting it to remain on the schedule despite unsatisfied prerequisites or corequisites.
+_Avoid_: Override, wave, pass, bypass
+
+**Unsatisfied Requirement Flag**:
+A visual warning indicator displayed on a scheduled course card when one or more of its prerequisite or corequisite requirements are unmet.
+_Avoid_: Error badge, conflict mark, warning tag
