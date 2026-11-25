@@ -212,28 +212,45 @@ export function addCourseToSchedule(schedule, course, location) {
   };
 }
 
-export function moveCourseInSchedule(schedule, code, targetLocation) {
-  const normalized = migrateSchedule(schedule);
-  const targetCode = code?.trim().toUpperCase();
+export function findCourseInSchedule(schedule, code) {
+  if (!schedule || !code) return null;
+  const targetCode = String(code).trim().toUpperCase();
 
-  let courseToMove = normalized.transferCourses.find(
-    (c) => c.code?.trim().toUpperCase() === targetCode
+  const transferCourse = (schedule.transferCourses || []).find(
+    (c) => String(c.code).trim().toUpperCase() === targetCode
   );
+  if (transferCourse) {
+    return {
+      course: transferCourse,
+      location: { type: 'transfer' },
+      locationLabel: 'Pre-College / Transfer Credits'
+    };
+  }
 
-  if (!courseToMove) {
-    for (const year of normalized.years) {
-      for (const term of year) {
-        const found = term.find((c) => c.code?.trim().toUpperCase() === targetCode);
-        if (found) {
-          courseToMove = found;
-          break;
-        }
+  const years = schedule.years || [];
+  for (let y = 0; y < years.length; y++) {
+    const terms = years[y] || [];
+    for (let t = 0; t < terms.length; t++) {
+      const course = terms[t].find(
+        (c) => String(c.code).trim().toUpperCase() === targetCode
+      );
+      if (course) {
+        return {
+          course,
+          location: { type: 'term', year: y, term: t },
+          locationLabel: `Year ${y + 1} Term ${t + 1}`
+        };
       }
-      if (courseToMove) break;
     }
   }
 
-  if (!courseToMove) return normalized;
+  return null;
+}
 
-  return addCourseToSchedule(normalized, courseToMove, targetLocation);
+export function moveCourseInSchedule(schedule, code, targetLocation) {
+  const normalized = migrateSchedule(schedule);
+  const found = findCourseInSchedule(normalized, code);
+  if (!found) return normalized;
+
+  return addCourseToSchedule(normalized, found.course, targetLocation);
 }

@@ -1,8 +1,4 @@
-import { 
-  VariantAFlag, 
-  VariantBStrip, 
-  VariantCChip 
-} from './prototypes/RequirementFlagVariants';
+import RequirementFlag from './RequirementFlag';
 
 function CourseCard({ 
     course,
@@ -14,7 +10,6 @@ function CourseCard({
     institution: propInstitution, 
     satisfiesCourse: propSatisfiesCourse, 
     validation: propValidation,
-    variant: propVariant,
     onInspectRequirement,
     onSelectCourse, 
     onClickCourse 
@@ -27,7 +22,6 @@ function CourseCard({
     const institution = course?.institution ?? propInstitution;
     const satisfiesCourse = course?.satisfiesCourse ?? propSatisfiesCourse;
     const validation = course?.validation ?? propValidation;
-    const variant = course?.variant ?? propVariant ?? 'A';
 
     const courseObj = course || { name, code, credits, description, isTransfer, institution, satisfiesCourse, validation };
 
@@ -45,8 +39,6 @@ function CourseCard({
             className={`course ${onClickCourse ? 'clickable' : ''}${cardExtraClass}`}
             onClick={onClickCourse ? () => onClickCourse(courseObj) : undefined}
         >
-            {variant === 'B' && <VariantBStrip validation={validation} />}
-
             <div className="courseHeader">
                 <h1 className="name">{name}</h1>
                 {isTransfer && <span className="transferBadge">Transfer</span>}
@@ -54,20 +46,11 @@ function CourseCard({
 
             <h3 className="code">{code}</h3>
 
-            {variant === 'A' && (
-                <VariantAFlag 
-                    validation={validation} 
-                    course={courseObj} 
-                    onInspect={onInspectRequirement} 
-                />
-            )}
-            {variant === 'C' && (
-                <VariantCChip 
-                    validation={validation} 
-                    course={courseObj} 
-                    onInspect={onInspectRequirement} 
-                />
-            )}
+            <RequirementFlag 
+                validation={validation} 
+                course={courseObj} 
+                onInspect={onInspectRequirement} 
+            />
 
             <p className="credits" title={`${credits} Credit${credits === 1 ? '' : 's'}`}>
                 <span className="credits-full">Credits: {credits}</span>

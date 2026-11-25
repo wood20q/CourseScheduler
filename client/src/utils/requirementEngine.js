@@ -74,15 +74,15 @@ export function evaluateDNF(requirement, satisfiedCodes, isWaived = false) {
     status = 'WAIVED';
   }
 
-  let missingSummary = '';
   const unfulfilledSummary = satisfiedClauseExists
     ? ''
     : evaluatedOptions.map(opt => opt.missing.join(' AND ')).join(' OR ');
 
+  let missingSummary;
   if (satisfiedClauseExists) {
     missingSummary = 'Fulfilled';
   } else if (isWaived) {
-    missingSummary = 'Waived by override';
+    missingSummary = 'Waived by advisor waiver';
   } else {
     missingSummary = unfulfilledSummary;
   }
@@ -235,11 +235,23 @@ export function validateSchedule(schedule, catalogCourses = []) {
           waivedCount++;
         }
 
-        const unfulfilledText = prereqResult.unfulfilledSummary 
-          ? `Prereq: ${prereqResult.unfulfilledSummary}` 
-          : coreqResult.unfulfilledSummary 
-            ? `Coreq: ${coreqResult.unfulfilledSummary}` 
-            : '';
+        const unfulfilledParts = [];
+        if (prereqResult.unfulfilledSummary) unfulfilledParts.push(`Prereq: ${prereqResult.unfulfilledSummary}`);
+        if (coreqResult.unfulfilledSummary) unfulfilledParts.push(`Coreq: ${coreqResult.unfulfilledSummary}`);
+        const unfulfilledText = unfulfilledParts.join('; ');
+
+        const missingParts = [];
+        if (prereqResult.status === 'UNSATISFIED') missingParts.push(`Prereq: ${prereqResult.missingSummary}`);
+        if (coreqResult.status === 'UNSATISFIED') missingParts.push(`Coreq: ${coreqResult.missingSummary}`);
+
+        let missingSummaryText;
+        if (missingParts.length > 0) {
+          missingSummaryText = missingParts.join('; ');
+        } else if (overallStatus === 'WAIVED') {
+          missingSummaryText = 'Waived by advisor waiver';
+        } else {
+          missingSummaryText = 'All requirements satisfied';
+        }
 
         diagnostics.push({
           id: `term-${yIdx}-${tIdx}-${cIdx}`,
@@ -249,17 +261,11 @@ export function validateSchedule(schedule, catalogCourses = []) {
           coreqResult,
           overallStatus,
           hasRequirements,
-          hasFlag: hasRequirements,
+          hasFlag: overallStatus === 'UNSATISFIED' || overallStatus === 'WAIVED',
           isUnsatisfied: overallStatus === 'UNSATISFIED',
           isWaived: overallStatus === 'WAIVED',
           unfulfilledSummary: unfulfilledText,
-          missingSummary: prereqResult.status === 'UNSATISFIED' 
-            ? `Prereq: ${prereqResult.missingSummary}`
-            : coreqResult.status === 'UNSATISFIED' 
-              ? `Coreq: ${coreqResult.missingSummary}`
-              : overallStatus === 'WAIVED'
-                ? 'Waived by override'
-                : 'All requirements satisfied'
+          missingSummary: missingSummaryText
         });
       });
     });

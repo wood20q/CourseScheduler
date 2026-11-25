@@ -1,14 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import CourseCard from '../components/CourseCard';
-import { 
-  VariantAFlag, 
-  VariantBStrip, 
-  VariantCChip, 
-  RequirementInspectorModal 
-} from '../components/prototypes/RequirementFlagVariants';
+import RequirementFlag from '../components/RequirementFlag';
+import RequirementInspectorModal from '../components/RequirementInspectorModal';
 
-describe('Requirement Flag Variants', () => {
+describe('Requirement Flag & Inspector Modal', () => {
   const sampleValidation = {
     hasFlag: true,
     overallStatus: 'UNSATISFIED',
@@ -25,6 +21,14 @@ describe('Requirement Flag Variants', () => {
     coreqResult: { status: 'SATISFIED', missingSummary: 'None' }
   };
 
+  const satisfiedValidation = {
+    hasFlag: false,
+    overallStatus: 'SATISFIED',
+    missingSummary: 'All requirements satisfied',
+    prereqResult: { isSatisfied: true, status: 'SATISFIED', missingSummary: 'Fulfilled' },
+    coreqResult: { isSatisfied: true, status: 'SATISFIED', missingSummary: 'Fulfilled' }
+  };
+
   const course = {
     code: 'CS220',
     name: 'Data Structures and Algorithms',
@@ -32,10 +36,10 @@ describe('Requirement Flag Variants', () => {
     description: 'In-depth study of algorithms'
   };
 
-  describe('Variant A (Pill & Modal)', () => {
+  describe('RequirementFlag Pill', () => {
     it('renders unsatisfied rounded pill badge and triggers onInspect on click', () => {
       const onInspect = vi.fn();
-      render(<VariantAFlag validation={sampleValidation} course={course} onInspect={onInspect} />);
+      render(<RequirementFlag validation={sampleValidation} course={course} onInspect={onInspect} />);
       const badge = screen.getByText('⚠️ Missing Req');
       expect(badge).toBeInTheDocument();
       expect(badge.tagName).toBe('BUTTON');
@@ -46,34 +50,17 @@ describe('Requirement Flag Variants', () => {
     });
 
     it('renders waived pill badge for waived courses', () => {
-      render(<VariantAFlag validation={waivedValidation} course={course} />);
+      render(<RequirementFlag validation={waivedValidation} course={course} />);
       expect(screen.getByText('🏷️ Waived')).toBeInTheDocument();
     });
-  });
 
-  describe('Variant B (Banner & Collapsible Drawer)', () => {
-    it('renders banner and toggles drawer', () => {
-      render(<VariantBStrip validation={sampleValidation} />);
-      expect(screen.getByText('⚠️ Unsatisfied Requirements')).toBeInTheDocument();
-      
-      const toggleBtn = screen.getByRole('button', { name: /Details/i });
-      fireEvent.click(toggleBtn);
-
-      expect(screen.getByText(/Prereq: CS120/)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Hide/i })).toBeInTheDocument();
+    it('does not render pill badge when hasFlag is false', () => {
+      const { container } = render(<RequirementFlag validation={satisfiedValidation} course={course} />);
+      expect(container.firstChild).toBeNull();
     });
   });
 
-  describe('Variant C (Action Chip & Inspector Modal)', () => {
-    it('renders action chip and triggers onInspect when clicked', () => {
-      const onInspect = vi.fn();
-      render(<VariantCChip validation={sampleValidation} course={course} onInspect={onInspect} />);
-      
-      const chip = screen.getByRole('button', { name: /Missing Requirements/i });
-      fireEvent.click(chip);
-      expect(onInspect).toHaveBeenCalledWith(course, sampleValidation);
-    });
-
+  describe('RequirementInspectorModal', () => {
     it('renders modal and triggers waiver toggle for unsatisfied course', () => {
       const onToggleWaiver = vi.fn();
       const onClose = vi.fn();
@@ -115,14 +102,6 @@ describe('Requirement Flag Variants', () => {
     });
 
     it('does not render waiver button when requirements are satisfied', () => {
-      const satisfiedValidation = {
-        hasFlag: false,
-        overallStatus: 'SATISFIED',
-        missingSummary: 'All requirements satisfied',
-        prereqResult: { isSatisfied: true, status: 'SATISFIED', missingSummary: 'Fulfilled' },
-        coreqResult: { isSatisfied: true, status: 'SATISFIED', missingSummary: 'Fulfilled' }
-      };
-
       render(
         <RequirementInspectorModal 
           course={course}
@@ -145,11 +124,21 @@ describe('Requirement Flag Variants', () => {
         <CourseCard 
           course={course} 
           validation={sampleValidation} 
-          variant="A"
         />
       );
       expect(container.firstChild).toHaveClass('has-unsatisfied-req');
       expect(screen.getByText('⚠️ Missing Req')).toBeInTheDocument();
+    });
+
+    it('does not render flag badge when validation hasFlag is false', () => {
+      render(
+        <CourseCard 
+          course={course} 
+          validation={satisfiedValidation} 
+        />
+      );
+      expect(screen.queryByText('⚠️ Missing Req')).not.toBeInTheDocument();
+      expect(screen.queryByText('✓ Req Met')).not.toBeInTheDocument();
     });
   });
 });

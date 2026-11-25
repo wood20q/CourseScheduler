@@ -6,7 +6,7 @@ import ManageCourseDialog from './components/ManageCourseDialog'
 import ImportExportDialog from './components/ImportExportDialog'
 import TransferCreditsSection from './components/TransferCreditsSection'
 import AddTransferCourseDialog from './components/AddTransferCourseDialog'
-import { RequirementInspectorModal } from './components/prototypes/RequirementFlagVariants'
+import RequirementInspectorModal from './components/RequirementInspectorModal'
 import { 
   addCourseToSchedule as apiAddCourse, 
   removeCourseFromSchedule as apiRemoveCourse, 
@@ -43,30 +43,6 @@ const FALLBACK_CATALOG = [
   { id: 16, name: "Software Engineering", code: "CS350", credits: 1, description: "Methodologies for software design, testing, agile development, and team project management." },
   { id: 19, name: "Cybersecurity Fundamentals", code: "CS240", credits: 1, description: "Core concepts of network security, cryptography, vulnerability assessment, and defense strategies." }
 ]
-
-const createDemoSchedule = () => ({
-  transferCourses: [
-    { code: 'AP-CALC', name: 'AP Calculus BC Exam', credits: 1, satisfiesCourse: 'MATH101' }
-  ],
-  years: [
-    [
-      // Year 1 Term 1: CS220 (Missing CS120! Unsatisfied)
-      [{ code: 'CS220', name: 'Data Structures and Algorithms', credits: 1, description: 'Requires CS120' }],
-      // Year 1 Term 2: PHYS200 (Corequisite satisfied concurrently via AP-CALC)
-      [{ code: 'PHYS200', name: 'General Physics', credits: 1, description: 'Corequisite with MATH101' }],
-      // Year 1 Term 3: CS120
-      [{ code: 'CS120', name: 'Intro to Python', credits: 1, description: 'Intro course' }]
-    ],
-    [
-      // Year 2 Term 1: CS350 (Software Engineering - Waived!)
-      [{ code: 'CS350', name: 'Software Engineering', credits: 1, isWaived: true, description: 'Requires CS220 and CS240 (Waived)' }],
-      [],
-      []
-    ],
-    [[], [], []],
-    [[], [], []]
-  ]
-})
 
 function App() {
   const [schedule, setSchedule] = useState(() => {
@@ -218,23 +194,13 @@ function App() {
     setSchedule(createEmptySchedule())
   }
 
-  const handleLoadDemo = () => {
-    const demo = createDemoSchedule()
-    setSchedule(demo)
-    try {
-      localStorage.setItem('course_scheduler_data', JSON.stringify(demo))
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
   const handleAddTransferCourse = (targetLocation, newCourse) => {
     setSchedule((prev) => addCourseToSchedule(prev, newCourse, targetLocation))
   }
 
   const allScheduledCourses = (schedule.transferCourses || []).concat((schedule.years || []).flat(2))
 
-  // Enriched schedule for rendering with diagnostics (finalized Variant A pill from #19)
+  // Enriched schedule for rendering with diagnostics
   const enrichedYears = useMemo(() => {
     return (schedule.years || []).map((year, yIdx) => {
       return year.map((term, tIdx) => {
@@ -242,15 +208,12 @@ function App() {
           const diag = validationResult.diagnosticsMap.get(`term-${yIdx}-${tIdx}-${cIdx}`)
           return {
             ...course,
-            validation: diag,
-            variant: 'A'
+            validation: diag
           }
         })
       })
     })
   }, [schedule.years, validationResult.diagnosticsMap])
-
-  const totalFlaggedCount = (validationResult.summary.unsatisfiedCount || 0) + (validationResult.summary.waivedCount || 0)
 
   return (
     <div className="app-container">
@@ -299,15 +262,6 @@ function App() {
             onAddClick={() => setIsAddTransferOpen(true)}
             onCourseClick={(course, location) => setManagedCourse({ ...course, currentTerm: location })}
           />
-          {allScheduledCourses.length === 0 && (
-            <div className="empty-schedule-prototype-banner">
-              <span>💡 Schedule is currently empty. Click</span>
-              <button type="button" className="btn-load-inline-demo" onClick={handleLoadDemo}>
-                ⚡ Load Test Courses
-              </button>
-              <span>to preview prerequisite, corequisite, and waiver flags!</span>
-            </div>
-          )}
           <div className="scheduleArea">
             {enrichedYears.map((year, i) => (
               <Year 

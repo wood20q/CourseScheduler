@@ -2,9 +2,57 @@ import { useState, useMemo } from "react";
 import { 
   getAvailableCourseCodes, 
   evaluateDNF, 
-  normalizeDNF,
-  findCourseCompletedLocation 
+  normalizeDNF
 } from "../utils/requirementEngine";
+import { findCourseInSchedule } from "../utils/scheduleMigration";
+
+function RequirementAuditItem({ 
+  type, 
+  clause, 
+  satisfiedCodes, 
+  schedule, 
+  targetTermLabel,
+  isOverallRequirementSatisfied,
+  hasMultipleOptions
+}) {
+  const clauseText = clause.join(' AND ');
+  const isClauseMet = clause.every(code => satisfiedCodes.has(code));
+  const missingCodes = clause.filter(code => !satisfiedCodes.has(code));
+  const firstCompleted = clause.find(code => satisfiedCodes.has(code));
+  const completedLoc = firstCompleted ? findCourseInSchedule(schedule, firstCompleted) : null;
+
+  const isPrereq = type === 'prereq';
+  const typeLabel = isPrereq ? 'Prerequisite' : 'Corequisite';
+  const timingLabel = isPrereq ? `Must precede ${targetTermLabel}` : 'Concurrent or prior';
+
+  let statusClass = 'missing';
+  let statusIcon = '❌';
+  let descText = `Missing: ${missingCodes.join(', ')} (${timingLabel})`;
+
+  if (isClauseMet) {
+    statusClass = 'met';
+    statusIcon = '✅';
+    descText = `Satisfied (${completedLoc ? completedLoc.locationLabel : 'Completed prior'})`;
+  } else if (isOverallRequirementSatisfied) {
+    // When the course requirement is satisfied via another alternative OR clause
+    statusClass = 'alternative';
+    statusIcon = '⚪';
+    descText = `Alternative option (${missingCodes.join(', ')} not required; requirement fulfilled via alternative)`;
+  }
+
+  return (
+    <div className={`audit-item ${statusClass}`}>
+      <span className="audit-status-icon">{statusIcon}</span>
+      <div className="audit-item-info">
+        <div className="audit-item-main">
+          <span className={`badge-type ${type}`}>{typeLabel}{hasMultipleOptions ? ' Option' : ''}</span>
+          <strong className="audit-item-code">{clauseText}</strong>
+        </div>
+        <span className="audit-item-desc">{descText}</span>
+      </div>
+    </div>
+  );
+}
 
 function AddCourseDialog({ 
   course, 
@@ -19,12 +67,19 @@ function AddCourseDialog({
 
   // Retrieve course requirements from catalog or course object
   const cleanCode = String(course?.code || '').trim().toUpperCase();
-  const catalogEntry = (catalogCourses || []).find(
-    c => String(c.code).trim().toUpperCase() === cleanCode
-  ) || course;
+  const catalogEntry = useMemo(() => {
+    return (catalogCourses || []).find(
+      c => String(c.code).trim().toUpperCase() === cleanCode
+    ) || course;
+  }, [catalogCourses, cleanCode, course]);
 
-  const prereqs = catalogEntry?.prerequisites || course?.prerequisites || [];
-  const coreqs = catalogEntry?.corequisites || course?.corequisites || [];
+  const prereqs = useMemo(() => {
+    return catalogEntry?.prerequisites || course?.prerequisites || null;
+  }, [catalogEntry, course]);
+
+  const coreqs = useMemo(() => {
+    return catalogEntry?.corequisites || course?.corequisites || null;
+  }, [catalogEntry, course]);
 
   const priorCodes = useMemo(() => {
     return getAvailableCourseCodes(schedule, {
@@ -134,61 +189,37 @@ function AddCourseDialog({
                 </div>
               ) : (
                 <div className="audit-checklist">
-                  {normalizedPrereqs.map((clause, cIdx) => {
-                    const clauseText = clause.join(' AND ');
-                    const isClauseMet = clause.every(code => priorCodes.has(code));
-                    const missingCodes = clause.filter(code => !priorCodes.has(code));
-                    const firstCompleted = clause.find(code => priorCodes.has(code));
-                    const completedLoc = firstCompleted ? findCourseCompletedLocation(schedule, firstCompleted) : null;
+                  {normalizedPrereqs.map((clause, cIdx) => (
+                    <RequirementAuditItem 
+                      key={`prereq-${cIdx}`}
+                      type="prereq"
+                      clause={clause}
+                      satisfiedCodes={priorCodes}
+                      schedule={schedule}
+                      targetTermLabel={targetTermLabel}
+                      isOverallRequirementSatisfied={isPrereqSatisfied}
+                      hasMultipleOptions={normalizedPrereqs.length > 1}
+                    />
+                  ))}
 
-                    return (
-                      <div key={`prereq-${cIdx}`} className={`audit-item ${isClauseMet ? 'met' : 'missing'}`}>
-                        <span className="audit-status-icon">{isClauseMet ? '✅' : '❌'}</span>
-                        <div className="audit-item-info">
-                          <div className="audit-item-main">
-                            <span className="badge-type prereq">Prerequisite</span>
-                            <strong className="audit-item-code">{clauseText}</strong>
-                          </div>
-                          <span className="audit-item-desc">
-                            {isClauseMet 
-                              ? `Satisfied (${completedLoc ? completedLoc.label : 'Completed prior'})`
-                              : `Missing: ${missingCodes.join(', ')} (Must precede ${targetTermLabel})`}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {normalizedCoreqs.map((clause, cIdx) => {
-                    const clauseText = clause.join(' AND ');
-                    const isClauseMet = clause.every(code => concurrentCodes.has(code));
-                    const missingCodes = clause.filter(code => !concurrentCodes.has(code));
-                    const firstCompleted = clause.find(code => concurrentCodes.has(code));
-                    const completedLoc = firstCompleted ? findCourseCompletedLocation(schedule, firstCompleted) : null;
-
-                    return (
-                      <div key={`coreq-${cIdx}`} className={`audit-item ${isClauseMet ? 'met' : 'missing'}`}>
-                        <span className="audit-status-icon">{isClauseMet ? '✅' : '❌'}</span>
-                        <div className="audit-item-info">
-                          <div className="audit-item-main">
-                            <span className="badge-type coreq">Corequisite</span>
-                            <strong className="audit-item-code">{clauseText}</strong>
-                          </div>
-                          <span className="audit-item-desc">
-                            {isClauseMet 
-                              ? `Satisfied (${completedLoc ? completedLoc.label : 'Concurrent or prior'})`
-                              : `Missing: ${missingCodes.join(', ')} (Concurrent or prior)`}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {normalizedCoreqs.map((clause, cIdx) => (
+                    <RequirementAuditItem 
+                      key={`coreq-${cIdx}`}
+                      type="coreq"
+                      clause={clause}
+                      satisfiedCodes={concurrentCodes}
+                      schedule={schedule}
+                      targetTermLabel={targetTermLabel}
+                      isOverallRequirementSatisfied={isCoreqSatisfied}
+                      hasMultipleOptions={normalizedCoreqs.length > 1}
+                    />
+                  ))}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Waiver Checkbox from Variant A (only shown if requirements are unsatisfied) */}
+          {/* Waiver Checkbox (only shown if requirements are unsatisfied) */}
           {!isSatisfied && (
             <div className="waiver-box">
               <label className="waiver-checkbox-label">
@@ -198,7 +229,7 @@ function AddCourseDialog({
                   onChange={(e) => setWaiverChecked(e.target.checked)} 
                   data-testid="waiver-checkbox"
                 />
-                <span className="waiver-title">Request Requirement Waiver (Advisor Override)</span>
+                <span className="waiver-title">Request Advisor Requirement Waiver</span>
               </label>
               <p className="waiver-caption">
                 Allow placement despite missing coursework. Course will appear on schedule with a requirement waiver indicator.
@@ -225,7 +256,7 @@ function AddCourseDialog({
                 type="button" 
                 className="btn-submit btn-disabled" 
                 disabled 
-                title="Check 'Request Requirement Waiver' above to add this course"
+                title="Check 'Request Advisor Requirement Waiver' above to add this course"
                 data-testid="submit-add-course-disabled"
               >
                 Add to Schedule (Requires Waiver)

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { formatLocationKey, parseLocation } from "../utils/scheduleMigration";
+import { formatLocationKey, parseLocation, findCourseInSchedule } from "../utils/scheduleMigration";
 import { 
     validateSchedule, 
     simulateScheduleMutation 
@@ -28,18 +28,9 @@ function ManageCourseDialog({
     // Live course state derived from schedule so mutations reflect instantly
     const liveCourse = useMemo(() => {
         if (!schedule || !course?.code) return course;
-        const clean = course.code.trim().toUpperCase();
-        const fromTransfer = (schedule.transferCourses || []).find(
-            c => c.code?.trim().toUpperCase() === clean
-        );
-        if (fromTransfer) return { ...fromTransfer, currentTerm: course.currentTerm };
-        for (let y = 0; y < (schedule.years || []).length; y++) {
-            for (let t = 0; t < schedule.years[y].length; t++) {
-                const found = schedule.years[y][t].find(
-                    c => c.code?.trim().toUpperCase() === clean
-                );
-                if (found) return { ...found, currentTerm: course.currentTerm };
-            }
+        const found = findCourseInSchedule(schedule, course.code);
+        if (found) {
+            return { ...found.course, currentTerm: course.currentTerm };
         }
         return course;
     }, [schedule, course]);
@@ -77,26 +68,30 @@ function ManageCourseDialog({
     const [editDescription, setEditDescription] = useState(course?.description || "");
     const [editError, setEditError] = useState("");
 
-    const effectiveTarget = isTransfer
-        ? (targetLocation === "transfer" ? "transfer" : targetLocation.split(",").map(Number))
-        : [selectedYear, selectedTerm];
+    const effectiveTarget = useMemo(() => {
+        return isTransfer
+            ? (targetLocation === "transfer" ? "transfer" : targetLocation.split(",").map(Number))
+            : [selectedYear, selectedTerm];
+    }, [isTransfer, targetLocation, selectedYear, selectedTerm]);
+
+    const courseCode = liveCourse?.code;
 
     // Live downstream simulation for move
     const moveSimulation = useMemo(() => {
-        return simulateScheduleMutation(schedule, liveCourse?.code, "move", effectiveTarget, catalogCourses);
-    }, [schedule, liveCourse?.code, effectiveTarget, catalogCourses]);
+        return simulateScheduleMutation(schedule, courseCode, "move", effectiveTarget, catalogCourses);
+    }, [schedule, courseCode, effectiveTarget, catalogCourses]);
 
     // Live downstream simulation for remove
     const removeSimulation = useMemo(() => {
-        return simulateScheduleMutation(schedule, liveCourse?.code, "remove", null, catalogCourses);
-    }, [schedule, liveCourse?.code, catalogCourses]);
+        return simulateScheduleMutation(schedule, courseCode, "remove", null, catalogCourses);
+    }, [schedule, courseCode, catalogCourses]);
 
     const isSatisfied = courseValidation?.overallStatus === "SATISFIED";
     const isWaived = !isSatisfied && Boolean(liveCourse?.isWaived);
     const isUnsatisfied = !isSatisfied && !isWaived;
 
     const missingText = (courseValidation?.missingSummary && 
-                         courseValidation.missingSummary !== "Waived by override" && 
+                         courseValidation.missingSummary !== "Waived by advisor waiver" && 
                          courseValidation.missingSummary !== "All requirements satisfied")
         ? courseValidation.missingSummary
         : (courseValidation?.unfulfilledSummary || "");
@@ -284,7 +279,7 @@ function ManageCourseDialog({
                                     <span className="audit-badge satisfied">✅ Requirements Met</span>
                                 )}
                                 {isWaived && (
-                                    <span className="audit-badge waived">🏷️ Waived by Override</span>
+                                    <span className="audit-badge waived">🏷️ Requirement Waived</span>
                                 )}
                                 {isUnsatisfied && (
                                     <span className="audit-badge unsatisfied">⚠️ Requirements Incomplete</span>
@@ -317,7 +312,7 @@ function ManageCourseDialog({
                                     <span className="waiver-caption">
                                         {isWaived 
                                             ? "Waiver granted. Click to revoke waiver and reinstate requirement checks."
-                                            : "Override prerequisite checks and permit out-of-sequence completion."}
+                                            : "Grant requirement waiver to permit out-of-sequence completion."}
                                     </span>
                                 </div>
                             )}

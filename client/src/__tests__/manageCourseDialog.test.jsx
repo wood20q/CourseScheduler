@@ -192,7 +192,7 @@ describe('ManageCourseDialog - Finalized Variant D Workflow (Issue #21)', () => 
     );
 
     // Initially waived
-    expect(screen.getByText(/🏷️ Waived by Override/i)).toBeInTheDocument();
+    expect(screen.getByText(/🏷️ Requirement Waived/i)).toBeInTheDocument();
     expect(screen.getByText(/Waived requirement:/i)).toBeInTheDocument();
     const waiverBox = screen.getByLabelText(/Advisor Requirement Waiver/i);
     expect(waiverBox).toBeChecked();

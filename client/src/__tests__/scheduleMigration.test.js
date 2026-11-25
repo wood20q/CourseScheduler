@@ -11,7 +11,8 @@ import {
   isTransferLocation,
   addCourseToSchedule,
   removeCourseFromSchedule,
-  moveCourseInSchedule
+  moveCourseInSchedule,
+  findCourseInSchedule
 } from '../utils/scheduleMigration';
 
 describe('scheduleMigration utils', () => {
@@ -166,6 +167,22 @@ describe('scheduleMigration utils', () => {
       const movedToTransfer = moveCourseInSchedule(baseSchedule, 'CS101', 'transfer');
       expect(movedToTransfer.years[0][0]).toHaveLength(0);
       expect(movedToTransfer.transferCourses).toHaveLength(2);
+    });
+
+    it('findCourseInSchedule locates courses in transfer and terms', () => {
+      const foundTransfer = findCourseInSchedule(baseSchedule, 'AP-CALC');
+      expect(foundTransfer).not.toBeNull();
+      expect(foundTransfer.location.type).toBe('transfer');
+      expect(foundTransfer.locationLabel).toBe('Pre-College / Transfer Credits');
+
+      const foundTerm = findCourseInSchedule(baseSchedule, 'CS101');
+      expect(foundTerm).not.toBeNull();
+      expect(foundTerm.location.type).toBe('term');
+      expect(foundTerm.location.year).toBe(0);
+      expect(foundTerm.location.term).toBe(0);
+      expect(foundTerm.locationLabel).toBe('Year 1 Term 1');
+
+      expect(findCourseInSchedule(baseSchedule, 'NON-EXISTENT')).toBeNull();
     });
   });
 });

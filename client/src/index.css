@@ -326,11 +326,7 @@ main,
   overflow: hidden;
 }
 
-.scheduleArea .course:has(.req-flag-container-b) {
-  flex-wrap: wrap;
-}
-
-.scheduleArea .course > :not(.code, .credits, .req-flag-container-a, .req-flag-container-c, .req-flag-container-b) {
+.scheduleArea .course > :not(.code, .credits, .req-flag-container, .req-flag-container-a) {
   display: none !important;
 }
 
@@ -342,19 +338,13 @@ main,
   flex-shrink: 0;
 }
 
-.scheduleArea .course .req-flag-container-a,
-.scheduleArea .course .req-flag-container-c {
+.scheduleArea .course .req-flag-container,
+.scheduleArea .course .req-flag-container-a {
   display: inline-flex;
   align-items: center;
   margin: 0;
   min-width: 0;
   flex-shrink: 1;
-}
-
-.scheduleArea .course .req-flag-container-b {
-  width: 100%;
-  order: -1;
-  margin-bottom: 0.3em;
 }
 
 .credits-compact {
@@ -1177,7 +1167,8 @@ main,
   z-index: 50;
 }
 
-/* Variant A: Rounded Status Pill & Inspector Modal (Single-line) */
+/* Requirement Flag: Rounded Status Pill & Inspector Modal (Single-line) */
+.req-flag-container,
 .req-flag-container-a {
   position: relative;
   display: inline-flex;
@@ -1325,105 +1316,6 @@ main,
   font-style: italic;
 }
 
-/* Variant B: Header Banner & Collapsible Drawer */
-.req-flag-container-b {
-  width: 100%;
-  margin-bottom: 0.6em;
-}
-
-.req-banner-b {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.35em 0.65em;
-  border-radius: 6px;
-  font-size: 0.75em;
-  font-weight: 700;
-}
-
-.req-banner-b.unsatisfied {
-  background-color: var(--red);
-  color: var(--crust);
-}
-
-.req-banner-b.waived {
-  background-color: var(--peach);
-  color: var(--crust);
-}
-
-.btn-drawer-toggle-b {
-  background-color: rgba(0, 0, 0, 0.25);
-  border: none;
-  color: inherit;
-  padding: 0.15em 0.45em;
-  border-radius: 3px;
-  font-size: 0.75em;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.req-drawer-b {
-  background-color: var(--surface0);
-  border: 1px solid var(--surface2);
-  border-radius: 4px;
-  padding: 0.6em;
-  margin-top: 0.35em;
-  font-size: 0.75em;
-  color: var(--text);
-  text-align: left;
-}
-
-.drawer-summary {
-  margin-bottom: 0.4em;
-}
-
-.drawer-rules {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2em;
-  font-size: 0.7em;
-  color: var(--subtext0);
-}
-
-/* Variant C: Action Chip & Inspector Modal */
-.req-flag-container-c {
-  display: inline-block;
-  margin-left: auto;
-}
-
-.req-action-chip-c {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25em 0.6em;
-  border-radius: 6px;
-  font-size: 0.7em;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.req-action-chip-c.unsatisfied {
-  background-color: rgba(243, 139, 168, 0.2);
-  color: var(--red);
-  border: 1px solid var(--red);
-}
-
-.req-action-chip-c.unsatisfied:hover {
-  background-color: var(--red);
-  color: var(--crust);
-}
-
-.req-action-chip-c.waived {
-  background-color: rgba(249, 226, 175, 0.2);
-  color: var(--yellow);
-  border: 1px solid var(--yellow);
-}
-
-.req-action-chip-c.waived:hover {
-  background-color: var(--yellow);
-  color: var(--crust);
-}
-
 /* Card highlight borders */
 .course.has-unsatisfied-req {
   border-left: 4px solid var(--red) !important;
@@ -1523,39 +1415,8 @@ main,
   color: var(--text) !important;
 }
 
-.empty-schedule-prototype-banner {
-  background-color: var(--surface0);
-  border: 1.5px dashed var(--yellow);
-  color: var(--text);
-  padding: 0.75em 1.2em;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6em;
-  font-size: 0.88em;
-  font-weight: 500;
-  margin-bottom: 0.5em;
-}
-
-.btn-load-inline-demo {
-  background-color: var(--yellow);
-  color: var(--crust);
-  border: none;
-  border-radius: 6px;
-  padding: 0.3em 0.8em;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-.btn-load-inline-demo:hover {
-  opacity: 0.9;
-}
-
-
 /* ==========================================================================
-   Prototype #20: Add Course Dialog Requirement Check & Waiver Workflow Styles
+   Add Course Dialog Requirement Check & Waiver Workflow Styles
    ========================================================================== */
 
 .addCourseDialogWrapper {
@@ -1848,6 +1709,12 @@ main,
 .audit-item.missing {
   border-left-color: var(--red);
   background-color: rgba(243, 139, 168, 0.08);
+}
+
+.audit-item.alternative {
+  border-left-color: var(--surface2);
+  background-color: rgba(147, 153, 178, 0.08);
+  opacity: 0.85;
 }
 
 .audit-status-icon {

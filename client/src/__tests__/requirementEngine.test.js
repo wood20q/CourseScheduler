@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { 
   normalizeDNF, 
   evaluateDNF, 
-  getAvailableCourseCodes, 
   validateSchedule,
   simulateScheduleMutation 
 } from '../utils/requirementEngine';
