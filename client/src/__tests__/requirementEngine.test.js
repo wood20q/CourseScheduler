@@ -3,7 +3,8 @@ import {
   normalizeDNF, 
   evaluateDNF, 
   getAvailableCourseCodes, 
-  validateSchedule 
+  validateSchedule,
+  simulateScheduleMutation 
 } from '../utils/requirementEngine';
 
 describe('Requirement Engine', () => {
@@ -116,6 +117,63 @@ describe('Requirement Engine', () => {
       expect(result.summary.isValid).toBe(true);
       const physDiag = result.diagnostics.find(d => d.courseCode === 'PHYS200');
       expect(physDiag.overallStatus).toBe('SATISFIED');
+    });
+  });
+
+  describe('simulateScheduleMutation', () => {
+    const catalog = [
+      { code: 'CS120', prerequisites: [] },
+      { code: 'CS220', prerequisites: ['CS120'] },
+      { code: 'CS310', prerequisites: ['CS220'] },
+      { code: 'ART110', prerequisites: [] }
+    ];
+
+    const baseSchedule = {
+      transferCourses: [],
+      years: [
+        [
+          [{ code: 'CS120' }],
+          [{ code: 'CS220' }],
+          [{ code: 'CS310' }]
+        ],
+        [
+          [{ code: 'ART110' }],
+          [],
+          []
+        ],
+        [[], [], []],
+        [[], [], []]
+      ]
+    };
+
+    it('detects downstream impact when removing a required course', () => {
+      const res = simulateScheduleMutation(baseSchedule, 'CS120', 'remove', null, catalog);
+      expect(res.hasDownstreamImpact).toBe(true);
+      expect(res.affectedCourses.length).toBeGreaterThanOrEqual(1);
+      const affectedCodes = res.affectedCourses.map(c => c.courseCode);
+      expect(affectedCodes).toContain('CS220');
+      expect(res.affectedCourses[0].reason).toMatch(/CS120/i);
+    });
+
+    it('detects downstream impact when moving a prerequisite to a later term than its dependent', () => {
+      // Move CS120 from Year 1 Term 1 to Year 1 Term 3 (after CS220)
+      const res = simulateScheduleMutation(baseSchedule, 'CS120', 'move', [0, 2], catalog);
+      expect(res.hasDownstreamImpact).toBe(true);
+      const affectedCodes = res.affectedCourses.map(c => c.courseCode);
+      expect(affectedCodes).toContain('CS220');
+    });
+
+    it('reports no downstream impact when moving to a safe earlier or same location', () => {
+      // Move CS310 (which has no dependents in this schedule) to Year 2 Term 2
+      const res = simulateScheduleMutation(baseSchedule, 'CS310', 'move', [1, 1], catalog);
+      expect(res.hasDownstreamImpact).toBe(false);
+      expect(res.affectedCourses).toEqual([]);
+    });
+
+    it('reports no downstream impact when removing an elective without dependents', () => {
+      const res = simulateScheduleMutation(baseSchedule, 'ART110', 'remove', null, catalog);
+      expect(res.hasDownstreamImpact).toBe(false);
+      expect(res.affectedCourses).toEqual([]);
     });
   });
 });

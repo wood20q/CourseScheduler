@@ -1816,6 +1816,9 @@ main,
 }
 
 .audit-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 0.5em;
@@ -2113,3 +2116,647 @@ main,
   opacity: 0.92;
   transform: translateY(-1px);
 }
+
+/* ==========================================================================
+   Issue #21 Prototypes: Downstream Mutation Warnings & Waiver Management
+   ========================================================================== */
+
+/* --- Floating Prototype Switcher Bar --- */
+.prototype-floating-switcher {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: var(--surface0);
+  border: 2px solid var(--mauve);
+  padding: 8px 18px;
+  border-radius: 9999px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65);
+  z-index: 9999;
+  backdrop-filter: blur(8px);
+}
+
+.proto-arrow-btn {
+  background: var(--mantle);
+  color: var(--mauve);
+  border: 1px solid var(--surface2);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.15s ease;
+}
+
+.proto-arrow-btn:hover {
+  background: var(--mauve);
+  color: var(--crust);
+}
+
+.proto-label-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.proto-tag {
+  font-size: 0.68em;
+  font-weight: 800;
+  color: var(--mauve);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.proto-variant-title {
+  font-size: 0.88em;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* --- Manage Course Variant A: Inline Accordion Warning & Checkbox --- */
+.manage-variant-a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85em;
+}
+
+.variant-a-requirement-strip {
+  background-color: var(--mantle);
+  border: 1px solid var(--surface2);
+  border-radius: 12px;
+  padding: 0.7em 0.9em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+
+.variant-a-req-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.variant-a-req-title {
+  font-size: 0.88em;
+  font-weight: 600;
+  color: var(--subtext1);
+}
+
+.variant-a-missing-desc {
+  font-size: 0.82em;
+  color: var(--red);
+  line-height: 1.35;
+}
+
+.variant-a-waiver-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+  margin-top: 0.3em;
+  padding-top: 0.4em;
+  border-top: 1px dashed var(--surface2);
+}
+
+.variant-a-downstream-card {
+  background-color: rgba(249, 226, 175, 0.08);
+  border: 1.5px solid var(--yellow);
+  border-radius: 12px;
+  padding: 0.8em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45em;
+  margin-top: 0.4em;
+}
+
+.variant-a-downstream-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  color: var(--yellow);
+  font-size: 0.9em;
+}
+
+.downstream-summary {
+  font-size: 0.83em;
+  color: var(--subtext1);
+  line-height: 1.35;
+}
+
+.btn-accordion-toggle {
+  background: transparent;
+  border: none;
+  color: var(--mauve);
+  font-size: 0.8em;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.downstream-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.3em 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+}
+
+.downstream-item {
+  background-color: var(--mantle);
+  border-left: 3px solid var(--yellow);
+  border-radius: 6px;
+  padding: 0.4em 0.6em;
+  font-size: 0.8em;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  flex-wrap: wrap;
+}
+
+.downstream-code {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.downstream-loc {
+  color: var(--subtext0);
+  font-size: 0.9em;
+}
+
+.downstream-reason {
+  color: var(--red);
+  font-size: 0.9em;
+}
+
+.downstream-ack-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  cursor: pointer;
+  font-size: 0.82em;
+  font-weight: 600;
+  color: var(--yellow);
+  margin-top: 0.4em;
+}
+
+.downstream-ack-label input[type="checkbox"] {
+  accent-color: var(--yellow);
+  width: 1.1em;
+  height: 1.1em;
+}
+
+.variant-a-remove-warning {
+  background-color: rgba(235, 160, 172, 0.1);
+  border: 1px solid var(--red);
+  border-radius: 8px;
+  padding: 0.6em;
+  margin: 0.5em 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+}
+
+.remove-warning-text {
+  font-size: 0.82em;
+  color: var(--red);
+  line-height: 1.3;
+}
+
+.remove-reassurance {
+  font-size: 0.76em;
+  color: var(--subtext0);
+  font-style: italic;
+}
+
+/* --- Manage Course Variant B: Interstitial Modal & Audit Card --- */
+.manage-variant-b {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85em;
+}
+
+.variant-b-audit-actions {
+  padding: 0.6em 0.9em;
+  background-color: var(--surface0);
+  border-top: 1px solid var(--surface2);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-grant-waiver {
+  background: linear-gradient(135deg, var(--peach), var(--yellow));
+  color: var(--crust);
+  border: none;
+  border-radius: 10px;
+  padding: 0.5em 1em;
+  font-size: 0.85em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-revoke-waiver {
+  background-color: var(--surface2);
+  color: var(--subtext1);
+  border: 1px solid var(--surface2);
+  border-radius: 10px;
+  padding: 0.5em 1em;
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-revoke-waiver:hover {
+  background-color: var(--red);
+  color: var(--crust);
+  border-color: var(--red);
+}
+
+.interstitial-overlay {
+  z-index: 1100;
+}
+
+.interstitial-wrapper {
+  max-width: 520px;
+  border-color: var(--yellow);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.75);
+}
+
+.interstitial-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+}
+
+.interstitial-warning-badge {
+  background-color: rgba(249, 226, 175, 0.15);
+  color: var(--yellow);
+  font-size: 0.75em;
+  font-weight: 800;
+  padding: 0.2em 0.6em;
+  border-radius: 9999px;
+  width: fit-content;
+  border: 1px solid var(--yellow);
+}
+
+.interstitial-desc {
+  font-size: 0.9em;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.interstitial-affected-box {
+  background-color: var(--mantle);
+  border: 1.5px solid var(--surface2);
+  border-radius: 12px;
+  padding: 0.7em 0.9em;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.interstitial-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.interstitial-item {
+  border-bottom: 1px solid var(--surface1);
+  padding-bottom: 0.4em;
+}
+
+.interstitial-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.interstitial-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.interstitial-code {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.interstitial-loc {
+  font-size: 0.8em;
+  color: var(--mauve);
+}
+
+.interstitial-item-reason {
+  font-size: 0.8em;
+  color: var(--red);
+  margin-top: 0.2em;
+}
+
+.interstitial-reassurance-card {
+  background-color: rgba(137, 180, 250, 0.08);
+  border: 1px solid var(--blue);
+  border-radius: 10px;
+  padding: 0.65em 0.8em;
+  display: flex;
+  gap: 0.6em;
+  font-size: 0.82em;
+  color: var(--subtext1);
+  line-height: 1.35;
+}
+
+.pill-sample {
+  background-color: rgba(235, 160, 172, 0.2);
+  color: var(--red);
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.9em;
+}
+
+.interstitial-actions {
+  display: flex;
+  gap: 0.75em;
+  justify-content: flex-end;
+  margin-top: 0.5em;
+}
+
+.btn-interstitial-cancel {
+  background-color: var(--surface2);
+  color: var(--text);
+  border: none;
+  border-radius: 12px;
+  padding: 0.65em 1.1em;
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-interstitial-confirm {
+  background: linear-gradient(135deg, var(--peach), var(--red));
+  color: var(--crust);
+  border: none;
+  border-radius: 12px;
+  padding: 0.65em 1.2em;
+  font-size: 0.9em;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* --- Manage Course Variant C: Tabbed Console & Timeline --- */
+.manage-variant-c {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85em;
+}
+
+.variant-c-tab-nav {
+  display: flex;
+  gap: 0.4em;
+  border-bottom: 2px solid var(--surface2);
+  padding-bottom: 0.2em;
+}
+
+.variant-c-tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--subtext0);
+  font-weight: 700;
+  font-size: 0.88em;
+  padding: 0.5em 0.8em;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.variant-c-tab-btn.active {
+  color: var(--mauve);
+  background-color: var(--mantle);
+  border-bottom: 2px solid var(--mauve);
+}
+
+.tab-alert-dot {
+  color: var(--yellow);
+  font-size: 1.2em;
+  line-height: 1;
+}
+
+.tab-alert-badge {
+  background-color: var(--red);
+  color: var(--crust);
+  font-size: 0.65em;
+  padding: 0.15em 0.4em;
+  border-radius: 9999px;
+  font-weight: 800;
+}
+
+.tab-waived-badge {
+  background-color: var(--mauve);
+  color: var(--crust);
+  font-size: 0.65em;
+  padding: 0.15em 0.4em;
+  border-radius: 9999px;
+  font-weight: 800;
+}
+
+.variant-c-impact-strip {
+  border-radius: 12px;
+  padding: 0.7em 0.85em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  margin-top: 0.4em;
+}
+
+.variant-c-impact-strip.clean {
+  background-color: rgba(166, 227, 161, 0.08);
+  border: 1px solid var(--green);
+  color: var(--green);
+  font-size: 0.84em;
+}
+
+.variant-c-impact-strip.has-impact {
+  background-color: rgba(249, 226, 175, 0.08);
+  border: 1.5px solid var(--yellow);
+}
+
+.impact-strip-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 0.86em;
+  color: var(--text);
+}
+
+.timeline-flow {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--subtext1);
+  margin-top: 0.2em;
+}
+
+.flow-step.current {
+  color: var(--subtext0);
+}
+
+.flow-step.target {
+  color: var(--mauve);
+}
+
+.timeline-affected {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+  margin-top: 0.3em;
+}
+
+.timeline-item {
+  font-size: 0.8em;
+  color: var(--subtext1);
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.timeline-badge {
+  background-color: var(--red);
+  color: var(--crust);
+  font-size: 0.7em;
+  font-weight: 800;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+.variant-c-ack {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 0.82em;
+  color: var(--yellow);
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.3em;
+}
+
+.variant-c-ack input[type="checkbox"] {
+  accent-color: var(--yellow);
+}
+
+.variant-c-waiver-console {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  margin-top: 0.5em;
+}
+
+.waiver-toggle-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+}
+
+.variant-c-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 0.9em;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.toggle-explanation {
+  font-size: 0.78em;
+  color: var(--subtext0);
+  padding-left: 1.6em;
+}
+
+.waiver-memo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  background-color: var(--mantle);
+  border: 1px solid var(--surface2);
+  border-radius: 10px;
+  padding: 0.6em;
+  margin-top: 0.3em;
+}
+
+.waiver-memo-form label {
+  font-size: 0.8em;
+  color: var(--subtext1);
+}
+
+.waiver-memo-form input {
+  padding: 0.45em 0.7em;
+  border-radius: 8px;
+  background: var(--surface0);
+  border: 1px solid var(--surface2);
+  color: var(--text);
+  font-size: 0.88em;
+}
+
+.memo-btn-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-save-memo {
+  background: var(--mauve);
+  color: var(--crust);
+  border: none;
+  border-radius: 6px;
+  padding: 0.3em 0.8em;
+  font-size: 0.78em;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.variant-c-rules-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.rule-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  background-color: var(--mantle);
+  border-radius: 8px;
+  padding: 0.35em 0.6em;
+  margin-bottom: 0.3em;
+  font-size: 0.82em;
+}
+
+.rule-chip.met {
+  border-left: 3px solid var(--green);
+}
+
+.rule-chip.missing {
+  border-left: 3px solid var(--red);
+}
+
+.rule-note {
+  margin-left: auto;
+  font-size: 0.85em;
+  color: var(--subtext0);
+}
+

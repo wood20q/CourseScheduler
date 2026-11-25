@@ -2,6 +2,7 @@
  * requirementEngine.js
  * Domain engine for prerequisite/corequisite parsing, evaluation, and schedule graph validation.
  */
+import { removeCourseFromSchedule, moveCourseInSchedule } from './scheduleMigration';
 
 /**
  * Normalizes any requirement representation (DNF array, flat array, or boolean string)
@@ -263,5 +264,72 @@ export function validateSchedule(schedule, catalogCourses = []) {
       waivedCount,
       isValid: unsatisfiedCount === 0
     }
+  };
+}
+
+/**
+ * Simulates a schedule mutation (e.g. moving or removing a course)
+ * and determines if any downstream courses have their requirements broken.
+ * Returns { hasDownstreamImpact: boolean, affectedCourses: Array<AffectedCourse> }.
+ */
+export function simulateScheduleMutation(schedule, courseCode, action, targetLocation = null, catalogCourses = []) {
+  if (!schedule || !courseCode) {
+    return { hasDownstreamImpact: false, affectedCourses: [] };
+  }
+
+  const cleanCode = String(courseCode).trim().toUpperCase();
+  const baseline = validateSchedule(schedule, catalogCourses);
+  const baselineMap = new Map();
+  baseline.diagnostics.forEach(d => {
+    baselineMap.set(d.courseCode.trim().toUpperCase(), d);
+  });
+
+  let mutatedSchedule;
+  if (action === 'remove') {
+    mutatedSchedule = removeCourseFromSchedule(schedule, cleanCode);
+  } else if (action === 'move') {
+    mutatedSchedule = moveCourseInSchedule(schedule, cleanCode, targetLocation);
+  } else {
+    return { hasDownstreamImpact: false, affectedCourses: [] };
+  }
+
+  const mutated = validateSchedule(mutatedSchedule, catalogCourses);
+  const affectedCourses = [];
+
+  mutated.diagnostics.forEach(newDiag => {
+    const code = newDiag.courseCode.trim().toUpperCase();
+    if (code === cleanCode) return;
+
+    const prevDiag = baselineMap.get(code);
+    if (!prevDiag) return;
+
+    // Check if prerequisite or corequisite was satisfied before but is now unsatisfied
+    const prereqBroken = prevDiag.prereqResult?.isSatisfied && !newDiag.prereqResult?.isSatisfied;
+    const coreqBroken = prevDiag.coreqResult?.isSatisfied && !newDiag.coreqResult?.isSatisfied;
+
+    if (prereqBroken || coreqBroken) {
+      const locLabel = newDiag.location.type === 'transfer'
+        ? 'Pre-College / Transfer Credits'
+        : `Year ${newDiag.location.year + 1}, Term ${newDiag.location.term + 1}`;
+
+      const reason = prereqBroken
+        ? `Missing prerequisite: ${newDiag.prereqResult.missingSummary}`
+        : `Missing corequisite: ${newDiag.coreqResult.missingSummary}`;
+
+      affectedCourses.push({
+        id: newDiag.id,
+        courseCode: newDiag.courseCode,
+        locationLabel: locLabel,
+        location: newDiag.location,
+        reason,
+        prereqResult: newDiag.prereqResult,
+        coreqResult: newDiag.coreqResult
+      });
+    }
+  });
+
+  return {
+    hasDownstreamImpact: affectedCourses.length > 0,
+    affectedCourses
   };
 }

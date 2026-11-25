@@ -7,6 +7,7 @@ import ImportExportDialog from './components/ImportExportDialog'
 import TransferCreditsSection from './components/TransferCreditsSection'
 import AddTransferCourseDialog from './components/AddTransferCourseDialog'
 import { RequirementInspectorModal } from './components/prototypes/RequirementFlagVariants'
+import PrototypeSwitcher from './components/prototypes/PrototypeSwitcher'
 import { 
   addCourseToSchedule as apiAddCourse, 
   removeCourseFromSchedule as apiRemoveCourse, 
@@ -24,6 +25,12 @@ import {
 import { validateSchedule } from './utils/requirementEngine'
 
 const studentName = "Chad Quick"
+
+const PROTOTYPE_VARIANTS = [
+  { key: 'A', name: 'Variant A (Inline Accordion & Checkbox)' },
+  { key: 'B', name: 'Variant B (Interstitial Modal & Audit Card)' },
+  { key: 'C', name: 'Variant C (Tabbed Console & Impact Timeline)' }
+];
 
 const CATALOG_REQUIREMENTS = {
   CS220: { prerequisites: ['CS120'] },
@@ -90,6 +97,24 @@ function App() {
   const [inspectedRequirement, setInspectedRequirement] = useState(null)
   const [isIODialogOpen, setIsIODialogOpen] = useState(false)
   const [isAddTransferOpen, setIsAddTransferOpen] = useState(false)
+
+  const [prototypeVariant, setPrototypeVariant] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const v = params.get('variant')?.toUpperCase();
+      if (v && ['A', 'B', 'C'].includes(v)) return v;
+    }
+    return 'A';
+  });
+
+  const handleSelectVariant = (newVariant) => {
+    setPrototypeVariant(newVariant);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('variant', newVariant);
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
 
   useEffect(() => {
     try {
@@ -329,11 +354,14 @@ function App() {
       {managedCourse && (
         <ManageCourseDialog
           course={managedCourse}
+          schedule={schedule}
+          catalogCourses={catalogWithRules}
           onClose={() => setManagedCourse(null)}
           onRemove={handleRemoveCourse}
           onMove={handleMoveCourse}
           onUpdate={handleUpdateCourse}
-          catalogCourses={catalogWithRules}
+          onToggleWaiver={handleToggleWaiver}
+          variant={prototypeVariant}
         />
       )}
       {isIODialogOpen && (
@@ -351,6 +379,13 @@ function App() {
           validation={inspectedRequirement.validation}
           onClose={() => setInspectedRequirement(null)}
           onToggleWaiver={handleToggleWaiver}
+        />
+      )}
+      {process.env.NODE_ENV !== 'production' && (
+        <PrototypeSwitcher
+          variants={PROTOTYPE_VARIANTS}
+          currentVariant={prototypeVariant}
+          onSelectVariant={handleSelectVariant}
         />
       )}
     </div>

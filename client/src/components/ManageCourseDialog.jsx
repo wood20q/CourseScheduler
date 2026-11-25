@@ -1,28 +1,26 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { formatLocationKey, parseLocation } from "../utils/scheduleMigration";
+import { validateSchedule } from "../utils/requirementEngine";
+import { 
+    ManageCourseVariantA, 
+    ManageCourseVariantB, 
+    ManageCourseVariantC 
+} from "./prototypes/ManageCourseVariants";
 
 function ManageCourseDialog({ 
     course, 
+    schedule,
+    catalogCourses = [],
     onClose, 
     onRemove, 
     onMove, 
     onUpdate,
-    catalogCourses = [] 
+    onToggleWaiver,
+    variant
 }) {
     const isTransfer = Boolean(course?.isTransfer);
 
-    const initialLocation = course?.currentTerm ? formatLocationKey(course.currentTerm) : "0,0";
-    const [targetLocation, setTargetLocation] = useState(initialLocation);
-    const parsedCurrent = parseLocation(course?.currentTerm);
-    const [selectedYear, setSelectedYear] = useState(
-        parsedCurrent.type === "term" ? parsedCurrent.year : 0
-    );
-    const [selectedTerm, setSelectedTerm] = useState(
-        parsedCurrent.type === "term" ? parsedCurrent.term : 0
-    );
-    const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
-
-    // Inline edit state
+    // Inline edit state for transfer courses
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(course?.name || "");
     const [editCredits, setEditCredits] = useState(course?.credits ?? 0);
@@ -31,21 +29,27 @@ function ManageCourseDialog({
     const [editDescription, setEditDescription] = useState(course?.description || "");
     const [editError, setEditError] = useState("");
 
-    const handleMove = (e) => {
-        e.preventDefault();
-        if (isTransfer) {
-            const loc = targetLocation === "transfer" ? "transfer" : targetLocation.split(",").map(Number);
-            onMove(loc, course.code);
-        } else {
-            onMove([selectedYear, selectedTerm], course.code);
+    // Determine active variant from prop or URL query param
+    const activeVariant = useMemo(() => {
+        if (variant) return variant.toUpperCase();
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            const v = params.get("variant");
+            if (v && ["A", "B", "C"].includes(v.toUpperCase())) {
+                return v.toUpperCase();
+            }
         }
-        onClose();
-    };
+        return "A";
+    }, [variant]);
 
-    const handleConfirmRemove = () => {
-        onRemove(course.code);
-        onClose();
-    };
+    // Compute real-time validation diagnostic for this course
+    const courseValidation = useMemo(() => {
+        if (!schedule || !course) return null;
+        const res = validateSchedule(schedule, catalogCourses);
+        return res.diagnostics.find(
+            d => d.courseCode?.trim().toUpperCase() === course.code?.trim().toUpperCase()
+        ) || null;
+    }, [schedule, course, catalogCourses]);
 
     const handleSaveEdit = (e) => {
         e.preventDefault();
@@ -80,16 +84,8 @@ function ManageCourseDialog({
         onClose();
     };
 
-    const formatCurrentLocation = () => {
-        const parsed = parseLocation(course?.currentTerm);
-        if (parsed.type === "transfer") {
-            return "Pre-College / Transfer Credits";
-        }
-        return `Year ${parsed.year + 1}, Term ${parsed.term + 1}`;
-    };
-
     return (
-        <div className="dialogOverlay" onClick={onClose}>
+        <div className="dialogOverlay" onClick={onClose} role="dialog" aria-modal="true">
             <div className="dialogWrapper" onClick={(e) => e.stopPropagation()}>
                 <div className="dialogHeaderRow">
                     <h2>{isEditing ? "Edit Course Details" : "Course Details"}</h2>
@@ -104,144 +100,7 @@ function ManageCourseDialog({
                     )}
                 </div>
 
-                {!isEditing ? (
-                    <>
-                        <div className="dialogCourseInfo">
-                            <div className="dialogCourseTitleRow">
-                                <p className="dialogCourseName">
-                                    <strong>{course.code}:</strong> {course.name}
-                                </p>
-                                {isTransfer && <span className="transferBadge">Transfer</span>}
-                            </div>
-                            <p className="dialogCourseCredits">
-                                <strong>Credits:</strong> {course.credits}
-                            </p>
-                            <p className="dialogCourseCurrentTerm">
-                                <strong>Current Location:</strong> {formatCurrentLocation()}
-                            </p>
-                            {isTransfer && (
-                                <>
-                                    <p className="dialogCourseInstitution">
-                                        <strong>Institution:</strong> {course.institution || "None"}
-                                    </p>
-                                    <p className="dialogCourseSatisfies">
-                                        <strong>Satisfies:</strong> {course.satisfiesCourse || "None / General Elective"}
-                                    </p>
-                                </>
-                            )}
-                            <p className="dialogCourseDescription">
-                                <strong>Description:</strong> {course.description || "None"}
-                            </p>
-                        </div>
-
-                        <hr className="dialogDivider" />
-
-                        <form onSubmit={handleMove}>
-                            <h3 className="dialogSubheading">Move Course</h3>
-                            {isTransfer ? (
-                                <div className="formGroup">
-                                    <label htmlFor="move-location-select">Target Location:</label>
-                                    <select
-                                        id="move-location-select"
-                                        aria-label="Target Location:"
-                                        value={targetLocation}
-                                        onChange={(e) => setTargetLocation(e.target.value)}
-                                    >
-                                        <option value="transfer">Pre-College / Transfer Credits</option>
-                                        <optgroup label="Academic Years">
-                                            <option value="0,0">Year 1 Term 1</option>
-                                            <option value="0,1">Year 1 Term 2</option>
-                                            <option value="0,2">Year 1 Term 3</option>
-                                            <option value="1,0">Year 2 Term 1</option>
-                                            <option value="1,1">Year 2 Term 2</option>
-                                            <option value="1,2">Year 2 Term 3</option>
-                                            <option value="2,0">Year 3 Term 1</option>
-                                            <option value="2,1">Year 3 Term 2</option>
-                                            <option value="2,2">Year 3 Term 3</option>
-                                            <option value="3,0">Year 4 Term 1</option>
-                                            <option value="3,1">Year 4 Term 2</option>
-                                            <option value="3,2">Year 4 Term 3</option>
-                                        </optgroup>
-                                    </select>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="formGroup" id="yearWrapper">
-                                        <label htmlFor="move-year-select">Target Year:</label>
-                                        <select 
-                                            name="move-year-select" 
-                                            id="move-year-select" 
-                                            value={selectedYear} 
-                                            onChange={(e) => setSelectedYear(Number(e.target.value))}
-                                        >
-                                            <option value={0}>Year 1</option>
-                                            <option value={1}>Year 2</option>
-                                            <option value={2}>Year 3</option>
-                                            <option value={3}>Year 4</option>
-                                        </select>
-                                    </div>
-                                    <div className="formGroup" id="termWrapper">
-                                        <label htmlFor="move-term-select">Target Term:</label>
-                                        <select 
-                                            name="move-term-select" 
-                                            id="move-term-select" 
-                                            value={selectedTerm} 
-                                            onChange={(e) => setSelectedTerm(Number(e.target.value))}
-                                        >
-                                            <option value={0}>Term 1</option>
-                                            <option value={1}>Term 2</option>
-                                            <option value={2}>Term 3</option>
-                                        </select>
-                                    </div>
-                                </>
-                            )}
-
-                            <div className="formGroup">
-                                <button type="submit" className="btn-submit">Move Course</button>
-                            </div>
-                        </form>
-
-                        <hr className="dialogDivider" />
-
-                        <div className="dialogDangerZone">
-                            {!isConfirmingDelete ? (
-                                <button 
-                                    type="button" 
-                                    className="btn-danger" 
-                                    onClick={() => setIsConfirmingDelete(true)}
-                                >
-                                    Remove Course from Schedule
-                                </button>
-                            ) : (
-                                <div className="deleteConfirmBox">
-                                    <p className="deleteConfirmWarning">
-                                        Are you sure you want to remove <strong>{course.code}</strong> from your schedule?
-                                    </p>
-                                    <div className="deleteConfirmButtons">
-                                        <button 
-                                            type="button" 
-                                            className="btn-confirm-delete" 
-                                            onClick={handleConfirmRemove}
-                                        >
-                                            Yes, Remove Course
-                                        </button>
-                                        <button 
-                                            type="button" 
-                                            className="btn-cancel-delete" 
-                                            onClick={() => setIsConfirmingDelete(false)}
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="formGroup buttons">
-                            <button type="button" className="btn-close" onClick={onClose}>Close</button>
-                        </div>
-                    </>
-                ) : (
+                {isEditing ? (
                     <form className="inlineEditForm" onSubmit={handleSaveEdit}>
                         {editError && (
                             <div className="formErrorBox">
@@ -324,6 +183,48 @@ function ManageCourseDialog({
                             </button>
                         </div>
                     </form>
+                ) : (
+                    <>
+                        {activeVariant === "B" && (
+                            <ManageCourseVariantB
+                                course={course}
+                                schedule={schedule}
+                                catalogCourses={catalogCourses}
+                                onClose={onClose}
+                                onRemove={onRemove}
+                                onMove={onMove}
+                                onUpdate={onUpdate}
+                                onToggleWaiver={onToggleWaiver}
+                                courseValidation={courseValidation}
+                            />
+                        )}
+                        {activeVariant === "C" && (
+                            <ManageCourseVariantC
+                                course={course}
+                                schedule={schedule}
+                                catalogCourses={catalogCourses}
+                                onClose={onClose}
+                                onRemove={onRemove}
+                                onMove={onMove}
+                                onUpdate={onUpdate}
+                                onToggleWaiver={onToggleWaiver}
+                                courseValidation={courseValidation}
+                            />
+                        )}
+                        {activeVariant === "A" && (
+                            <ManageCourseVariantA
+                                course={course}
+                                schedule={schedule}
+                                catalogCourses={catalogCourses}
+                                onClose={onClose}
+                                onRemove={onRemove}
+                                onMove={onMove}
+                                onUpdate={onUpdate}
+                                onToggleWaiver={onToggleWaiver}
+                                courseValidation={courseValidation}
+                            />
+                        )}
+                    </>
                 )}
             </div>
         </div>
