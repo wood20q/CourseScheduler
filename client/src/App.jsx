@@ -6,7 +6,6 @@ import ManageCourseDialog from './components/ManageCourseDialog'
 import ImportExportDialog from './components/ImportExportDialog'
 import TransferCreditsSection from './components/TransferCreditsSection'
 import AddTransferCourseDialog from './components/AddTransferCourseDialog'
-import PrototypeSwitcher from './components/PrototypeSwitcher'
 import { RequirementInspectorModal } from './components/prototypes/RequirementFlagVariants'
 import { 
   addCourseToSchedule as apiAddCourse, 
@@ -70,16 +69,6 @@ const createDemoSchedule = () => ({
 })
 
 function App() {
-  const [variant, setVariant] = useState(() => {
-    try {
-      const params = new URLSearchParams(window.location.search)
-      const v = (params.get('variant') || 'A').toUpperCase()
-      return ['A', 'B', 'C'].includes(v) ? v : 'A'
-    } catch {
-      return 'A'
-    }
-  })
-
   const [schedule, setSchedule] = useState(() => {
     try {
       const saved = localStorage.getItem('course_scheduler_data')
@@ -101,36 +90,6 @@ function App() {
   const [inspectedRequirement, setInspectedRequirement] = useState(null)
   const [isIODialogOpen, setIsIODialogOpen] = useState(false)
   const [isAddTransferOpen, setIsAddTransferOpen] = useState(false)
-
-  // Sync variant selection to state and URL search params
-  const handleSelectVariant = (newVariant) => {
-    const upper = String(newVariant || 'A').toUpperCase()
-    setVariant(upper)
-    try {
-      const url = new URL(window.location.href)
-      url.searchParams.set('variant', upper)
-      window.history.replaceState({}, '', url.toString())
-    } catch (e) {
-      console.warn("Could not update URL param:", e)
-    }
-  }
-
-  // Handle browser back/forward buttons
-  useEffect(() => {
-    const handlePopState = () => {
-      try {
-        const params = new URLSearchParams(window.location.search)
-        const v = (params.get('variant') || 'A').toUpperCase()
-        if (['A', 'B', 'C'].includes(v)) {
-          setVariant(v)
-        }
-      } catch {
-        // ignore
-      }
-    }
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [])
 
   useEffect(() => {
     try {
@@ -264,7 +223,7 @@ function App() {
 
   const allScheduledCourses = (schedule.transferCourses || []).concat((schedule.years || []).flat(2))
 
-  // Enriched schedule for rendering with diagnostics and variant
+  // Enriched schedule for rendering with diagnostics (finalized Variant A pill from #19)
   const enrichedYears = useMemo(() => {
     return (schedule.years || []).map((year, yIdx) => {
       return year.map((term, tIdx) => {
@@ -273,12 +232,12 @@ function App() {
           return {
             ...course,
             validation: diag,
-            variant
+            variant: 'A'
           }
         })
       })
     })
-  }, [schedule.years, validationResult.diagnosticsMap, variant])
+  }, [schedule.years, validationResult.diagnosticsMap])
 
   const totalFlaggedCount = (validationResult.summary.unsatisfiedCount || 0) + (validationResult.summary.waivedCount || 0)
 
@@ -354,6 +313,8 @@ function App() {
       {selectedCourse && (
         <AddCourseDialog
           course={selectedCourse}
+          schedule={schedule}
+          catalogCourses={catalogWithRules}
           onClose={() => setSelectedCourse(null)}
           onConfirm={handleAddCourse}
         />
@@ -392,14 +353,6 @@ function App() {
           onToggleWaiver={handleToggleWaiver}
         />
       )}
-
-      {/* Floating Prototype Switcher for Ticket #19 */}
-      <PrototypeSwitcher 
-        currentVariant={variant}
-        onSelectVariant={handleSelectVariant}
-        onLoadDemoSchedule={handleLoadDemo}
-        flaggedCount={totalFlaggedCount}
-      />
     </div>
   )
 }

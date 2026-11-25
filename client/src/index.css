@@ -1552,3 +1552,564 @@ main,
 .btn-load-inline-demo:hover {
   opacity: 0.9;
 }
+
+
+/* ==========================================================================
+   Prototype #20: Add Course Dialog Requirement Check & Waiver Workflow Styles
+   ========================================================================== */
+
+.addCourseDialogWrapper {
+  max-width: 560px;
+}
+
+.dialogHeaderRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  margin-bottom: 0.3em;
+}
+
+@media (min-width: 480px) {
+  .dialogHeaderRow {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.dialog-prototype-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  background-color: var(--mantle);
+  padding: 0.25em 0.4em;
+  border-radius: 9999px;
+  border: 1px solid var(--surface2);
+  flex-wrap: wrap;
+}
+
+.dialog-tab-intro {
+  font-size: 0.72em;
+  font-weight: 700;
+  color: var(--subtext0);
+  padding: 0 0.4em;
+}
+
+.dialog-tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--subtext1);
+  font-size: 0.72em;
+  font-weight: 600;
+  padding: 0.25em 0.6em;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dialog-tab-btn:hover {
+  color: var(--text);
+  background-color: var(--surface1);
+}
+
+.dialog-tab-btn.active {
+  background-color: var(--mauve);
+  color: var(--crust);
+  font-weight: 700;
+}
+
+/* --- Common Requirement Badges --- */
+.req-type-pill {
+  display: inline-block;
+  font-size: 0.7em;
+  font-weight: 700;
+  padding: 0.15em 0.5em;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.req-type-pill.prereq,
+.badge-type.prereq {
+  background-color: rgba(243, 139, 168, 0.2);
+  color: var(--red);
+  border: 1px solid rgba(243, 139, 168, 0.4);
+}
+
+.req-type-pill.coreq,
+.badge-type.coreq {
+  background-color: rgba(137, 180, 250, 0.2);
+  color: var(--blue);
+  border: 1px solid rgba(137, 180, 250, 0.4);
+}
+
+/* --- Variant A: Inline Checkbox Alert & Canonical Add Course Form --- */
+.add-course-form,
+.add-course-variant-a,
+.add-course-variant-d {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85em;
+}
+
+.term-selector-row,
+.variant-b-term-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75em;
+}
+
+.requirement-audit-card,
+.variant-b-audit-card {
+  background-color: var(--mantle);
+  border: 1.5px solid var(--surface2);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.waiver-box,
+.variant-a-waiver-box {
+  background-color: rgba(24, 24, 37, 0.7);
+  border: 1px dashed var(--yellow);
+  border-radius: 8px;
+  padding: 0.65em 0.8em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  margin-top: 0.3em;
+}
+
+.waiver-checkbox-label,
+.variant-a-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--yellow);
+  font-size: 0.88em;
+}
+
+.waiver-checkbox-label input[type="checkbox"],
+.variant-a-checkbox-label input[type="checkbox"] {
+  width: 1.1em;
+  height: 1.1em;
+  accent-color: var(--yellow);
+  cursor: pointer;
+}
+
+.waiver-caption {
+  font-size: 0.76em;
+  color: var(--subtext0);
+  line-height: 1.35;
+  padding-left: 1.7em;
+}
+
+.btn-waived-action {
+  background: linear-gradient(135deg, var(--peach), var(--yellow)) !important;
+  color: var(--crust) !important;
+  font-weight: 700 !important;
+  border: none !important;
+}
+
+.btn-disabled {
+  opacity: 0.45;
+  cursor: not-allowed !important;
+  background-color: var(--surface2) !important;
+  color: var(--subtext0) !important;
+}
+
+/* --- Variant B: Embedded Audit Checklist Card --- */
+.add-course-variant-b {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85em;
+}
+
+.variant-b-term-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75em;
+}
+
+.term-inline-group label {
+  font-size: 0.85em;
+  margin-bottom: 0.25em;
+}
+
+.variant-b-audit-card {
+  background-color: var(--mantle);
+  border: 1.5px solid var(--surface2);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.audit-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--surface0);
+  padding: 0.6em 0.9em;
+  border-bottom: 1px solid var(--surface2);
+}
+
+.audit-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+}
+
+.audit-card-title {
+  font-weight: 700;
+  font-size: 0.9em;
+  color: var(--mauve);
+}
+
+.audit-target-term {
+  font-size: 0.75em;
+  color: var(--subtext0);
+}
+
+.audit-badge {
+  font-size: 0.72em;
+  font-weight: 700;
+  padding: 0.2em 0.6em;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.audit-badge.satisfied {
+  background-color: rgba(166, 227, 161, 0.2);
+  color: var(--green);
+  border: 1px solid var(--green);
+}
+
+.audit-badge.unsatisfied {
+  background-color: rgba(243, 139, 168, 0.2);
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+
+.audit-card-body {
+  padding: 0.75em 0.9em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.audit-empty-notice {
+  font-size: 0.85em;
+  color: var(--subtext1);
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.audit-empty-notice .icon {
+  color: var(--green);
+}
+
+.audit-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.audit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6em;
+  padding: 0.5em 0.7em;
+  border-radius: 8px;
+  font-size: 0.85em;
+  background-color: var(--surface0);
+  border-left: 3px solid transparent;
+}
+
+.audit-item.met {
+  border-left-color: var(--green);
+}
+
+.audit-item.missing {
+  border-left-color: var(--red);
+  background-color: rgba(243, 139, 168, 0.08);
+}
+
+.audit-status-icon {
+  font-size: 1em;
+  line-height: 1.2;
+}
+
+.audit-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  flex: 1;
+}
+
+.audit-item-main {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.badge-type {
+  font-size: 0.68em;
+  font-weight: 700;
+  padding: 0.1em 0.45em;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.audit-item-code {
+  color: var(--text);
+  font-size: 0.92em;
+}
+
+.audit-item-desc {
+  font-size: 0.78em;
+  color: var(--subtext0);
+}
+
+.variant-b-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.split-action-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.btn-waive-and-add {
+  background: linear-gradient(135deg, var(--peach), var(--mauve)) !important;
+  color: var(--crust) !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+}
+
+.btn-waived-split {
+  background: linear-gradient(135deg, var(--peach), var(--yellow)) !important;
+  color: var(--crust) !important;
+  font-weight: 700 !important;
+  border: none !important;
+  white-space: nowrap;
+}
+
+/* --- Variant C: Two-Step Pre-Flight Wizard --- */
+.add-course-variant-c {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85em;
+}
+
+.wizard-step-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.4em 0.8em;
+  background-color: var(--mantle);
+  border-radius: 10px;
+  border: 1px solid var(--surface2);
+}
+
+.step-pill {
+  font-size: 0.72em;
+  font-weight: 700;
+  background-color: var(--mauve);
+  color: var(--crust);
+  padding: 0.2em 0.6em;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.step-label {
+  font-size: 0.82em;
+  font-weight: 600;
+  color: var(--subtext1);
+}
+
+.wizard-step-1 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85em;
+}
+
+.variant-c-eligibility-callout {
+  margin-top: 0.2em;
+}
+
+.eligibility-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6em;
+  padding: 0.75em 1em;
+  border-radius: 10px;
+  font-size: 0.85em;
+}
+
+.eligibility-box.satisfied {
+  background-color: rgba(166, 227, 161, 0.12);
+  border: 1.5px solid var(--green);
+}
+
+.eligibility-box.satisfied strong {
+  color: var(--green);
+}
+
+.eligibility-box.unsatisfied {
+  background-color: rgba(243, 139, 168, 0.12);
+  border: 1.5px solid var(--red);
+}
+
+.eligibility-box.unsatisfied strong {
+  color: var(--red);
+}
+
+.box-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+}
+
+.box-text p {
+  font-size: 0.82em;
+  color: var(--subtext1);
+}
+
+.btn-wizard-proceed {
+  background-color: var(--peach) !important;
+  color: var(--crust) !important;
+  font-weight: 700 !important;
+}
+
+.wizard-step-2 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8em;
+  animation: fadeIn 0.2s ease;
+}
+
+.btn-wizard-back {
+  background: transparent;
+  border: none;
+  color: var(--mauve);
+  font-size: 0.82em;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  padding: 0.2em 0.4em;
+  transition: opacity 0.15s ease;
+}
+
+.btn-wizard-back:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.waiver-review-card {
+  background-color: var(--mantle);
+  border: 2px solid var(--yellow);
+  border-radius: 14px;
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+}
+
+.waiver-review-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  color: var(--yellow);
+  font-size: 1em;
+}
+
+.waiver-explanation {
+  font-size: 0.85em;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.unmet-summary-box {
+  background-color: var(--surface0);
+  border-radius: 8px;
+  padding: 0.6em 0.8em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+
+.unmet-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  font-size: 0.85em;
+  color: var(--peach);
+  font-weight: 600;
+}
+
+.waiver-notice {
+  font-size: 0.78em;
+  color: var(--subtext0);
+  background-color: rgba(137, 180, 250, 0.1);
+  border-left: 3px solid var(--blue);
+  padding: 0.5em 0.7em;
+  border-radius: 4px;
+}
+
+.waiver-ack-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6em;
+  cursor: pointer;
+  font-size: 0.84em;
+  color: var(--yellow);
+  font-weight: 600;
+  margin-top: 0.2em;
+}
+
+.waiver-ack-label input[type="checkbox"] {
+  width: 1.15em;
+  height: 1.15em;
+  accent-color: var(--yellow);
+  margin-top: 0.1em;
+  cursor: pointer;
+}
+
+/* --- Prototype Switcher Additions --- */
+.switcher-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  flex-wrap: wrap;
+}
+
+.switcher-test-btn {
+  background: linear-gradient(135deg, var(--mauve), var(--blue));
+  color: var(--crust);
+  border: none;
+  border-radius: 9999px;
+  padding: 0.35em 0.85em;
+  font-size: 0.76em;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: all 0.15s ease;
+}
+
+.switcher-test-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
