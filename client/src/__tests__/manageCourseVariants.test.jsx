@@ -298,5 +298,75 @@ describe('Issue #21 - Downstream Mutation Warnings & Manage Course Waiver Manage
       fireEvent.click(waiverBox);
       expect(onToggleWaiver).toHaveBeenCalledWith('CS220');
     });
+
+    it('immediately reflects unchecking waiver from true to false and displays missing requirements without re-opening', () => {
+      let currentSchedule = {
+        transferCourses: [],
+        years: [
+          [
+            [{ code: 'CS220', name: 'Data Structures', isWaived: true }],
+            [],
+            []
+          ],
+          [[], [], []],
+          [[], [], []],
+          [[], [], []]
+        ]
+      };
+
+      const handleToggle = vi.fn((code) => {
+        currentSchedule = {
+          ...currentSchedule,
+          years: currentSchedule.years.map(y =>
+            y.map(t =>
+              t.map(c => (c.code === code ? { ...c, isWaived: !c.isWaived } : c))
+            )
+          )
+        };
+      });
+
+      const { rerender } = render(
+        <ManageCourseDialog
+          course={currentSchedule.years[0][0][0]}
+          schedule={currentSchedule}
+          catalogCourses={catalog}
+          onClose={vi.fn()}
+          onRemove={vi.fn()}
+          onMove={vi.fn()}
+          onToggleWaiver={handleToggle}
+          variant="D"
+        />
+      );
+
+      // Initially waived
+      expect(screen.getByText(/🏷️ Waived by Override/i)).toBeInTheDocument();
+      expect(screen.getByText(/Waived requirement:/i)).toBeInTheDocument();
+      const waiverBox = screen.getByLabelText(/Advisor Requirement Waiver/i);
+      expect(waiverBox).toBeChecked();
+
+      // Click to uncheck waiver
+      fireEvent.click(waiverBox);
+      expect(handleToggle).toHaveBeenCalledWith('CS220');
+
+      // Re-render dialog with updated schedule (simulating App's schedule state update)
+      rerender(
+        <ManageCourseDialog
+          course={currentSchedule.years[0][0][0]}
+          schedule={currentSchedule}
+          catalogCourses={catalog}
+          onClose={vi.fn()}
+          onRemove={vi.fn()}
+          onMove={vi.fn()}
+          onToggleWaiver={handleToggle}
+          variant="D"
+        />
+      );
+
+      // Status must immediately flip to incomplete and show missing requirements
+      expect(screen.getByText(/⚠️ Requirements Incomplete/i)).toBeInTheDocument();
+      expect(screen.getByText(/Missing:/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/CS120/i).length).toBeGreaterThan(0);
+      expect(screen.getByLabelText(/Advisor Requirement Waiver/i)).not.toBeChecked();
+    });
   });
 });

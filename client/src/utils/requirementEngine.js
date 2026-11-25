@@ -75,14 +75,16 @@ export function evaluateDNF(requirement, satisfiedCodes, isWaived = false) {
   }
 
   let missingSummary = '';
+  const unfulfilledSummary = satisfiedClauseExists
+    ? ''
+    : evaluatedOptions.map(opt => opt.missing.join(' AND ')).join(' OR ');
+
   if (satisfiedClauseExists) {
     missingSummary = 'Fulfilled';
   } else if (isWaived) {
     missingSummary = 'Waived by override';
   } else {
-    missingSummary = evaluatedOptions
-      .map(opt => opt.missing.join(' AND '))
-      .join(' OR ');
+    missingSummary = unfulfilledSummary;
   }
 
   return {
@@ -90,7 +92,8 @@ export function evaluateDNF(requirement, satisfiedCodes, isWaived = false) {
     isWaived: Boolean(isWaived),
     status,
     options: evaluatedOptions,
-    missingSummary
+    missingSummary,
+    unfulfilledSummary
   };
 }
 
@@ -232,6 +235,12 @@ export function validateSchedule(schedule, catalogCourses = []) {
           waivedCount++;
         }
 
+        const unfulfilledText = prereqResult.unfulfilledSummary 
+          ? `Prereq: ${prereqResult.unfulfilledSummary}` 
+          : coreqResult.unfulfilledSummary 
+            ? `Coreq: ${coreqResult.unfulfilledSummary}` 
+            : '';
+
         diagnostics.push({
           id: `term-${yIdx}-${tIdx}-${cIdx}`,
           courseCode: course.code,
@@ -243,6 +252,7 @@ export function validateSchedule(schedule, catalogCourses = []) {
           hasFlag: hasRequirements,
           isUnsatisfied: overallStatus === 'UNSATISFIED',
           isWaived: overallStatus === 'WAIVED',
+          unfulfilledSummary: unfulfilledText,
           missingSummary: prereqResult.status === 'UNSATISFIED' 
             ? `Prereq: ${prereqResult.missingSummary}`
             : coreqResult.status === 'UNSATISFIED' 

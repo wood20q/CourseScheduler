@@ -55,8 +55,13 @@ export function ManageCourseVariantA({
   }, [schedule, course?.code, catalogCourses]);
 
   const isSatisfied = courseValidation?.overallStatus === 'SATISFIED';
-  const isWaived = Boolean(course?.isWaived || courseValidation?.isWaived);
+  const isWaived = !isSatisfied && Boolean(course?.isWaived);
   const isUnsatisfied = !isSatisfied && !isWaived;
+  const missingText = (courseValidation?.missingSummary && 
+                       courseValidation.missingSummary !== 'Waived by override' && 
+                       courseValidation.missingSummary !== 'All requirements satisfied')
+    ? courseValidation.missingSummary
+    : (courseValidation?.unfulfilledSummary || '');
 
   const handleMoveSubmit = (e) => {
     e.preventDefault();
@@ -119,9 +124,14 @@ export function ManageCourseVariantA({
         </div>
 
         {/* Missing rule description */}
-        {isUnsatisfied && courseValidation?.missingSummary && (
+        {isUnsatisfied && missingText && (
           <p className="variant-a-missing-desc">
-            Missing: <strong>{courseValidation.missingSummary}</strong>
+            Missing: <strong>{missingText}</strong>
+          </p>
+        )}
+        {isWaived && missingText && (
+          <p className="variant-a-missing-desc waived">
+            Waived requirement: <strong>{missingText}</strong>
           </p>
         )}
 
@@ -361,8 +371,13 @@ export function ManageCourseVariantB({
   // Requirements breakdown
   const catCourse = catalogCourses.find(c => c.code === course?.code) || course;
   const isSatisfied = courseValidation?.overallStatus === 'SATISFIED';
-  const isWaived = Boolean(course?.isWaived || courseValidation?.isWaived);
+  const isWaived = !isSatisfied && Boolean(course?.isWaived);
   const isUnsatisfied = !isSatisfied && !isWaived;
+  const missingText = (courseValidation?.missingSummary && 
+                       courseValidation.missingSummary !== 'Waived by override' && 
+                       courseValidation.missingSummary !== 'All requirements satisfied')
+    ? courseValidation.missingSummary
+    : (courseValidation?.unfulfilledSummary || '');
 
   const handleMoveClick = (e) => {
     e.preventDefault();
@@ -751,8 +766,13 @@ export function ManageCourseVariantC({
 
   const catCourse = catalogCourses.find(c => c.code === course?.code) || course;
   const isSatisfied = courseValidation?.overallStatus === 'SATISFIED';
-  const isWaived = Boolean(course?.isWaived || courseValidation?.isWaived);
+  const isWaived = !isSatisfied && Boolean(course?.isWaived);
   const isUnsatisfied = !isSatisfied && !isWaived;
+  const missingText = (courseValidation?.missingSummary && 
+                       courseValidation.missingSummary !== 'Waived by override' && 
+                       courseValidation.missingSummary !== 'All requirements satisfied')
+    ? courseValidation.missingSummary
+    : (courseValidation?.unfulfilledSummary || '');
 
   const handleMoveSubmit = (e) => {
     e.preventDefault();
@@ -1114,8 +1134,13 @@ export function ManageCourseVariantD({
   }, [schedule, course?.code, catalogCourses]);
 
   const isSatisfied = courseValidation?.overallStatus === 'SATISFIED';
-  const isWaived = Boolean(course?.isWaived || courseValidation?.isWaived);
+  const isWaived = !isSatisfied && Boolean(course?.isWaived);
   const isUnsatisfied = !isSatisfied && !isWaived;
+  const missingText = (courseValidation?.missingSummary && 
+                       courseValidation.missingSummary !== 'Waived by override' && 
+                       courseValidation.missingSummary !== 'All requirements satisfied')
+    ? courseValidation.missingSummary
+    : (courseValidation?.unfulfilledSummary || '');
 
   const handleMoveSubmit = (e) => {
     e.preventDefault();
@@ -1176,9 +1201,14 @@ export function ManageCourseVariantD({
         </div>
 
         {/* Missing rule description */}
-        {isUnsatisfied && courseValidation?.missingSummary && (
+        {isUnsatisfied && missingText && (
           <p className="variant-a-missing-desc">
-            Missing: <strong>{courseValidation.missingSummary}</strong>
+            Missing: <strong>{missingText}</strong>
+          </p>
+        )}
+        {isWaived && missingText && (
+          <p className="variant-a-missing-desc waived">
+            Waived requirement: <strong>{missingText}</strong>
           </p>
         )}
 

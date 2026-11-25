@@ -227,6 +227,17 @@ function App() {
         )
       )
     }))
+    setManagedCourse((prev) => {
+      if (!prev || prev.code?.toLowerCase().trim() !== cleanCode) return prev
+      return { ...prev, isWaived: !prev.isWaived }
+    })
+    setInspectedRequirement((prev) => {
+      if (!prev || prev.course?.code?.toLowerCase().trim() !== cleanCode) return prev
+      return {
+        ...prev,
+        course: { ...prev.course, isWaived: !prev.course.isWaived }
+      }
+    })
   }
 
   const handleResetSchedule = () => {

@@ -2215,6 +2215,10 @@ main,
   line-height: 1.35;
 }
 
+.variant-a-missing-desc.waived {
+  color: var(--mauve);
+}
+
 .variant-a-waiver-container {
   display: flex;
   flex-direction: column;

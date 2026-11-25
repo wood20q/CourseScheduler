@@ -43,14 +43,33 @@ function ManageCourseDialog({
         return "A";
     }, [variant]);
 
+    // Always resolve the live course from schedule so mutations (e.g. waiver toggle) reflect immediately
+    const liveCourse = useMemo(() => {
+        if (!schedule || !course?.code) return course;
+        const clean = course.code.trim().toUpperCase();
+        const fromTransfer = (schedule.transferCourses || []).find(
+            c => c.code?.trim().toUpperCase() === clean
+        );
+        if (fromTransfer) return { ...fromTransfer, currentTerm: course.currentTerm };
+        for (let y = 0; y < (schedule.years || []).length; y++) {
+            for (let t = 0; t < schedule.years[y].length; t++) {
+                const found = schedule.years[y][t].find(
+                    c => c.code?.trim().toUpperCase() === clean
+                );
+                if (found) return { ...found, currentTerm: course.currentTerm };
+            }
+        }
+        return course;
+    }, [schedule, course]);
+
     // Compute real-time validation diagnostic for this course
     const courseValidation = useMemo(() => {
-        if (!schedule || !course) return null;
+        if (!schedule || !liveCourse) return null;
         const res = validateSchedule(schedule, catalogCourses);
         return res.diagnostics.find(
-            d => d.courseCode?.trim().toUpperCase() === course.code?.trim().toUpperCase()
+            d => d.courseCode?.trim().toUpperCase() === liveCourse.code?.trim().toUpperCase()
         ) || null;
-    }, [schedule, course, catalogCourses]);
+    }, [schedule, liveCourse, catalogCourses]);
 
     const handleSaveEdit = (e) => {
         e.preventDefault();
@@ -188,7 +207,7 @@ function ManageCourseDialog({
                     <>
                         {activeVariant === "B" && (
                             <ManageCourseVariantB
-                                course={course}
+                                course={liveCourse}
                                 schedule={schedule}
                                 catalogCourses={catalogCourses}
                                 onClose={onClose}
@@ -201,7 +220,7 @@ function ManageCourseDialog({
                         )}
                         {activeVariant === "C" && (
                             <ManageCourseVariantC
-                                course={course}
+                                course={liveCourse}
                                 schedule={schedule}
                                 catalogCourses={catalogCourses}
                                 onClose={onClose}
@@ -214,7 +233,7 @@ function ManageCourseDialog({
                         )}
                         {activeVariant === "D" && (
                             <ManageCourseVariantD
-                                course={course}
+                                course={liveCourse}
                                 schedule={schedule}
                                 catalogCourses={catalogCourses}
                                 onClose={onClose}
@@ -227,7 +246,7 @@ function ManageCourseDialog({
                         )}
                         {activeVariant === "A" && (
                             <ManageCourseVariantA
-                                course={course}
+                                course={liveCourse}
                                 schedule={schedule}
                                 catalogCourses={catalogCourses}
                                 onClose={onClose}
