@@ -188,7 +188,7 @@ export function RequirementInspectorModal({ course, validation, onClose, onToggl
 
         <div className="formGroup buttons" style={{ marginTop: '1.5em' }}>
           <button type="button" className="btn-close" onClick={onClose}>Done</button>
-          {onToggleWaiver && (
+          {!isSatisfied && onToggleWaiver && (
             <button 
               type="button" 
               className={`btn-submit ${isWaived ? 'btn-revoke-waiver' : 'btn-apply-waiver'}`}

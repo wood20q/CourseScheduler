@@ -74,7 +74,7 @@ describe('Requirement Flag Variants', () => {
       expect(onInspect).toHaveBeenCalledWith(course, sampleValidation);
     });
 
-    it('renders modal and triggers waiver toggle', () => {
+    it('renders modal and triggers waiver toggle for unsatisfied course', () => {
       const onToggleWaiver = vi.fn();
       const onClose = vi.fn();
 
@@ -93,6 +93,49 @@ describe('Requirement Flag Variants', () => {
 
       expect(onToggleWaiver).toHaveBeenCalledWith('CS220');
       expect(onClose).toHaveBeenCalled();
+    });
+
+    it('renders Revoke Requirement Waiver when course has waived status', () => {
+      const onToggleWaiver = vi.fn();
+
+      render(
+        <RequirementInspectorModal 
+          course={course}
+          validation={waivedValidation}
+          onClose={vi.fn()}
+          onToggleWaiver={onToggleWaiver}
+        />
+      );
+
+      const revokeBtn = screen.getByRole('button', { name: /Revoke Requirement Waiver/i });
+      expect(revokeBtn).toBeInTheDocument();
+      fireEvent.click(revokeBtn);
+
+      expect(onToggleWaiver).toHaveBeenCalledWith('CS220');
+    });
+
+    it('does not render waiver button when requirements are satisfied', () => {
+      const satisfiedValidation = {
+        hasFlag: false,
+        overallStatus: 'SATISFIED',
+        missingSummary: 'All requirements satisfied',
+        prereqResult: { isSatisfied: true, status: 'SATISFIED', missingSummary: 'Fulfilled' },
+        coreqResult: { isSatisfied: true, status: 'SATISFIED', missingSummary: 'Fulfilled' }
+      };
+
+      render(
+        <RequirementInspectorModal 
+          course={course}
+          validation={satisfiedValidation}
+          onClose={vi.fn()}
+          onToggleWaiver={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText('Requirement Audit')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Done/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Waive Requirements/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Revoke Requirement Waiver/i })).not.toBeInTheDocument();
     });
   });
 
