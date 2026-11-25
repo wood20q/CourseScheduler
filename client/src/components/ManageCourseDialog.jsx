@@ -4,7 +4,8 @@ import { validateSchedule } from "../utils/requirementEngine";
 import { 
     ManageCourseVariantA, 
     ManageCourseVariantB, 
-    ManageCourseVariantC 
+    ManageCourseVariantC,
+    ManageCourseVariantD
 } from "./prototypes/ManageCourseVariants";
 
 function ManageCourseDialog({ 
@@ -35,7 +36,7 @@ function ManageCourseDialog({
         if (typeof window !== "undefined") {
             const params = new URLSearchParams(window.location.search);
             const v = params.get("variant");
-            if (v && ["A", "B", "C"].includes(v.toUpperCase())) {
+            if (v && ["A", "B", "C", "D"].includes(v.toUpperCase())) {
                 return v.toUpperCase();
             }
         }
@@ -200,6 +201,19 @@ function ManageCourseDialog({
                         )}
                         {activeVariant === "C" && (
                             <ManageCourseVariantC
+                                course={course}
+                                schedule={schedule}
+                                catalogCourses={catalogCourses}
+                                onClose={onClose}
+                                onRemove={onRemove}
+                                onMove={onMove}
+                                onUpdate={onUpdate}
+                                onToggleWaiver={onToggleWaiver}
+                                courseValidation={courseValidation}
+                            />
+                        )}
+                        {activeVariant === "D" && (
+                            <ManageCourseVariantD
                                 course={course}
                                 schedule={schedule}
                                 catalogCourses={catalogCourses}

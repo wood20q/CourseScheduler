@@ -2760,3 +2760,23 @@ main,
   color: var(--subtext0);
 }
 
+/* --- Manage Course Variant D: Hybrid (Inline Req Status + Timeline Flow) --- */
+.manage-variant-d {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85em;
+}
+
+.variant-d-move-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85em;
+}
+
+.timeline-item-reason {
+  font-size: 0.85em;
+  color: var(--red);
+  margin-left: 0.3em;
+}
+
+

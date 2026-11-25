@@ -4,7 +4,8 @@ import ManageCourseDialog from '../components/ManageCourseDialog';
 import { 
   ManageCourseVariantA, 
   ManageCourseVariantB, 
-  ManageCourseVariantC 
+  ManageCourseVariantC,
+  ManageCourseVariantD
 } from '../components/prototypes/ManageCourseVariants';
 
 describe('Issue #21 - Downstream Mutation Warnings & Manage Course Waiver Management', () => {
@@ -223,6 +224,79 @@ describe('Issue #21 - Downstream Mutation Warnings & Manage Course Waiver Manage
       // Live timeline lights up
       expect(screen.getByText(/Schedule Impact: 1 Downstream Course\(s\) Broken/i)).toBeInTheDocument();
       expect(screen.getByText(/Allow downstream prerequisite flags/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Variant D (Hybrid: Inline Status & Timeline Flow)', () => {
+    it('displays prerequisite status from A and real-time downstream timeline flow from C', () => {
+      const onMove = vi.fn();
+      const course = { code: 'CS120', name: 'Intro to Python', credits: 1, currentTerm: [0, 0] };
+
+      render(
+        <ManageCourseVariantD
+          course={course}
+          schedule={scheduleWithDependencies}
+          catalogCourses={catalog}
+          onClose={vi.fn()}
+          onRemove={vi.fn()}
+          onMove={onMove}
+          courseValidation={{ overallStatus: 'SATISFIED' }}
+        />
+      );
+
+      // Prerequisite status strip from A is present
+      expect(screen.getByText(/Prerequisite Status:/i)).toBeInTheDocument();
+      expect(screen.getByText(/✅ Requirements Met/i)).toBeInTheDocument();
+      expect(screen.queryByLabelText(/Advisor Requirement Waiver/i)).not.toBeInTheDocument();
+
+      // Initially clean timeline from C
+      expect(screen.getByText(/Safe Mutation: No downstream courses affected/i)).toBeInTheDocument();
+
+      // Change target year to Year 2
+      fireEvent.change(screen.getByLabelText(/Target Year:/i), { target: { value: '1' } });
+
+      // Live impact preview timeline lights up
+      expect(screen.getByText(/Schedule Impact: 1 Downstream Course\(s\) Broken/i)).toBeInTheDocument();
+      expect(screen.getByText(/Allow downstream prerequisite flags/i)).toBeInTheDocument();
+
+      // Submit button is disabled until acknowledgment
+      const moveBtn = screen.getByRole('button', { name: /⚡ Move Course \(With Warnings\)/i });
+      expect(moveBtn).toBeDisabled();
+
+      // Check acknowledgment
+      fireEvent.click(screen.getByLabelText(/Allow downstream prerequisite flags/i));
+      expect(moveBtn).not.toBeDisabled();
+
+      fireEvent.click(moveBtn);
+      expect(onMove).toHaveBeenCalledWith([1, 0], 'CS120');
+    });
+
+    it('displays inline waiver checkbox from A when course requirements are unfulfilled', () => {
+      const onToggleWaiver = vi.fn();
+      const unmetCourse = { code: 'CS220', name: 'Data Structures', credits: 1, currentTerm: [0, 0] };
+
+      render(
+        <ManageCourseVariantD
+          course={unmetCourse}
+          schedule={{ transferCourses: [], years: [[[], [], []], [[], [], []], [[], [], []], [[], [], []]] }}
+          catalogCourses={catalog}
+          onClose={vi.fn()}
+          onRemove={vi.fn()}
+          onMove={vi.fn()}
+          onToggleWaiver={onToggleWaiver}
+          courseValidation={{ overallStatus: 'UNSATISFIED', missingSummary: 'CS120' }}
+        />
+      );
+
+      // Status shows incomplete
+      expect(screen.getByText(/⚠️ Requirements Incomplete/i)).toBeInTheDocument();
+      expect(screen.getByText(/Missing:/i)).toBeInTheDocument();
+
+      // Waiver checkbox from A is available
+      const waiverBox = screen.getByLabelText(/Advisor Requirement Waiver/i);
+      expect(waiverBox).toBeInTheDocument();
+      fireEvent.click(waiverBox);
+      expect(onToggleWaiver).toHaveBeenCalledWith('CS220');
     });
   });
 });

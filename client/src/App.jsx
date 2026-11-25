@@ -29,7 +29,8 @@ const studentName = "Chad Quick"
 const PROTOTYPE_VARIANTS = [
   { key: 'A', name: 'Variant A (Inline Accordion & Checkbox)' },
   { key: 'B', name: 'Variant B (Interstitial Modal & Audit Card)' },
-  { key: 'C', name: 'Variant C (Tabbed Console & Impact Timeline)' }
+  { key: 'C', name: 'Variant C (Tabbed Console & Impact Timeline)' },
+  { key: 'D', name: 'Variant D (Hybrid: Inline Status & Timeline Flow)' }
 ];
 
 const CATALOG_REQUIREMENTS = {
@@ -102,7 +103,7 @@ function App() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const v = params.get('variant')?.toUpperCase();
-      if (v && ['A', 'B', 'C'].includes(v)) return v;
+      if (v && ['A', 'B', 'C', 'D'].includes(v)) return v;
     }
     return 'A';
   });

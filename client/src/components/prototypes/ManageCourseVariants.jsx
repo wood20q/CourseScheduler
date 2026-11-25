@@ -1073,3 +1073,318 @@ export function ManageCourseVariantC({
     </div>
   );
 }
+
+// ============================================================================
+// VARIANT D: Hybrid (Inline Requirement Status from A + Live Downstream Timeline from C)
+// ============================================================================
+export function ManageCourseVariantD({
+  course,
+  schedule,
+  catalogCourses = [],
+  onClose,
+  onRemove,
+  onMove,
+  onUpdate,
+  onToggleWaiver,
+  courseValidation
+}) {
+  const isTransfer = Boolean(course?.isTransfer);
+  const initialLocation = course?.currentTerm ? formatLocationKey(course.currentTerm) : '0,0';
+  const [targetLocation, setTargetLocation] = useState(initialLocation);
+  const parsedCurrent = parseLocation(course?.currentTerm);
+  const [selectedYear, setSelectedYear] = useState(parsedCurrent.type === 'term' ? parsedCurrent.year : 0);
+  const [selectedTerm, setSelectedTerm] = useState(parsedCurrent.type === 'term' ? parsedCurrent.term : 0);
+
+  // Acknowledgment for downstream impact
+  const [impactAck, setImpactAck] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+
+  const effectiveTarget = isTransfer
+    ? (targetLocation === 'transfer' ? 'transfer' : targetLocation.split(',').map(Number))
+    : [selectedYear, selectedTerm];
+
+  // Live downstream simulation for move
+  const moveSimulation = useMemo(() => {
+    return simulateScheduleMutation(schedule, course?.code, 'move', effectiveTarget, catalogCourses);
+  }, [schedule, course?.code, effectiveTarget, catalogCourses]);
+
+  // Live downstream simulation for remove
+  const removeSimulation = useMemo(() => {
+    return simulateScheduleMutation(schedule, course?.code, 'remove', null, catalogCourses);
+  }, [schedule, course?.code, catalogCourses]);
+
+  const isSatisfied = courseValidation?.overallStatus === 'SATISFIED';
+  const isWaived = Boolean(course?.isWaived || courseValidation?.isWaived);
+  const isUnsatisfied = !isSatisfied && !isWaived;
+
+  const handleMoveSubmit = (e) => {
+    e.preventDefault();
+    if (moveSimulation.hasDownstreamImpact && !impactAck) return;
+    onMove(effectiveTarget, course.code);
+    onClose();
+  };
+
+  const handleConfirmRemove = () => {
+    onRemove(course.code);
+    onClose();
+  };
+
+  return (
+    <div className="manage-variant-d">
+      {/* Course Header Info */}
+      <div className="dialogCourseInfo">
+        <div className="dialogCourseTitleRow">
+          <p className="dialogCourseName">
+            <strong>{course.code}:</strong> {course.name}
+          </p>
+          {isTransfer && <span className="transferBadge">Transfer</span>}
+        </div>
+        <p className="dialogCourseCredits">
+          <strong>Credits:</strong> {course.credits}
+        </p>
+        <p className="dialogCourseCurrentTerm">
+          <strong>Current Location:</strong> {formatCurrentLocation(course.currentTerm)}
+        </p>
+        {isTransfer && (
+          <>
+            <p className="dialogCourseInstitution">
+              <strong>Institution:</strong> {course.institution || "None"}
+            </p>
+            <p className="dialogCourseSatisfies">
+              <strong>Satisfies:</strong> {course.satisfiesCourse || "None / General Elective"}
+            </p>
+          </>
+        )}
+        <p className="dialogCourseDescription">
+          <strong>Description:</strong> {course.description || "None"}
+        </p>
+      </div>
+
+      {/* Prerequisite Status Strip (from Variant A) */}
+      <div className="variant-a-requirement-strip">
+        <div className="variant-a-req-header">
+          <span className="variant-a-req-title">Prerequisite Status:</span>
+          {isSatisfied && (
+            <span className="audit-badge badge-satisfied">✅ Requirements Met</span>
+          )}
+          {isWaived && (
+            <span className="audit-badge badge-waived">🏷️ Waived by Override</span>
+          )}
+          {isUnsatisfied && (
+            <span className="audit-badge badge-unsatisfied">⚠️ Requirements Incomplete</span>
+          )}
+        </div>
+
+        {/* Missing rule description */}
+        {isUnsatisfied && courseValidation?.missingSummary && (
+          <p className="variant-a-missing-desc">
+            Missing: <strong>{courseValidation.missingSummary}</strong>
+          </p>
+        )}
+
+        {/* Waiver Toggle: Only available if not already satisfied */}
+        {!isSatisfied && (
+          <div className="variant-a-waiver-container">
+            <label className="waiver-checkbox-label">
+              <input
+                type="checkbox"
+                checked={isWaived}
+                onChange={() => onToggleWaiver && onToggleWaiver(course.code)}
+              />
+              <span>Advisor Requirement Waiver</span>
+            </label>
+            <span className="waiver-caption">
+              {isWaived 
+                ? "Waiver granted. Click to revoke waiver and reinstate requirement checks."
+                : "Override prerequisite checks and permit out-of-sequence completion."}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <hr className="dialogDivider" />
+
+      {/* Move Course Form */}
+      <form onSubmit={handleMoveSubmit} className="variant-d-move-form">
+        <h3 className="dialogSubheading">Move Course</h3>
+        {isTransfer ? (
+          <div className="formGroup">
+            <label htmlFor="move-location-select-d">Target Location:</label>
+            <select
+              id="move-location-select-d"
+              value={targetLocation}
+              onChange={(e) => {
+                setTargetLocation(e.target.value);
+                setImpactAck(false);
+              }}
+            >
+              <option value="transfer">Pre-College / Transfer Credits</option>
+              <optgroup label="Academic Years">
+                <option value="0,0">Year 1 Term 1</option>
+                <option value="0,1">Year 1 Term 2</option>
+                <option value="0,2">Year 1 Term 3</option>
+                <option value="1,0">Year 2 Term 1</option>
+                <option value="1,1">Year 2 Term 2</option>
+                <option value="1,2">Year 2 Term 3</option>
+                <option value="2,0">Year 3 Term 1</option>
+                <option value="2,1">Year 3 Term 2</option>
+                <option value="2,2">Year 3 Term 3</option>
+                <option value="3,0">Year 4 Term 1</option>
+                <option value="3,1">Year 4 Term 2</option>
+                <option value="3,2">Year 4 Term 3</option>
+              </optgroup>
+            </select>
+          </div>
+        ) : (
+          <div className="variant-b-term-row">
+            <div className="formGroup term-inline-group">
+              <label htmlFor="move-year-select-d">Target Year:</label>
+              <select
+                id="move-year-select-d"
+                value={selectedYear}
+                onChange={(e) => {
+                  setSelectedYear(Number(e.target.value));
+                  setImpactAck(false);
+                }}
+              >
+                <option value={0}>Year 1</option>
+                <option value={1}>Year 2</option>
+                <option value={2}>Year 3</option>
+                <option value={3}>Year 4</option>
+              </select>
+            </div>
+            <div className="formGroup term-inline-group">
+              <label htmlFor="move-term-select-d">Target Term:</label>
+              <select
+                id="move-term-select-d"
+                value={selectedTerm}
+                onChange={(e) => {
+                  setSelectedTerm(Number(e.target.value));
+                  setImpactAck(false);
+                }}
+              >
+                <option value={0}>Term 1</option>
+                <option value={1}>Term 2</option>
+                <option value={2}>Term 3</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* Real-time Schedule Impact Timeline Strip (from Variant C) */}
+        <div className={`variant-c-impact-strip ${moveSimulation.hasDownstreamImpact ? 'has-impact' : 'clean'}`}>
+          <div className="impact-strip-header">
+            <span className="impact-indicator">
+              {moveSimulation.hasDownstreamImpact ? '⚠️' : '🟢'}
+            </span>
+            <strong>
+              {moveSimulation.hasDownstreamImpact
+                ? `Schedule Impact: ${moveSimulation.affectedCourses.length} Downstream Course(s) Broken`
+                : 'Safe Mutation: No downstream courses affected'}
+            </strong>
+          </div>
+
+          {moveSimulation.hasDownstreamImpact && (
+            <div className="variant-c-timeline-preview">
+              <div className="timeline-flow">
+                <span className="flow-step current">{formatCurrentLocation(course.currentTerm)}</span>
+                <span className="flow-arrow">➔</span>
+                <span className="flow-step target">
+                  {isTransfer ? targetLocation : `Year ${selectedYear + 1}, Term ${selectedTerm + 1}`}
+                </span>
+              </div>
+              <div className="timeline-affected">
+                {moveSimulation.affectedCourses.map((c) => (
+                  <div key={c.id || c.courseCode} className="timeline-item">
+                    <span className="timeline-badge">Breaks</span>
+                    <strong>{c.courseCode}</strong> in {c.locationLabel}
+                    <span className="timeline-item-reason">({c.reason})</span>
+                  </div>
+                ))}
+              </div>
+              <label className="variant-c-ack">
+                <input
+                  type="checkbox"
+                  checked={impactAck}
+                  onChange={(e) => setImpactAck(e.target.checked)}
+                />
+                <span>Allow downstream prerequisite flags</span>
+              </label>
+            </div>
+          )}
+        </div>
+
+        <div className="formGroup">
+          <button
+            type="submit"
+            className={`btn-submit ${moveSimulation.hasDownstreamImpact && !impactAck ? 'btn-disabled' : ''}`}
+            disabled={moveSimulation.hasDownstreamImpact && !impactAck}
+          >
+            {moveSimulation.hasDownstreamImpact ? '⚡ Move Course (With Warnings)' : 'Move Course'}
+          </button>
+        </div>
+      </form>
+
+      <hr className="dialogDivider" />
+
+      {/* Danger Zone */}
+      <div className="dialogDangerZone">
+        {!isConfirmingDelete ? (
+          <button
+            type="button"
+            className="btn-danger"
+            onClick={() => setIsConfirmingDelete(true)}
+          >
+            Remove Course from Schedule
+          </button>
+        ) : (
+          <div className="deleteConfirmBox">
+            <p className="deleteConfirmWarning">
+              Are you sure you want to remove <strong>{course.code}</strong> from your schedule?
+            </p>
+            {removeSimulation.hasDownstreamImpact && (
+              <div className="variant-a-remove-warning">
+                <p className="remove-warning-text">
+                  ⚠️ <strong>Notice:</strong> Removing this course invalidates prerequisites for{' '}
+                  <strong>{removeSimulation.affectedCourses.length}</strong> downstream course(s):
+                </p>
+                <ul className="downstream-list compact">
+                  {removeSimulation.affectedCourses.map((c) => (
+                    <li key={c.id || c.courseCode}>
+                      <strong>{c.courseCode}</strong> ({c.locationLabel}) — {c.reason}
+                    </li>
+                  ))}
+                </ul>
+                <p className="remove-reassurance">
+                  Affected courses will remain on the schedule with ⚠️ Missing Req flags.
+                </p>
+              </div>
+            )}
+            <div className="deleteConfirmButtons">
+              <button
+                type="button"
+                className="btn-confirm-delete"
+                onClick={handleConfirmRemove}
+              >
+                Yes, Remove Course
+              </button>
+              <button
+                type="button"
+                className="btn-cancel-delete"
+                onClick={() => setIsConfirmingDelete(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="formGroup buttons">
+        <button type="button" className="btn-close" onClick={onClose}>
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
