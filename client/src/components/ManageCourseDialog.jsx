@@ -1,12 +1,17 @@
 import { useState, useMemo } from "react";
 import { formatLocationKey, parseLocation } from "../utils/scheduleMigration";
-import { validateSchedule } from "../utils/requirementEngine";
 import { 
-    ManageCourseVariantA, 
-    ManageCourseVariantB, 
-    ManageCourseVariantC,
-    ManageCourseVariantD
-} from "./prototypes/ManageCourseVariants";
+    validateSchedule, 
+    simulateScheduleMutation 
+} from "../utils/requirementEngine";
+
+function formatCurrentLocation(currentTerm) {
+    const parsed = parseLocation(currentTerm);
+    if (parsed.type === "transfer") {
+        return "Pre-College / Transfer Credits";
+    }
+    return `Year ${parsed.year + 1}, Term ${parsed.term + 1}`;
+}
 
 function ManageCourseDialog({ 
     course, 
@@ -16,34 +21,11 @@ function ManageCourseDialog({
     onRemove, 
     onMove, 
     onUpdate,
-    onToggleWaiver,
-    variant
+    onToggleWaiver
 }) {
     const isTransfer = Boolean(course?.isTransfer);
 
-    // Inline edit state for transfer courses
-    const [isEditing, setIsEditing] = useState(false);
-    const [editName, setEditName] = useState(course?.name || "");
-    const [editCredits, setEditCredits] = useState(course?.credits ?? 0);
-    const [editInstitution, setEditInstitution] = useState(course?.institution || "");
-    const [editSatisfies, setEditSatisfies] = useState(course?.satisfiesCourse || "");
-    const [editDescription, setEditDescription] = useState(course?.description || "");
-    const [editError, setEditError] = useState("");
-
-    // Determine active variant from prop or URL query param
-    const activeVariant = useMemo(() => {
-        if (variant) return variant.toUpperCase();
-        if (typeof window !== "undefined") {
-            const params = new URLSearchParams(window.location.search);
-            const v = params.get("variant");
-            if (v && ["A", "B", "C", "D"].includes(v.toUpperCase())) {
-                return v.toUpperCase();
-            }
-        }
-        return "A";
-    }, [variant]);
-
-    // Always resolve the live course from schedule so mutations (e.g. waiver toggle) reflect immediately
+    // Live course state derived from schedule so mutations reflect instantly
     const liveCourse = useMemo(() => {
         if (!schedule || !course?.code) return course;
         const clean = course.code.trim().toUpperCase();
@@ -71,6 +53,66 @@ function ManageCourseDialog({
         ) || null;
     }, [schedule, liveCourse, catalogCourses]);
 
+    // Move course location state
+    const initialLocation = liveCourse?.currentTerm ? formatLocationKey(liveCourse.currentTerm) : "0,0";
+    const [targetLocation, setTargetLocation] = useState(initialLocation);
+    const parsedCurrent = parseLocation(liveCourse?.currentTerm);
+    const [selectedYear, setSelectedYear] = useState(
+        parsedCurrent.type === "term" ? parsedCurrent.year : 0
+    );
+    const [selectedTerm, setSelectedTerm] = useState(
+        parsedCurrent.type === "term" ? parsedCurrent.term : 0
+    );
+
+    // Downstream conflict acknowledgment & delete confirmation
+    const [impactAck, setImpactAck] = useState(false);
+    const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+
+    // Inline edit state for transfer courses
+    const [isEditing, setIsEditing] = useState(false);
+    const [editName, setEditName] = useState(course?.name || "");
+    const [editCredits, setEditCredits] = useState(course?.credits ?? 0);
+    const [editInstitution, setEditInstitution] = useState(course?.institution || "");
+    const [editSatisfies, setEditSatisfies] = useState(course?.satisfiesCourse || "");
+    const [editDescription, setEditDescription] = useState(course?.description || "");
+    const [editError, setEditError] = useState("");
+
+    const effectiveTarget = isTransfer
+        ? (targetLocation === "transfer" ? "transfer" : targetLocation.split(",").map(Number))
+        : [selectedYear, selectedTerm];
+
+    // Live downstream simulation for move
+    const moveSimulation = useMemo(() => {
+        return simulateScheduleMutation(schedule, liveCourse?.code, "move", effectiveTarget, catalogCourses);
+    }, [schedule, liveCourse?.code, effectiveTarget, catalogCourses]);
+
+    // Live downstream simulation for remove
+    const removeSimulation = useMemo(() => {
+        return simulateScheduleMutation(schedule, liveCourse?.code, "remove", null, catalogCourses);
+    }, [schedule, liveCourse?.code, catalogCourses]);
+
+    const isSatisfied = courseValidation?.overallStatus === "SATISFIED";
+    const isWaived = !isSatisfied && Boolean(liveCourse?.isWaived);
+    const isUnsatisfied = !isSatisfied && !isWaived;
+
+    const missingText = (courseValidation?.missingSummary && 
+                         courseValidation.missingSummary !== "Waived by override" && 
+                         courseValidation.missingSummary !== "All requirements satisfied")
+        ? courseValidation.missingSummary
+        : (courseValidation?.unfulfilledSummary || "");
+
+    const handleMoveSubmit = (e) => {
+        e.preventDefault();
+        if (moveSimulation.hasDownstreamImpact && !impactAck) return;
+        onMove(effectiveTarget, liveCourse.code);
+        onClose();
+    };
+
+    const handleConfirmRemove = () => {
+        onRemove(liveCourse.code);
+        onClose();
+    };
+
     const handleSaveEdit = (e) => {
         e.preventDefault();
         const trimmedName = editName.trim();
@@ -92,7 +134,7 @@ function ManageCourseDialog({
 
         if (onUpdate) {
             onUpdate({
-                ...course,
+                ...liveCourse,
                 name: trimmedName,
                 credits: numCredits,
                 institution: editInstitution.trim(),
@@ -204,60 +246,267 @@ function ManageCourseDialog({
                         </div>
                     </form>
                 ) : (
-                    <>
-                        {activeVariant === "B" && (
-                            <ManageCourseVariantB
-                                course={liveCourse}
-                                schedule={schedule}
-                                catalogCourses={catalogCourses}
-                                onClose={onClose}
-                                onRemove={onRemove}
-                                onMove={onMove}
-                                onUpdate={onUpdate}
-                                onToggleWaiver={onToggleWaiver}
-                                courseValidation={courseValidation}
-                            />
-                        )}
-                        {activeVariant === "C" && (
-                            <ManageCourseVariantC
-                                course={liveCourse}
-                                schedule={schedule}
-                                catalogCourses={catalogCourses}
-                                onClose={onClose}
-                                onRemove={onRemove}
-                                onMove={onMove}
-                                onUpdate={onUpdate}
-                                onToggleWaiver={onToggleWaiver}
-                                courseValidation={courseValidation}
-                            />
-                        )}
-                        {activeVariant === "D" && (
-                            <ManageCourseVariantD
-                                course={liveCourse}
-                                schedule={schedule}
-                                catalogCourses={catalogCourses}
-                                onClose={onClose}
-                                onRemove={onRemove}
-                                onMove={onMove}
-                                onUpdate={onUpdate}
-                                onToggleWaiver={onToggleWaiver}
-                                courseValidation={courseValidation}
-                            />
-                        )}
-                        {activeVariant === "A" && (
-                            <ManageCourseVariantA
-                                course={liveCourse}
-                                schedule={schedule}
-                                catalogCourses={catalogCourses}
-                                onClose={onClose}
-                                onRemove={onRemove}
-                                onMove={onMove}
-                                onUpdate={onUpdate}
-                                onToggleWaiver={onToggleWaiver}
-                                courseValidation={courseValidation}
-                            />
-                        )}
-                    </>
+                    <div className="manage-course-content">
+                        {/* Course Header Info */}
+                        <div className="dialogCourseInfo">
+                            <div className="dialogCourseTitleRow">
+                                <p className="dialogCourseName">
+                                    <strong>{liveCourse.code}:</strong> {liveCourse.name}
+                                </p>
+                                {isTransfer && <span className="transferBadge">Transfer</span>}
+                            </div>
+                            <p className="dialogCourseCredits">
+                                <strong>Credits:</strong> {liveCourse.credits}
+                            </p>
+                            <p className="dialogCourseCurrentTerm">
+                                <strong>Current Location:</strong> {formatCurrentLocation(liveCourse.currentTerm)}
+                            </p>
+                            {isTransfer && (
+                                <>
+                                    <p className="dialogCourseInstitution">
+                                        <strong>Institution:</strong> {liveCourse.institution || "None"}
+                                    </p>
+                                    <p className="dialogCourseSatisfies">
+                                        <strong>Satisfies:</strong> {liveCourse.satisfiesCourse || "None / General Elective"}
+                                    </p>
+                                </>
+                            )}
+                            <p className="dialogCourseDescription">
+                                <strong>Description:</strong> {liveCourse.description || "None"}
+                            </p>
+                        </div>
+
+                        {/* Prerequisite Status & Waiver Strip */}
+                        <div className="manage-requirement-strip">
+                            <div className="manage-req-header">
+                                <span className="manage-req-title">Prerequisite Status:</span>
+                                {isSatisfied && (
+                                    <span className="audit-badge satisfied">✅ Requirements Met</span>
+                                )}
+                                {isWaived && (
+                                    <span className="audit-badge waived">🏷️ Waived by Override</span>
+                                )}
+                                {isUnsatisfied && (
+                                    <span className="audit-badge unsatisfied">⚠️ Requirements Incomplete</span>
+                                )}
+                            </div>
+
+                            {/* Missing / Waived rule description */}
+                            {isUnsatisfied && missingText && (
+                                <p className="manage-missing-desc">
+                                    Missing: <strong>{missingText}</strong>
+                                </p>
+                            )}
+                            {isWaived && missingText && (
+                                <p className="manage-missing-desc waived">
+                                    Waived requirement: <strong>{missingText}</strong>
+                                </p>
+                            )}
+
+                            {/* Waiver Toggle: Only available if not already satisfied */}
+                            {!isSatisfied && (
+                                <div className="manage-waiver-container">
+                                    <label className="waiver-checkbox-label">
+                                        <input
+                                            type="checkbox"
+                                            checked={isWaived}
+                                            onChange={() => onToggleWaiver && onToggleWaiver(liveCourse.code)}
+                                        />
+                                        <span>Advisor Requirement Waiver</span>
+                                    </label>
+                                    <span className="waiver-caption">
+                                        {isWaived 
+                                            ? "Waiver granted. Click to revoke waiver and reinstate requirement checks."
+                                            : "Override prerequisite checks and permit out-of-sequence completion."}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        <hr className="dialogDivider" />
+
+                        {/* Move Course Form */}
+                        <form onSubmit={handleMoveSubmit} className="manage-move-form">
+                            <h3 className="dialogSubheading">Move Course</h3>
+                            {isTransfer ? (
+                                <div className="formGroup">
+                                    <label htmlFor="move-location-select-manage">Target Location:</label>
+                                    <select
+                                        id="move-location-select-manage"
+                                        value={targetLocation}
+                                        onChange={(e) => {
+                                            setTargetLocation(e.target.value);
+                                            setImpactAck(false);
+                                        }}
+                                    >
+                                        <option value="transfer">Pre-College / Transfer Credits</option>
+                                        <optgroup label="Academic Years">
+                                            <option value="0,0">Year 1 Term 1</option>
+                                            <option value="0,1">Year 1 Term 2</option>
+                                            <option value="0,2">Year 1 Term 3</option>
+                                            <option value="1,0">Year 2 Term 1</option>
+                                            <option value="1,1">Year 2 Term 2</option>
+                                            <option value="1,2">Year 2 Term 3</option>
+                                            <option value="2,0">Year 3 Term 1</option>
+                                            <option value="2,1">Year 3 Term 2</option>
+                                            <option value="2,2">Year 3 Term 3</option>
+                                            <option value="3,0">Year 4 Term 1</option>
+                                            <option value="3,1">Year 4 Term 2</option>
+                                            <option value="3,2">Year 4 Term 3</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            ) : (
+                                <div className="manage-term-row">
+                                    <div className="formGroup term-inline-group">
+                                        <label htmlFor="move-year-select-manage">Target Year:</label>
+                                        <select
+                                            id="move-year-select-manage"
+                                            value={selectedYear}
+                                            onChange={(e) => {
+                                                setSelectedYear(Number(e.target.value));
+                                                setImpactAck(false);
+                                            }}
+                                        >
+                                            <option value={0}>Year 1</option>
+                                            <option value={1}>Year 2</option>
+                                            <option value={2}>Year 3</option>
+                                            <option value={3}>Year 4</option>
+                                        </select>
+                                    </div>
+                                    <div className="formGroup term-inline-group">
+                                        <label htmlFor="move-term-select-manage">Target Term:</label>
+                                        <select
+                                            id="move-term-select-manage"
+                                            value={selectedTerm}
+                                            onChange={(e) => {
+                                                setSelectedTerm(Number(e.target.value));
+                                                setImpactAck(false);
+                                            }}
+                                        >
+                                            <option value={0}>Term 1</option>
+                                            <option value={1}>Term 2</option>
+                                            <option value={2}>Term 3</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Real-time Schedule Impact Timeline Strip */}
+                            <div className={`manage-impact-strip ${moveSimulation.hasDownstreamImpact ? 'has-impact' : 'clean'}`}>
+                                <div className="impact-strip-header">
+                                    <span className="impact-indicator">
+                                        {moveSimulation.hasDownstreamImpact ? '⚠️' : '🟢'}
+                                    </span>
+                                    <strong>
+                                        {moveSimulation.hasDownstreamImpact
+                                            ? `Schedule Impact: ${moveSimulation.affectedCourses.length} Downstream Course(s) Broken`
+                                            : 'Safe Mutation: No downstream courses affected'}
+                                    </strong>
+                                </div>
+
+                                {moveSimulation.hasDownstreamImpact && (
+                                    <div className="timeline-preview">
+                                        <div className="timeline-flow">
+                                            <span className="flow-step current">{formatCurrentLocation(liveCourse.currentTerm)}</span>
+                                            <span className="flow-arrow">➔</span>
+                                            <span className="flow-step target">
+                                                {isTransfer ? targetLocation : `Year ${selectedYear + 1}, Term ${selectedTerm + 1}`}
+                                            </span>
+                                        </div>
+                                        <div className="timeline-affected">
+                                            {moveSimulation.affectedCourses.map((c) => (
+                                                <div key={c.id || c.courseCode} className="timeline-item">
+                                                    <span className="timeline-badge">Breaks</span>
+                                                    <strong>{c.courseCode}</strong> in {c.locationLabel}
+                                                    <span className="timeline-item-reason">({c.reason})</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <label className="manage-impact-ack">
+                                            <input
+                                                type="checkbox"
+                                                checked={impactAck}
+                                                onChange={(e) => setImpactAck(e.target.checked)}
+                                            />
+                                            <span>Allow downstream prerequisite flags</span>
+                                        </label>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="formGroup">
+                                <button
+                                    type="submit"
+                                    className={`btn-submit ${moveSimulation.hasDownstreamImpact && !impactAck ? 'btn-disabled' : ''}`}
+                                    disabled={moveSimulation.hasDownstreamImpact && !impactAck}
+                                >
+                                    {moveSimulation.hasDownstreamImpact ? '⚡ Move Course (With Warnings)' : 'Move Course'}
+                                </button>
+                            </div>
+                        </form>
+
+                        <hr className="dialogDivider" />
+
+                        {/* Danger Zone */}
+                        <div className="dialogDangerZone">
+                            {!isConfirmingDelete ? (
+                                <button
+                                    type="button"
+                                    className="btn-danger"
+                                    onClick={() => setIsConfirmingDelete(true)}
+                                >
+                                    Remove Course from Schedule
+                                </button>
+                            ) : (
+                                <div className="deleteConfirmBox">
+                                    <p className="deleteConfirmWarning">
+                                        Are you sure you want to remove <strong>{liveCourse.code}</strong> from your schedule?
+                                    </p>
+                                    {removeSimulation.hasDownstreamImpact && (
+                                        <div className="manage-remove-warning">
+                                            <p className="remove-warning-text">
+                                                ⚠️ <strong>Notice:</strong> Removing this course invalidates prerequisites for{' '}
+                                                <strong>{removeSimulation.affectedCourses.length}</strong> downstream course(s):
+                                            </p>
+                                            <ul className="downstream-list compact">
+                                                {removeSimulation.affectedCourses.map((c) => (
+                                                    <li key={c.id || c.courseCode}>
+                                                        <strong>{c.courseCode}</strong> ({c.locationLabel}) — {c.reason}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                            <p className="remove-reassurance">
+                                                Affected courses will remain on the schedule with ⚠️ Missing Req flags.
+                                            </p>
+                                        </div>
+                                    )}
+                                    <div className="deleteConfirmButtons">
+                                        <button
+                                            type="button"
+                                            className="btn-confirm-delete"
+                                            onClick={handleConfirmRemove}
+                                        >
+                                            Yes, Remove Course
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn-cancel-delete"
+                                            onClick={() => setIsConfirmingDelete(false)}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="formGroup buttons">
+                            <button type="button" className="btn-close" onClick={onClose}>
+                                Close
+                            </button>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>
