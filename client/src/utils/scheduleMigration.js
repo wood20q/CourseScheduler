@@ -254,3 +254,26 @@ export function moveCourseInSchedule(schedule, code, targetLocation) {
 
   return addCourseToSchedule(normalized, found.course, targetLocation);
 }
+
+export function toggleCourseWaiver(schedule, courseCode) {
+  const normalized = migrateSchedule(schedule);
+  if (!courseCode) return normalized;
+  const cleanCode = String(courseCode).trim().toUpperCase();
+
+  return {
+    transferCourses: (normalized.transferCourses || []).map((c) =>
+      String(c?.code || '').trim().toUpperCase() === cleanCode
+        ? { ...c, isWaived: !c.isWaived }
+        : c
+    ),
+    years: (normalized.years || []).map((year) =>
+      year.map((term) =>
+        term.map((c) =>
+          String(c?.code || '').trim().toUpperCase() === cleanCode
+            ? { ...c, isWaived: !c.isWaived }
+            : c
+        )
+      )
+    )
+  };
+}
