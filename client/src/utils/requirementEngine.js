@@ -5,6 +5,17 @@
 import { removeCourseFromSchedule, moveCourseInSchedule } from './scheduleMigration';
 
 /**
+ * Canonicalizes a course code by trimming, uppercasing, and collapsing internal whitespace
+ * between subject letters and numbers (e.g. "MA 101" -> "MA101", "CS 120" -> "CS120").
+ */
+export function canonicalizeCode(code) {
+  if (!code) return '';
+  return String(code).replace(/[()]/g, '').trim().toUpperCase().replace(/\s+/g, '');
+}
+
+export const canonicalizeCourseCode = canonicalizeCode;
+
+/**
  * Normalizes any requirement representation (DNF array, flat array, or boolean string)
  * into canonical Disjunctive Normal Form (DNF): Array<Array<string>>.
  * 
@@ -21,17 +32,18 @@ export function normalizeDNF(req) {
     if (!clean) return [];
     const orClauses = clean.split(/\s+OR\s+|\s*\|\s*/i);
     return orClauses.map(clause => {
-      const stripped = clause.replace(/^\(|\)$/g, '').trim();
+      const stripped = clause.replace(/^\(+|\)+$/g, '').trim();
       const andItems = stripped.split(/\s+AND\s+|\s*,\s*|\s*&\s*/i);
-      return andItems.map(c => c.trim().toUpperCase()).filter(Boolean);
+      return andItems.map(c => canonicalizeCode(c)).filter(Boolean);
     }).filter(clause => clause.length > 0);
   }
   if (Array.isArray(req)) {
     if (req.length === 0) return [];
     if (Array.isArray(req[0])) {
-      return req.map(c => c.map(x => String(x).trim().toUpperCase()));
+      return req.map(c => c.map(x => canonicalizeCode(x)).filter(Boolean)).filter(clause => clause.length > 0);
     }
-    return [req.map(x => String(x).trim().toUpperCase())];
+    const flat = req.map(x => canonicalizeCode(x)).filter(Boolean);
+    return flat.length > 0 ? [flat] : [];
   }
   return [];
 }
@@ -42,8 +54,8 @@ export function normalizeDNF(req) {
 export function evaluateDNF(requirement, satisfiedCodes, isWaived = false) {
   const dnf = normalizeDNF(requirement);
   const codeSet = satisfiedCodes instanceof Set 
-    ? satisfiedCodes 
-    : new Set((satisfiedCodes || []).map(c => String(c).toUpperCase().trim()));
+    ? new Set(Array.from(satisfiedCodes).map(canonicalizeCode).filter(Boolean)) 
+    : new Set((satisfiedCodes || []).map(canonicalizeCode).filter(Boolean));
 
   if (dnf.length === 0) {
     return {
@@ -108,8 +120,14 @@ export function getAvailableCourseCodes(schedule, targetLocation, includeCurrent
 
   // 1. Pre-college transfer courses
   (schedule.transferCourses || []).forEach(tc => {
-    if (tc.code) codes.add(String(tc.code).trim().toUpperCase());
-    if (tc.satisfiesCourse) codes.add(String(tc.satisfiesCourse).trim().toUpperCase());
+    if (tc.code) {
+      const code = canonicalizeCode(tc.code);
+      if (code) codes.add(code);
+    }
+    if (tc.satisfiesCourse) {
+      const sat = canonicalizeCode(tc.satisfiesCourse);
+      if (sat) codes.add(sat);
+    }
   });
 
   if (targetLocation && targetLocation.type === 'transfer') {
@@ -130,8 +148,14 @@ export function getAvailableCourseCodes(schedule, targetLocation, includeCurrent
         termList.forEach((course, cIdx) => {
           if (isSameTerm && cIdx === excludeIndex) return;
 
-          if (course.code) codes.add(String(course.code).trim().toUpperCase());
-          if (course.satisfiesCourse) codes.add(String(course.satisfiesCourse).trim().toUpperCase());
+          if (course.code) {
+            const code = canonicalizeCode(course.code);
+            if (code) codes.add(code);
+          }
+          if (course.satisfiesCourse) {
+            const sat = canonicalizeCode(course.satisfiesCourse);
+            if (sat) codes.add(sat);
+          }
         });
       }
     });
@@ -147,10 +171,10 @@ export function getAvailableCourseCodes(schedule, targetLocation, includeCurrent
  */
 export function findCourseCompletedLocation(schedule, code) {
   if (!schedule || !code) return null;
-  const clean = String(code).trim().toUpperCase();
+  const clean = canonicalizeCode(code);
 
   const transfer = (schedule.transferCourses || []).find(
-    c => c.code?.trim().toUpperCase() === clean || c.satisfiesCourse?.trim().toUpperCase() === clean
+    c => canonicalizeCode(c.code) === clean || canonicalizeCode(c.satisfiesCourse) === clean
   );
   if (transfer) {
     return { type: 'transfer', label: `Pre-College Credit (${transfer.code})` };
@@ -159,7 +183,7 @@ export function findCourseCompletedLocation(schedule, code) {
   for (let y = 0; y < (schedule.years || []).length; y++) {
     for (let t = 0; t < schedule.years[y].length; t++) {
       const match = schedule.years[y][t].find(
-        c => c.code?.trim().toUpperCase() === clean || c.satisfiesCourse?.trim().toUpperCase() === clean
+        c => canonicalizeCode(c.code) === clean || canonicalizeCode(c.satisfiesCourse) === clean
       );
       if (match) {
         return { type: 'term', year: y, term: t, label: `Year ${y + 1}, Term ${t + 1}` };
@@ -176,7 +200,7 @@ export function findCourseCompletedLocation(schedule, code) {
 export function validateSchedule(schedule, catalogCourses = []) {
   const catalogMap = new Map();
   (catalogCourses || []).forEach(c => {
-    if (c?.code) catalogMap.set(String(c.code).trim().toUpperCase(), c);
+    if (c?.code) catalogMap.set(canonicalizeCode(c.code), c);
   });
 
   const diagnostics = [];
@@ -203,7 +227,7 @@ export function validateSchedule(schedule, catalogCourses = []) {
     yearList.forEach((termList, tIdx) => {
       termList.forEach((course, cIdx) => {
         totalCourses++;
-        const cleanCode = String(course?.code || '').trim().toUpperCase();
+        const cleanCode = canonicalizeCode(course?.code);
         const catCourse = catalogMap.get(cleanCode) || course;
 
         const priorCodes = getAvailableCourseCodes(schedule, {
@@ -293,11 +317,11 @@ export function simulateScheduleMutation(schedule, courseCode, action, targetLoc
     return { hasDownstreamImpact: false, affectedCourses: [] };
   }
 
-  const cleanCode = String(courseCode).trim().toUpperCase();
+  const cleanCode = canonicalizeCode(courseCode);
   const baseline = validateSchedule(schedule, catalogCourses);
   const baselineMap = new Map();
   baseline.diagnostics.forEach(d => {
-    baselineMap.set(d.courseCode.trim().toUpperCase(), d);
+    baselineMap.set(canonicalizeCode(d.courseCode), d);
   });
 
   let mutatedSchedule;
@@ -313,7 +337,7 @@ export function simulateScheduleMutation(schedule, courseCode, action, targetLoc
   const affectedCourses = [];
 
   mutated.diagnostics.forEach(newDiag => {
-    const code = newDiag.courseCode.trim().toUpperCase();
+    const code = canonicalizeCode(newDiag.courseCode);
     if (code === cleanCode) return;
 
     const prevDiag = baselineMap.get(code);
