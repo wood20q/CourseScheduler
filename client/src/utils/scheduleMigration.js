@@ -140,30 +140,119 @@ export function calculateTotalCredits(schedule) {
   return Math.round((transferTotal + yearsTotal) * 100) / 100;
 }
 
+export function createTermLocation(year, term) {
+  return {
+    type: 'term',
+    year: Number(year),
+    term: Number(term)
+  };
+}
+
+export function createTransferLocation() {
+  return {
+    type: 'transfer'
+  };
+}
+
 export function parseLocation(location) {
   if (!location || location === 'transfer') {
-    return { type: 'transfer' };
+    return createTransferLocation();
   }
   if (typeof location === 'object' && !Array.isArray(location)) {
     if (location.type === 'term') {
-      return { type: 'term', year: Number(location.year), term: Number(location.term) };
+      return createTermLocation(location.year, location.term);
     }
-    return { type: 'transfer' };
+    if ('year' in location && 'term' in location) {
+      return createTermLocation(location.year, location.term);
+    }
+    return createTransferLocation();
   }
   if (Array.isArray(location)) {
-    return { type: 'term', year: Number(location[0]), term: Number(location[1]) };
+    return createTermLocation(location[0], location[1]);
   }
   if (typeof location === 'string' && location.includes(',')) {
-    const [y, t] = location.split(',').map(Number);
-    return { type: 'term', year: y, term: t };
+    const [y, t] = location.split(',').map((s) => Number(s.trim()));
+    return createTermLocation(y, t);
   }
-  return { type: 'transfer' };
+  return createTransferLocation();
 }
 
 export function formatLocationKey(location) {
   const parsed = parseLocation(location);
   if (parsed.type === 'transfer') return 'transfer';
   return `${parsed.year},${parsed.term}`;
+}
+
+export function formatLocationLabel(location) {
+  const parsed = parseLocation(location);
+  if (parsed.type === 'transfer') {
+    return 'Pre-College / Transfer Credits';
+  }
+  return `Year ${parsed.year + 1}, Term ${parsed.term + 1}`;
+}
+
+export function isValidLocation(location) {
+  if (!location) return false;
+
+  if (location === 'transfer') return true;
+
+  if (typeof location === 'object') {
+    if (Array.isArray(location)) {
+      if (location.length !== 2) return false;
+      const [yRaw, tRaw] = location;
+      if (
+        typeof yRaw === 'boolean' ||
+        typeof tRaw === 'boolean' ||
+        yRaw === null ||
+        tRaw === null ||
+        yRaw === '' ||
+        tRaw === ''
+      ) {
+        return false;
+      }
+      const y = Number(yRaw);
+      const t = Number(tRaw);
+      if (!Number.isInteger(y) || !Number.isInteger(t)) return false;
+      return y >= 0 && y <= 3 && t >= 0 && t <= 2;
+    }
+
+    if (location.type === 'transfer') return true;
+
+    if (location.type === 'term' || ('year' in location && 'term' in location)) {
+      if (
+        typeof location.year === 'boolean' ||
+        typeof location.term === 'boolean' ||
+        location.year === null ||
+        location.term === null ||
+        location.year === '' ||
+        location.term === ''
+      ) {
+        return false;
+      }
+      const y = Number(location.year);
+      const t = Number(location.term);
+      if (!Number.isInteger(y) || !Number.isInteger(t)) return false;
+      return y >= 0 && y <= 3 && t >= 0 && t <= 2;
+    }
+
+    return false;
+  }
+
+  if (typeof location === 'string') {
+    if (location.includes(',')) {
+      const parts = location.split(',');
+      if (parts.length !== 2) return false;
+      const [yStr, tStr] = parts.map((s) => s.trim());
+      if (yStr === '' || tStr === '') return false;
+      const y = Number(yStr);
+      const t = Number(tStr);
+      if (!Number.isInteger(y) || !Number.isInteger(t)) return false;
+      return y >= 0 && y <= 3 && t >= 0 && t <= 2;
+    }
+    return false;
+  }
+
+  return false;
 }
 
 export function isTransferLocation(location) {

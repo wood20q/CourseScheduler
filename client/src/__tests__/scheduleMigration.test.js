@@ -9,6 +9,10 @@ import {
   parseLocation,
   formatLocationKey,
   isTransferLocation,
+  createTermLocation,
+  createTransferLocation,
+  formatLocationLabel,
+  isValidLocation,
   addCourseToSchedule,
   removeCourseFromSchedule,
   moveCourseInSchedule,
@@ -112,10 +116,123 @@ describe('scheduleMigration utils', () => {
       expect(parseLocation(null)).toEqual({ type: 'transfer' });
     });
 
+    it('createTermLocation and createTransferLocation construct standard models', () => {
+      expect(createTermLocation(0, 1)).toEqual({ type: 'term', year: 0, term: 1 });
+      expect(createTermLocation('2', '1')).toEqual({ type: 'term', year: 2, term: 1 });
+      expect(createTransferLocation()).toEqual({ type: 'transfer' });
+    });
+
+    it('parseLocation parses various formats into standardized Location objects', () => {
+      // Tuples
+      expect(parseLocation([0, 1])).toEqual({ type: 'term', year: 0, term: 1 });
+      expect(parseLocation([3, 2])).toEqual({ type: 'term', year: 3, term: 2 });
+
+      // { year, term } objects
+      expect(parseLocation({ year: 2, term: 1 })).toEqual({ type: 'term', year: 2, term: 1 });
+      expect(parseLocation({ year: '1', term: '0' })).toEqual({ type: 'term', year: 1, term: 0 });
+
+      // Standardized term location
+      expect(parseLocation({ type: 'term', year: 3, term: 2 })).toEqual({ type: 'term', year: 3, term: 2 });
+
+      // Strings
+      expect(parseLocation('0,0')).toEqual({ type: 'term', year: 0, term: 0 });
+      expect(parseLocation('2, 1')).toEqual({ type: 'term', year: 2, term: 1 });
+      expect(parseLocation('transfer')).toEqual({ type: 'transfer' });
+
+      // Transfer objects
+      expect(parseLocation({ type: 'transfer' })).toEqual({ type: 'transfer' });
+      expect(parseLocation(createTransferLocation())).toEqual({ type: 'transfer' });
+
+      // Falsy fallback
+      expect(parseLocation(null)).toEqual({ type: 'transfer' });
+      expect(parseLocation(undefined)).toEqual({ type: 'transfer' });
+    });
+
     it('formatLocationKey formats keys consistently', () => {
       expect(formatLocationKey('transfer')).toBe('transfer');
+      expect(formatLocationKey(createTransferLocation())).toBe('transfer');
+      expect(formatLocationKey({ type: 'transfer' })).toBe('transfer');
       expect(formatLocationKey([0, 1])).toBe('0,1');
       expect(formatLocationKey('0,1')).toBe('0,1');
+      expect(formatLocationKey({ year: 2, term: 1 })).toBe('2,1');
+      expect(formatLocationKey(createTermLocation(3, 2))).toBe('3,2');
+    });
+
+    it('formatLocationLabel formats human-readable location labels', () => {
+      expect(formatLocationLabel('transfer')).toBe('Pre-College / Transfer Credits');
+      expect(formatLocationLabel(createTransferLocation())).toBe('Pre-College / Transfer Credits');
+      expect(formatLocationLabel({ type: 'transfer' })).toBe('Pre-College / Transfer Credits');
+      expect(formatLocationLabel(null)).toBe('Pre-College / Transfer Credits');
+
+      expect(formatLocationLabel([0, 0])).toBe('Year 1, Term 1');
+      expect(formatLocationLabel('0,0')).toBe('Year 1, Term 1');
+      expect(formatLocationLabel(createTermLocation(0, 0))).toBe('Year 1, Term 1');
+      expect(formatLocationLabel({ year: 0, term: 0 })).toBe('Year 1, Term 1');
+
+      expect(formatLocationLabel([2, 1])).toBe('Year 3, Term 2');
+      expect(formatLocationLabel('2,1')).toBe('Year 3, Term 2');
+      expect(formatLocationLabel(createTermLocation(2, 1))).toBe('Year 3, Term 2');
+
+      expect(formatLocationLabel([3, 2])).toBe('Year 4, Term 3');
+      expect(formatLocationLabel('3,2')).toBe('Year 4, Term 3');
+      expect(formatLocationLabel(createTermLocation(3, 2))).toBe('Year 4, Term 3');
+    });
+
+    it('isValidLocation validates location format and boundaries', () => {
+      // Valid transfer locations
+      expect(isValidLocation('transfer')).toBe(true);
+      expect(isValidLocation(createTransferLocation())).toBe(true);
+      expect(isValidLocation({ type: 'transfer' })).toBe(true);
+
+      // Valid term locations
+      expect(isValidLocation([0, 0])).toBe(true);
+      expect(isValidLocation([3, 2])).toBe(true);
+      expect(isValidLocation([1, 1])).toBe(true);
+      expect(isValidLocation('0,0')).toBe(true);
+      expect(isValidLocation('3,2')).toBe(true);
+      expect(isValidLocation(createTermLocation(0, 0))).toBe(true);
+      expect(isValidLocation(createTermLocation(3, 2))).toBe(true);
+      expect(isValidLocation({ year: 0, term: 0 })).toBe(true);
+      expect(isValidLocation({ year: 3, term: 2 })).toBe(true);
+      expect(isValidLocation({ type: 'term', year: 2, term: 1 })).toBe(true);
+
+      // Boundary violations - Year must be 0-3
+      expect(isValidLocation([-1, 0])).toBe(false);
+      expect(isValidLocation([4, 0])).toBe(false);
+      expect(isValidLocation('-1,0')).toBe(false);
+      expect(isValidLocation('4,0')).toBe(false);
+      expect(isValidLocation(createTermLocation(-1, 0))).toBe(false);
+      expect(isValidLocation(createTermLocation(4, 0))).toBe(false);
+      expect(isValidLocation({ year: -1, term: 0 })).toBe(false);
+      expect(isValidLocation({ year: 4, term: 0 })).toBe(false);
+
+      // Boundary violations - Term must be 0-2
+      expect(isValidLocation([0, -1])).toBe(false);
+      expect(isValidLocation([0, 3])).toBe(false);
+      expect(isValidLocation('0,-1')).toBe(false);
+      expect(isValidLocation('0,3')).toBe(false);
+      expect(isValidLocation(createTermLocation(0, -1))).toBe(false);
+      expect(isValidLocation(createTermLocation(0, 3))).toBe(false);
+      expect(isValidLocation({ year: 0, term: -1 })).toBe(false);
+      expect(isValidLocation({ year: 0, term: 3 })).toBe(false);
+
+      // Malformed or non-location inputs
+      expect(isValidLocation(null)).toBe(false);
+      expect(isValidLocation(undefined)).toBe(false);
+      expect(isValidLocation('')).toBe(false);
+      expect(isValidLocation('invalid')).toBe(false);
+      expect(isValidLocation('0,0,0')).toBe(false);
+      expect(isValidLocation([])).toBe(false);
+      expect(isValidLocation([0])).toBe(false);
+      expect(isValidLocation([0, 1, 2])).toBe(false);
+      expect(isValidLocation({})).toBe(false);
+      expect(isValidLocation({ type: 'unknown' })).toBe(false);
+      expect(isValidLocation({ type: 'term' })).toBe(false);
+      expect(isValidLocation({ year: 'abc', term: 0 })).toBe(false);
+      expect(isValidLocation({ year: 1.5, term: 0 })).toBe(false);
+      expect(isValidLocation({ year: 1, term: 1.5 })).toBe(false);
+      expect(isValidLocation(123)).toBe(false);
+      expect(isValidLocation(true)).toBe(false);
     });
 
     it('isTransferLocation identifies transfer targets', () => {
