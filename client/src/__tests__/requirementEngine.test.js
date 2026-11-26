@@ -87,12 +87,13 @@ describe('Requirement Engine', () => {
       expect(evaluateDNF(req, new Set(['CS120'])).status).toBe('UNSATISFIED');
     });
 
-    it('handles explicit requirement waivers', () => {
+    it('handles explicit requirement waivers and preserves unfulfilledSummary', () => {
       const req = [['CS120']];
       const res = evaluateDNF(req, new Set(), true);
       expect(res.isSatisfied).toBe(true);
       expect(res.isWaived).toBe(true);
       expect(res.status).toBe('WAIVED');
+      expect(res.unfulfilledSummary).toBe('CS120');
     });
 
     it('reliably matches spaced requirement strings against compact satisfied codes', () => {

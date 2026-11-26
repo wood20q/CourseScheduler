@@ -1,6 +1,27 @@
+function formatRequirementAudit(result, isCourseWaived) {
+  if (!result) return 'None required';
+  const waived = result.status === 'WAIVED' || Boolean(result.isWaived) || Boolean(isCourseWaived);
+  if (waived && result.unfulfilledSummary) {
+    if (result.unfulfilledSummary.includes('(Waived by Advisor)')) {
+      return result.unfulfilledSummary;
+    }
+    return `${result.unfulfilledSummary} (Waived by Advisor)`;
+  }
+  if (result.status === 'WAIVED') {
+    if (result.missingSummary && result.missingSummary !== 'Waived by advisor waiver') {
+      return result.missingSummary;
+    }
+    return 'Waived by advisor waiver';
+  }
+  if (result.status === 'SATISFIED') {
+    return result.missingSummary || 'Fulfilled';
+  }
+  return result.missingSummary || result.unfulfilledSummary || 'None required';
+}
+
 export default function RequirementInspectorModal({ course, validation, onClose, onToggleWaiver }) {
   if (!course || !validation) return null;
-  const isWaived = validation.overallStatus === 'WAIVED';
+  const isWaived = validation.overallStatus === 'WAIVED' || Boolean(validation.isWaived);
   const isSatisfied = validation.overallStatus === 'SATISFIED';
 
   let statusBadgeClass = 'unsatisfied';
@@ -40,14 +61,14 @@ export default function RequirementInspectorModal({ course, validation, onClose,
             <h3>Prerequisites</h3>
             <p className="inspector-desc">Must be completed in a strictly prior term or transfer credit.</p>
             <div className="inspector-value">
-              {validation.prereqResult?.missingSummary || 'None required'}
+              {formatRequirementAudit(validation.prereqResult, isWaived)}
             </div>
           </div>
           <div className="inspector-section">
             <h3>Corequisites</h3>
             <p className="inspector-desc">May be taken concurrently in the same term or completed earlier.</p>
             <div className="inspector-value">
-              {validation.coreqResult?.missingSummary || 'None required'}
+              {formatRequirementAudit(validation.coreqResult, isWaived)}
             </div>
           </div>
         </div>
