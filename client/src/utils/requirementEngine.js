@@ -63,7 +63,8 @@ export function evaluateDNF(requirement, satisfiedCodes, isWaived = false) {
       isWaived: false,
       status: 'SATISFIED',
       options: [],
-      missingSummary: 'No requirements needed'
+      missingSummary: 'No requirements needed',
+      unfulfilledSummary: ''
     };
   }
 
@@ -185,10 +186,11 @@ export function validateSchedule(schedule, catalogCourses = []) {
       id: `transfer-${cIdx}`,
       courseCode: course.code,
       location: { type: 'transfer', index: cIdx },
-      prereqResult: { isSatisfied: true, status: 'SATISFIED', missingSummary: 'Pre-college credit' },
-      coreqResult: { isSatisfied: true, status: 'SATISFIED', missingSummary: 'None' },
+      prereqResult: { isSatisfied: true, status: 'SATISFIED', missingSummary: 'Pre-college credit', unfulfilledSummary: '' },
+      coreqResult: { isSatisfied: true, status: 'SATISFIED', missingSummary: 'None', unfulfilledSummary: '' },
       overallStatus: 'SATISFIED',
-      hasFlag: false
+      hasFlag: false,
+      unfulfilledSummary: ''
     });
   });
 
