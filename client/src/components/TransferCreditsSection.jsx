@@ -1,14 +1,19 @@
 import CourseCard from "./CourseCard";
-import { calculateCredits } from "../utils/scheduleMigration";
+import { 
+    calculateCredits, 
+    createTransferLocation, 
+    formatLocationLabel 
+} from "../utils/scheduleMigration";
 
 function TransferCreditsSection({ transferCourses = [], onAddClick, onCourseClick }) {
     const totalTransferCredits = calculateCredits(transferCourses);
+    const transferLocation = createTransferLocation();
 
     return (
         <div className="transferSectionBlock">
             <div className="transferSectionHeader">
                 <div className="transferSectionInfo">
-                    <h1>Pre-College / Transfer Credits</h1>
+                    <h1>{formatLocationLabel(transferLocation)}</h1>
                     <p>Transfer Credits: {totalTransferCredits}</p>
                 </div>
                 {transferCourses.length > 0 && (
@@ -41,7 +46,7 @@ function TransferCreditsSection({ transferCourses = [], onAddClick, onCourseClic
                             key={course.code}
                             course={{ ...course, isTransfer: true }}
                             onClickCourse={(courseData) =>
-                                onCourseClick ? onCourseClick(courseData, 'transfer') : undefined
+                                onCourseClick ? onCourseClick(courseData, transferLocation) : undefined
                             }
                         />
                     ))}

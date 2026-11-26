@@ -4,7 +4,12 @@ import {
   evaluateDNF, 
   normalizeDNF
 } from "../utils/requirementEngine";
-import { findCourseInSchedule } from "../utils/scheduleMigration";
+import { 
+  findCourseInSchedule, 
+  createTermLocation, 
+  formatLocationLabel, 
+  isValidLocation 
+} from "../utils/scheduleMigration";
 
 function RequirementAuditItem({ 
   type, 
@@ -92,21 +97,17 @@ function AddCourseDialog({
     return catalogEntry?.corequisites || course?.corequisites || null;
   }, [catalogEntry, course]);
 
+  const targetLocation = useMemo(() => {
+    return createTermLocation(selectedYear, selectedTerm);
+  }, [selectedYear, selectedTerm]);
+
   const priorCodes = useMemo(() => {
-    return getAvailableCourseCodes(schedule, {
-      type: 'term',
-      year: selectedYear,
-      term: selectedTerm
-    }, false);
-  }, [schedule, selectedYear, selectedTerm]);
+    return getAvailableCourseCodes(schedule, targetLocation, false);
+  }, [schedule, targetLocation]);
 
   const concurrentCodes = useMemo(() => {
-    return getAvailableCourseCodes(schedule, {
-      type: 'term',
-      year: selectedYear,
-      term: selectedTerm
-    }, true);
-  }, [schedule, selectedYear, selectedTerm]);
+    return getAvailableCourseCodes(schedule, targetLocation, true);
+  }, [schedule, targetLocation]);
 
   const prereqEvaluation = useMemo(() => {
     return evaluateDNF(prereqs, priorCodes, false);
@@ -127,10 +128,11 @@ function AddCourseDialog({
   const isCoreqSatisfied = !hasCoreqs || coreqEvaluation.status === 'SATISFIED';
   const isSatisfied = isPrereqSatisfied && isCoreqSatisfied;
 
-  const targetTermLabel = `Year ${selectedYear + 1}, Term ${selectedTerm + 1}`;
+  const targetTermLabel = formatLocationLabel(targetLocation);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!isValidLocation(targetLocation)) return;
     if (!isSatisfied && !waiverChecked) return;
     const courseToAdd = (!isSatisfied && waiverChecked) 
       ? { ...course, isWaived: true } 

@@ -1,17 +1,15 @@
 import { useState, useMemo } from "react";
-import { formatLocationKey, parseLocation, findCourseInSchedule } from "../utils/scheduleMigration";
+import { 
+    formatLocationKey, 
+    formatLocationLabel, 
+    parseLocation, 
+    isValidLocation, 
+    findCourseInSchedule 
+} from "../utils/scheduleMigration";
 import { 
     validateSchedule, 
     simulateScheduleMutation 
 } from "../utils/requirementEngine";
-
-function formatCurrentLocation(currentTerm) {
-    const parsed = parseLocation(currentTerm);
-    if (parsed.type === "transfer") {
-        return "Pre-College / Transfer Credits";
-    }
-    return `Year ${parsed.year + 1}, Term ${parsed.term + 1}`;
-}
 
 function ManageCourseDialog({ 
     course, 
@@ -69,9 +67,11 @@ function ManageCourseDialog({
     const [editError, setEditError] = useState("");
 
     const effectiveTarget = useMemo(() => {
-        return isTransfer
-            ? (targetLocation === "transfer" ? "transfer" : targetLocation.split(",").map(Number))
-            : [selectedYear, selectedTerm];
+        if (isTransfer) {
+            const parsed = parseLocation(targetLocation);
+            return parsed.type === "transfer" ? "transfer" : [parsed.year, parsed.term];
+        }
+        return [selectedYear, selectedTerm];
     }, [isTransfer, targetLocation, selectedYear, selectedTerm]);
 
     const courseCode = liveCourse?.code;
@@ -99,6 +99,7 @@ function ManageCourseDialog({
     const handleMoveSubmit = (e) => {
         e.preventDefault();
         if (moveSimulation.hasDownstreamImpact && !impactAck) return;
+        if (!isValidLocation(effectiveTarget)) return;
         onMove(effectiveTarget, liveCourse.code);
         onClose();
     };
@@ -254,7 +255,7 @@ function ManageCourseDialog({
                                 <strong>Credits:</strong> {liveCourse.credits}
                             </p>
                             <p className="dialogCourseCurrentTerm">
-                                <strong>Current Location:</strong> {formatCurrentLocation(liveCourse.currentTerm)}
+                                <strong>Current Location:</strong> {formatLocationLabel(liveCourse.currentTerm)}
                             </p>
                             {isTransfer && (
                                 <>
@@ -403,10 +404,10 @@ function ManageCourseDialog({
                                 {moveSimulation.hasDownstreamImpact && (
                                     <div className="timeline-preview">
                                         <div className="timeline-flow">
-                                            <span className="flow-step current">{formatCurrentLocation(liveCourse.currentTerm)}</span>
+                                            <span className="flow-step current">{formatLocationLabel(liveCourse.currentTerm)}</span>
                                             <span className="flow-arrow">➔</span>
                                             <span className="flow-step target">
-                                                {isTransfer ? targetLocation : `Year ${selectedYear + 1}, Term ${selectedTerm + 1}`}
+                                                {formatLocationLabel(effectiveTarget)}
                                             </span>
                                         </div>
                                         <div className="timeline-affected">
