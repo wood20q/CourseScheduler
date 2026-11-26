@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import CourseCard from '../components/CourseCard';
 import RequirementFlag from '../components/RequirementFlag';
 import RequirementInspectorModal from '../components/RequirementInspectorModal';
+import { validateSchedule } from '../utils/requirementEngine';
 
 describe('Requirement Flag & Inspector Modal', () => {
   const sampleValidation = {
@@ -115,6 +116,109 @@ describe('Requirement Flag & Inspector Modal', () => {
       expect(screen.getByRole('button', { name: /Done/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /Waive Requirements/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /Revoke Requirement Waiver/i })).not.toBeInTheDocument();
+    });
+
+    it('itemizes specific waived prerequisite and corequisite course codes in modal audit sections', () => {
+      const waivedWithBreakdown = {
+        hasFlag: true,
+        overallStatus: 'WAIVED',
+        isWaived: true,
+        missingSummary: 'Waived by advisor waiver',
+        unfulfilledSummary: 'Prereq: CS120; Coreq: CS125',
+        prereqResult: {
+          status: 'WAIVED',
+          isWaived: true,
+          unfulfilledSummary: 'CS120',
+          missingSummary: 'Waived by advisor waiver'
+        },
+        coreqResult: {
+          status: 'WAIVED',
+          isWaived: true,
+          unfulfilledSummary: 'CS125',
+          missingSummary: 'Waived by advisor waiver'
+        }
+      };
+
+      render(
+        <RequirementInspectorModal
+          course={course}
+          validation={waivedWithBreakdown}
+          onClose={vi.fn()}
+          onToggleWaiver={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText('CS120 (Waived by Advisor)')).toBeInTheDocument();
+      expect(screen.getByText('CS125 (Waived by Advisor)')).toBeInTheDocument();
+    });
+
+    it('itemizes waived prerequisite and displays fulfilled for satisfied corequisite', () => {
+      const waivedPrereqSatisfiedCoreq = {
+        hasFlag: true,
+        overallStatus: 'WAIVED',
+        isWaived: true,
+        missingSummary: 'Waived by advisor waiver',
+        unfulfilledSummary: 'Prereq: CS120',
+        prereqResult: {
+          status: 'WAIVED',
+          isWaived: true,
+          unfulfilledSummary: 'CS120',
+          missingSummary: 'Waived by advisor waiver'
+        },
+        coreqResult: {
+          status: 'SATISFIED',
+          isWaived: true,
+          isSatisfied: true,
+          unfulfilledSummary: '',
+          missingSummary: 'Fulfilled'
+        }
+      };
+
+      render(
+        <RequirementInspectorModal
+          course={course}
+          validation={waivedPrereqSatisfiedCoreq}
+          onClose={vi.fn()}
+          onToggleWaiver={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText('CS120 (Waived by Advisor)')).toBeInTheDocument();
+      expect(screen.getByText('Fulfilled')).toBeInTheDocument();
+    });
+
+    it('renders end-to-end audit breakdown from validateSchedule for waived course', () => {
+      const catalog = [
+        { code: 'CS120', prerequisites: [] },
+        { code: 'CS220', prerequisites: ['CS120'], corequisites: [] }
+      ];
+      const schedule = {
+        transferCourses: [],
+        years: [
+          [
+            [{ code: 'CS220', isWaived: true }],
+            [],
+            []
+          ],
+          [[], [], []],
+          [[], [], []],
+          [[], [], []]
+        ]
+      };
+      const validationReport = validateSchedule(schedule, catalog);
+      const cs220Diag = validationReport.diagnostics.find(d => d.courseCode === 'CS220');
+
+      render(
+        <RequirementInspectorModal
+          course={{ code: 'CS220', name: 'Data Structures and Algorithms' }}
+          validation={cs220Diag}
+          onClose={vi.fn()}
+          onToggleWaiver={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText('CS120 (Waived by Advisor)')).toBeInTheDocument();
+      expect(screen.getByText('No requirements needed')).toBeInTheDocument();
     });
   });
 
