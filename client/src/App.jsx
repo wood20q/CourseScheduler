@@ -26,23 +26,13 @@ import { validateSchedule } from './utils/requirementEngine'
 
 const studentName = "Chad Quick"
 
-const CATALOG_REQUIREMENTS = {
-  CS220: { prerequisites: ['CS120'] },
-  CS240: { prerequisites: ['CS120'] },
-  CS350: { prerequisites: ['CS220', 'CS240'] },
-  CS310: { prerequisites: ['CS220'] },
-  MATH215: { prerequisites: ['MATH101'] },
-  PHYS200: { corequisites: ['MATH101'] },
-  MATH310: { prerequisites: [['MATH101', 'MATH105'], ['MATH303', 'MATH304']] }
-}
-
-const FALLBACK_CATALOG = [
-  { id: 1, name: "Intro to Python", code: "CS120", credits: 1, description: "Intro to structured and object-oriented programming..." },
-  { id: 2, name: "Data Structures and Algorithms", code: "CS220", credits: 1, description: "In-depth study of data structures, complexity, and sorting." },
-  { id: 3, name: "Calculus I", code: "MATH101", credits: 1, description: "Fundamentals of limits, derivatives, and integrals." },
-  { id: 10, name: "General Physics", code: "PHYS200", credits: 1, description: "Calculus-based mechanics, thermodynamics, and waves." },
-  { id: 16, name: "Software Engineering", code: "CS350", credits: 1, description: "Methodologies for software design, testing, agile development, and team project management." },
-  { id: 19, name: "Cybersecurity Fundamentals", code: "CS240", credits: 1, description: "Core concepts of network security, cryptography, vulnerability assessment, and defense strategies." }
+export const FALLBACK_CATALOG = [
+  { id: 1, name: "Intro to Python", code: "CS120", credits: 1, description: "Intro to structured and object-oriented programming...", prerequisites: [], corequisites: [] },
+  { id: 2, name: "Data Structures and Algorithms", code: "CS220", credits: 1, description: "In-depth study of data structures, complexity, and sorting.", prerequisites: [['CS120']], corequisites: [] },
+  { id: 3, name: "Calculus I", code: "MATH101", credits: 1, description: "Fundamentals of limits, derivatives, and integrals.", prerequisites: [], corequisites: [] },
+  { id: 10, name: "General Physics", code: "PHYS200", credits: 1, description: "Calculus-based mechanics, thermodynamics, and waves.", prerequisites: [], corequisites: [['MATH101']] },
+  { id: 16, name: "Software Engineering", code: "CS350", credits: 1, description: "Methodologies for software design, testing, agile development, and team project management.", prerequisites: [['CS220', 'CS240']], corequisites: [] },
+  { id: 19, name: "Cybersecurity Fundamentals", code: "CS240", credits: 1, description: "Core concepts of network security, cryptography, vulnerability assessment, and defense strategies.", prerequisites: [['CS120']], corequisites: [] }
 ]
 
 function App() {
@@ -103,13 +93,13 @@ function App() {
       .finally(() => setIsLoading(false))
   }, [])
 
-  // Augmented catalog with prerequisite/corequisite rules
+  // Augmented catalog with prerequisite/corequisite rules directly from course definitions
   const catalogWithRules = useMemo(() => {
     const baseList = (availCourses && availCourses.length > 0) ? availCourses : FALLBACK_CATALOG
     return baseList.map(c => ({
       ...c,
-      prerequisites: c.prerequisites || CATALOG_REQUIREMENTS[c.code]?.prerequisites || [],
-      corequisites: c.corequisites || CATALOG_REQUIREMENTS[c.code]?.corequisites || []
+      prerequisites: c.prerequisites || [],
+      corequisites: c.corequisites || []
     }))
   }, [availCourses])
 
