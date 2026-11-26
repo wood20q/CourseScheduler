@@ -12,7 +12,8 @@ import {
   addCourseToSchedule,
   removeCourseFromSchedule,
   moveCourseInSchedule,
-  findCourseInSchedule
+  findCourseInSchedule,
+  toggleCourseWaiver
 } from '../utils/scheduleMigration';
 
 describe('scheduleMigration utils', () => {
@@ -233,6 +234,66 @@ describe('scheduleMigration utils', () => {
 
       // Null when non-existent
       expect(findCourseInSchedule(scheduleWithEquivalencies, 'UNKNOWN')).toBeNull();
+    });
+
+    describe('toggleCourseWaiver', () => {
+      const scheduleWithCourses = {
+        transferCourses: [{ code: 'AP-CALC', name: 'Calc', credits: 4, isTransfer: true }],
+        years: [
+          [[{ code: 'CS101', name: 'Intro CS', credits: 3 }, { code: 'MATH101', name: 'Calculus I', credits: 4 }], [], []],
+          [[], [], []],
+          [[], [], []],
+          [[], [], []]
+        ]
+      };
+
+      it('toggles isWaived on a target course located in transferCourses', () => {
+        const waived = toggleCourseWaiver(scheduleWithCourses, 'AP-CALC');
+        expect(waived.transferCourses[0].isWaived).toBe(true);
+
+        const unWaived = toggleCourseWaiver(waived, 'AP-CALC');
+        expect(unWaived.transferCourses[0].isWaived).toBe(false);
+      });
+
+      it('toggles isWaived on a target course located in an academic year/term', () => {
+        const waived = toggleCourseWaiver(scheduleWithCourses, 'CS101');
+        expect(waived.years[0][0][0].isWaived).toBe(true);
+        expect(waived.years[0][0][1].isWaived).toBeUndefined();
+
+        const unWaived = toggleCourseWaiver(waived, 'CS101');
+        expect(unWaived.years[0][0][0].isWaived).toBe(false);
+      });
+
+      it('matches course codes case-insensitively and with trimmed whitespace', () => {
+        const waivedTransfer = toggleCourseWaiver(scheduleWithCourses, '  ap-calc  ');
+        expect(waivedTransfer.transferCourses[0].isWaived).toBe(true);
+
+        const waivedTerm = toggleCourseWaiver(scheduleWithCourses, '  cs101 \n');
+        expect(waivedTerm.years[0][0][0].isWaived).toBe(true);
+      });
+
+      it('leaves other courses untouched and returns a new schedule object (immutability)', () => {
+        const frozenSchedule = Object.freeze({
+          transferCourses: Object.freeze([Object.freeze({ code: 'AP-CALC', name: 'Calc', credits: 4 })]),
+          years: Object.freeze([
+            Object.freeze([
+              Object.freeze([Object.freeze({ code: 'CS101', name: 'Intro CS', credits: 3 })]),
+              Object.freeze([]),
+              Object.freeze([])
+            ]),
+            Object.freeze([Object.freeze([]), Object.freeze([]), Object.freeze([])]),
+            Object.freeze([Object.freeze([]), Object.freeze([]), Object.freeze([])]),
+            Object.freeze([Object.freeze([]), Object.freeze([]), Object.freeze([])])
+          ])
+        });
+
+        const updated = toggleCourseWaiver(frozenSchedule, 'CS101');
+        expect(updated).not.toBe(frozenSchedule);
+        expect(updated.years).not.toBe(frozenSchedule.years);
+        expect(updated.years[0][0][0].isWaived).toBe(true);
+        expect(frozenSchedule.years[0][0][0].isWaived).toBeUndefined();
+        expect(updated.transferCourses[0]).toEqual(frozenSchedule.transferCourses[0]);
+      });
     });
   });
 });
