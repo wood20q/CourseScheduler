@@ -217,7 +217,9 @@ export function findCourseInSchedule(schedule, code) {
   const targetCode = String(code).trim().toUpperCase();
 
   const transferCourse = (schedule.transferCourses || []).find(
-    (c) => String(c.code).trim().toUpperCase() === targetCode
+    (c) => String(c?.code || '').trim().toUpperCase() === targetCode
+  ) || (schedule.transferCourses || []).find(
+    (c) => c?.satisfiesCourse && String(c.satisfiesCourse).trim().toUpperCase() === targetCode
   );
   if (transferCourse) {
     return {
@@ -232,7 +234,9 @@ export function findCourseInSchedule(schedule, code) {
     const terms = years[y] || [];
     for (let t = 0; t < terms.length; t++) {
       const course = terms[t].find(
-        (c) => String(c.code).trim().toUpperCase() === targetCode
+        (c) => String(c?.code || '').trim().toUpperCase() === targetCode
+      ) || terms[t].find(
+        (c) => c?.satisfiesCourse && String(c.satisfiesCourse).trim().toUpperCase() === targetCode
       );
       if (course) {
         return {
