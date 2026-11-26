@@ -18,6 +18,16 @@ module.exports = (sequelize) => {
         description: {
           type: DataTypes.TEXT,
           allowNull: true
+        },
+        prerequisites: {
+          type: DataTypes.JSON,
+          allowNull: true,
+          defaultValue: []
+        },
+        corequisites: {
+          type: DataTypes.JSON,
+          allowNull: true,
+          defaultValue: []
         }
     })
 }

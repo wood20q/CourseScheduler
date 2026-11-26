@@ -1,4 +1,6 @@
 const { addCourse, findCourse, removeCourse, moveCourse } = require('../scheduleService');
+const request = require('supertest');
+const app = require('../index');
 
 describe('Schedule Schema Upgrade ({ transferCourses, years })', () => {
   const createEmptyUpgradedSchedule = () => ({
@@ -100,5 +102,49 @@ describe('Schedule Schema Upgrade ({ transferCourses, years })', () => {
 
     expect(Array.isArray(updated)).toBe(true);
     expect(updated[0][0][0].code).toBe('CS101');
+  });
+});
+
+describe('Catalog API Requirements Schema (/api/courses) - Issue #27', () => {
+  test('delivers course objects with prerequisites and corequisites defined on courses', async () => {
+    const res = await request(app).get('/api/courses');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThan(0);
+
+    const cs220 = res.body.find(c => c.code === 'CS220');
+    expect(cs220).toBeDefined();
+    expect(cs220.prerequisites).toEqual([['CS120']]);
+    expect(cs220.corequisites).toEqual([]);
+
+    const cs240 = res.body.find(c => c.code === 'CS240');
+    expect(cs240).toBeDefined();
+    expect(cs240.prerequisites).toEqual([['CS120']]);
+    expect(cs240.corequisites).toEqual([]);
+
+    const cs350 = res.body.find(c => c.code === 'CS350');
+    expect(cs350).toBeDefined();
+    expect(cs350.prerequisites).toEqual([['CS220', 'CS240']]);
+    expect(cs350.corequisites).toEqual([]);
+
+    const cs310 = res.body.find(c => c.code === 'CS310');
+    expect(cs310).toBeDefined();
+    expect(cs310.prerequisites).toEqual([['CS220']]);
+    expect(cs310.corequisites).toEqual([]);
+
+    const math215 = res.body.find(c => c.code === 'MATH215');
+    expect(math215).toBeDefined();
+    expect(math215.prerequisites).toEqual([['MATH101']]);
+    expect(math215.corequisites).toEqual([]);
+
+    const phys200 = res.body.find(c => c.code === 'PHYS200');
+    expect(phys200).toBeDefined();
+    expect(phys200.prerequisites).toEqual([]);
+    expect(phys200.corequisites).toEqual([['MATH101']]);
+
+    const cs120 = res.body.find(c => c.code === 'CS120');
+    expect(cs120).toBeDefined();
+    expect(cs120.prerequisites).toEqual([]);
+    expect(cs120.corequisites).toEqual([]);
   });
 });
