@@ -184,5 +184,55 @@ describe('scheduleMigration utils', () => {
 
       expect(findCourseInSchedule(baseSchedule, 'NON-EXISTENT')).toBeNull();
     });
+
+    it('findCourseInSchedule checks both home course codes and transfer courses with satisfiesCourse mappings', () => {
+      const scheduleWithEquivalencies = {
+        transferCourses: [
+          { code: 'AP-CALC', name: 'AP Calculus BC', credits: 4, satisfiesCourse: 'MATH101', isTransfer: true }
+        ],
+        years: [
+          [[{ code: 'HON-CS101', name: 'Honors Intro CS', credits: 3, satisfiesCourse: 'CS101' }], [], []],
+          [[], [], []],
+          [[], [], []],
+          [[], [], []]
+        ]
+      };
+
+      // By direct course code in transferCourses
+      const foundTransferDirect = findCourseInSchedule(scheduleWithEquivalencies, 'AP-CALC');
+      expect(foundTransferDirect).not.toBeNull();
+      expect(foundTransferDirect.course.code).toBe('AP-CALC');
+      expect(foundTransferDirect.location.type).toBe('transfer');
+      expect(foundTransferDirect.locationLabel).toBe('Pre-College / Transfer Credits');
+
+      // By satisfiesCourse equivalency in transferCourses
+      const foundTransferEquiv = findCourseInSchedule(scheduleWithEquivalencies, 'MATH101');
+      expect(foundTransferEquiv).not.toBeNull();
+      expect(foundTransferEquiv.course.code).toBe('AP-CALC');
+      expect(foundTransferEquiv.location.type).toBe('transfer');
+      expect(foundTransferEquiv.locationLabel).toBe('Pre-College / Transfer Credits');
+
+      // Case insensitive and whitespace tolerance
+      const foundTransferCase = findCourseInSchedule(scheduleWithEquivalencies, ' math101 ');
+      expect(foundTransferCase).not.toBeNull();
+      expect(foundTransferCase.course.code).toBe('AP-CALC');
+
+      // By satisfiesCourse equivalency in scheduled terms
+      const foundTermEquiv = findCourseInSchedule(scheduleWithEquivalencies, 'CS101');
+      expect(foundTermEquiv).not.toBeNull();
+      expect(foundTermEquiv.course.code).toBe('HON-CS101');
+      expect(foundTermEquiv.location.type).toBe('term');
+      expect(foundTermEquiv.location.year).toBe(0);
+      expect(foundTermEquiv.location.term).toBe(0);
+      expect(foundTermEquiv.locationLabel).toBe('Year 1 Term 1');
+
+      // Direct match in scheduled terms
+      const foundTermDirect = findCourseInSchedule(scheduleWithEquivalencies, 'HON-CS101');
+      expect(foundTermDirect).not.toBeNull();
+      expect(foundTermDirect.course.code).toBe('HON-CS101');
+
+      // Null when non-existent
+      expect(findCourseInSchedule(scheduleWithEquivalencies, 'UNKNOWN')).toBeNull();
+    });
   });
 });

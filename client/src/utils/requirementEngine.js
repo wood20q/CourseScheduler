@@ -165,36 +165,6 @@ export function getAvailableCourseCodes(schedule, targetLocation, includeCurrent
 }
 
 /**
- * Finds the specific location where a course code was completed.
- * Returns { type: 'transfer', label: 'Pre-College Credit (AP-CALC)' } or
- * { type: 'term', year: y, term: t, label: 'Year 1, Term 1' }, or null.
- */
-export function findCourseCompletedLocation(schedule, code) {
-  if (!schedule || !code) return null;
-  const clean = canonicalizeCode(code);
-
-  const transfer = (schedule.transferCourses || []).find(
-    c => canonicalizeCode(c.code) === clean || canonicalizeCode(c.satisfiesCourse) === clean
-  );
-  if (transfer) {
-    return { type: 'transfer', label: `Pre-College Credit (${transfer.code})` };
-  }
-
-  for (let y = 0; y < (schedule.years || []).length; y++) {
-    for (let t = 0; t < schedule.years[y].length; t++) {
-      const match = schedule.years[y][t].find(
-        c => canonicalizeCode(c.code) === clean || canonicalizeCode(c.satisfiesCourse) === clean
-      );
-      if (match) {
-        return { type: 'term', year: y, term: t, label: `Year ${y + 1}, Term ${t + 1}` };
-      }
-    }
-  }
-
-  return null;
-}
-
-/**
  * Validates an entire schedule and returns diagnostics mapped by course id/key.
  */
 export function validateSchedule(schedule, catalogCourses = []) {
