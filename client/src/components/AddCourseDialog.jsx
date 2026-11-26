@@ -32,7 +32,18 @@ function RequirementAuditItem({
   if (isClauseMet) {
     statusClass = 'met';
     statusIcon = '✅';
-    descText = `Satisfied (${completedLoc ? completedLoc.locationLabel : 'Completed prior'})`;
+    if (completedLoc) {
+      const isEquivalency = Boolean(
+        completedLoc.course?.code &&
+        firstCompleted &&
+        completedLoc.course.code.trim().toUpperCase() !== String(firstCompleted).trim().toUpperCase()
+      );
+      descText = isEquivalency
+        ? `Satisfied (${completedLoc.locationLabel} - ${completedLoc.course.code})`
+        : `Satisfied (${completedLoc.locationLabel})`;
+    } else {
+      descText = 'Satisfied (Completed prior)';
+    }
   } else if (isOverallRequirementSatisfied) {
     // When the course requirement is satisfied via another alternative OR clause
     statusClass = 'alternative';

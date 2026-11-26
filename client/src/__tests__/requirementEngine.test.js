@@ -3,10 +3,22 @@ import {
   normalizeDNF, 
   evaluateDNF, 
   validateSchedule,
-  simulateScheduleMutation 
+  simulateScheduleMutation,
+  canonicalizeCode
 } from '../utils/requirementEngine';
 
 describe('Requirement Engine', () => {
+  describe('canonicalizeCode', () => {
+    it('removes inner whitespace between letters and digits and trims/uppercases', () => {
+      expect(canonicalizeCode('MA 101')).toBe('MA101');
+      expect(canonicalizeCode('CS 120')).toBe('CS120');
+      expect(canonicalizeCode('  cs   120  ')).toBe('CS120');
+      expect(canonicalizeCode('MATH 101-B')).toBe('MATH101-B');
+      expect(canonicalizeCode('')).toBe('');
+      expect(canonicalizeCode(null)).toBe('');
+    });
+  });
+
   describe('normalizeDNF', () => {
     it('normalizes empty or null values', () => {
       expect(normalizeDNF(null)).toEqual([]);
@@ -18,8 +30,19 @@ describe('Requirement Engine', () => {
       expect(normalizeDNF(['cs120', 'math101'])).toEqual([['CS120', 'MATH101']]);
     });
 
+    it('canonicalizes course codes with inner whitespace in flat arrays', () => {
+      expect(normalizeDNF(['MA 101', 'CS 120'])).toEqual([['MA101', 'CS120']]);
+    });
+
     it('preserves array of arrays (DNF)', () => {
       expect(normalizeDNF([['MA101', 'MA105'], ['MA303', 'MA304']])).toEqual([
+        ['MA101', 'MA105'],
+        ['MA303', 'MA304']
+      ]);
+    });
+
+    it('canonicalizes course codes with inner whitespace in DNF array of arrays', () => {
+      expect(normalizeDNF([['MA 101', 'MA 105'], ['MA 303', 'MA 304']])).toEqual([
         ['MA101', 'MA105'],
         ['MA303', 'MA304']
       ]);
@@ -29,6 +52,18 @@ describe('Requirement Engine', () => {
       expect(normalizeDNF('(MA101 AND MA105) OR (MA303 AND MA304)')).toEqual([
         ['MA101', 'MA105'],
         ['MA303', 'MA304']
+      ]);
+    });
+
+    it('canonicalizes course codes with inner whitespace in boolean string expressions', () => {
+      expect(normalizeDNF('(MA 101 AND MA 105) OR (MA 303 AND MA 304)')).toEqual([
+        ['MA101', 'MA105'],
+        ['MA303', 'MA304']
+      ]);
+      expect(normalizeDNF('CS 120')).toEqual([['CS120']]);
+      expect(normalizeDNF('(CS 120 AND MATH 101) OR CS 220')).toEqual([
+        ['CS120', 'MATH101'],
+        ['CS220']
       ]);
     });
   });
@@ -52,12 +87,34 @@ describe('Requirement Engine', () => {
       expect(evaluateDNF(req, new Set(['CS120'])).status).toBe('UNSATISFIED');
     });
 
-    it('handles explicit requirement waivers', () => {
+    it('handles explicit requirement waivers and preserves unfulfilledSummary', () => {
       const req = [['CS120']];
       const res = evaluateDNF(req, new Set(), true);
       expect(res.isSatisfied).toBe(true);
       expect(res.isWaived).toBe(true);
       expect(res.status).toBe('WAIVED');
+      expect(res.unfulfilledSummary).toBe('CS120');
+    });
+
+    it('reliably matches spaced requirement strings against compact satisfied codes', () => {
+      const req = '(MA 101 AND MA 105) OR (MA 303 AND MA 304)';
+      const res1 = evaluateDNF(req, new Set(['MA101', 'MA105']));
+      expect(res1.isSatisfied).toBe(true);
+      expect(res1.status).toBe('SATISFIED');
+      expect(res1.options[0].isSatisfied).toBe(true);
+      expect(res1.options[0].required).toEqual(['MA101', 'MA105']);
+
+      const res2 = evaluateDNF(req, new Set(['MA101']));
+      expect(res2.isSatisfied).toBe(false);
+      expect(res2.status).toBe('UNSATISFIED');
+      expect(res2.unfulfilledSummary).toBe('MA105 OR MA303 AND MA304');
+    });
+
+    it('matches compact requirement strings against spaced satisfied codes', () => {
+      const req = '(MA101 AND MA105) OR MA303';
+      const res = evaluateDNF(req, ['MA 101', 'MA 105']);
+      expect(res.isSatisfied).toBe(true);
+      expect(res.status).toBe('SATISFIED');
     });
   });
 
@@ -116,6 +173,34 @@ describe('Requirement Engine', () => {
       expect(result.summary.isValid).toBe(true);
       const physDiag = result.diagnostics.find(d => d.courseCode === 'PHYS200');
       expect(physDiag.overallStatus).toBe('SATISFIED');
+    });
+
+    it('matches requirements when catalog prerequisites and schedule contain spaced course codes', () => {
+      const catalog = [
+        { code: 'CS 120', prerequisites: [] },
+        { code: 'MATH 101', prerequisites: [] },
+        { code: 'CS 220', prerequisites: '(CS 120 AND MATH 101)' }
+      ];
+
+      const schedule = {
+        transferCourses: [{ code: 'MATH 101' }],
+        years: [
+          [
+            [{ code: 'CS 120' }],
+            [{ code: 'CS 220' }],
+            []
+          ],
+          [[], [], []],
+          [[], [], []],
+          [[], [], []]
+        ]
+      };
+
+      const result = validateSchedule(schedule, catalog);
+      expect(result.summary.isValid).toBe(true);
+      expect(result.summary.unsatisfiedCount).toBe(0);
+      const cs220Diag = result.diagnostics.find(d => d.courseCode === 'CS 220');
+      expect(cs220Diag.overallStatus).toBe('SATISFIED');
     });
   });
 

@@ -149,7 +149,7 @@ describe('AddCourseDialog Requirement Validation & Waiver Workflow (Issue #20)',
 
     // MATH101 satisfied via AP-CALC
     expect(screen.getByText(/Eligible/i)).toBeInTheDocument();
-    expect(screen.getByText(/Satisfied/i)).toBeInTheDocument();
+    expect(screen.getByText('Satisfied (Pre-College / Transfer Credits - AP-CALC)')).toBeInTheDocument();
     expect(screen.queryByTestId('waiver-checkbox')).not.toBeInTheDocument();
 
     const submitBtn = screen.getByTestId('submit-add-course');
@@ -159,6 +159,28 @@ describe('AddCourseDialog Requirement Validation & Waiver Workflow (Issue #20)',
     expect(onConfirm).toHaveBeenCalledWith([0, 0], expect.objectContaining({
       code: 'PHYS200'
     }));
+  });
+
+  it('displays transfer course code and location label when prerequisite is satisfied via equivalency', () => {
+    const courseWithPrereq = {
+      code: 'MATH201',
+      name: 'Calculus II',
+      credits: 1,
+      prerequisites: ['MATH101']
+    };
+
+    render(
+      <AddCourseDialog
+        course={courseWithPrereq}
+        schedule={scheduleWithTransferCredit}
+        catalogCourses={catalogWithRules}
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/Eligible/i)).toBeInTheDocument();
+    expect(screen.getByText('Satisfied (Pre-College / Transfer Credits - AP-CALC)')).toBeInTheDocument();
   });
 
   it('closes dialog when Close button is clicked', () => {

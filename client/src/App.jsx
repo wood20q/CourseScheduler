@@ -19,7 +19,8 @@ import {
   calculateTotalCredits,
   addCourseToSchedule,
   removeCourseFromSchedule,
-  moveCourseInSchedule
+  moveCourseInSchedule,
+  toggleCourseWaiver
 } from './utils/scheduleMigration'
 import { validateSchedule } from './utils/requirementEngine'
 
@@ -164,25 +165,14 @@ function App() {
   }
 
   const handleToggleWaiver = (courseCode) => {
-    const cleanCode = courseCode.toLowerCase().trim()
-    setSchedule((prev) => ({
-      transferCourses: (prev.transferCourses || []).map((c) =>
-        c.code.toLowerCase().trim() === cleanCode ? { ...c, isWaived: !c.isWaived } : c
-      ),
-      years: (prev.years || []).map((year) =>
-        year.map((term) =>
-          term.map((c) =>
-            c.code.toLowerCase().trim() === cleanCode ? { ...c, isWaived: !c.isWaived } : c
-          )
-        )
-      )
-    }))
+    const cleanCode = String(courseCode || '').trim().toUpperCase()
+    setSchedule((prev) => toggleCourseWaiver(prev, courseCode))
     setManagedCourse((prev) => {
-      if (!prev || prev.code?.toLowerCase().trim() !== cleanCode) return prev
+      if (!prev || String(prev.code || '').trim().toUpperCase() !== cleanCode) return prev
       return { ...prev, isWaived: !prev.isWaived }
     })
     setInspectedRequirement((prev) => {
-      if (!prev || prev.course?.code?.toLowerCase().trim() !== cleanCode) return prev
+      if (!prev || String(prev.course?.code || '').trim().toUpperCase() !== cleanCode) return prev
       return {
         ...prev,
         course: { ...prev.course, isWaived: !prev.course.isWaived }
