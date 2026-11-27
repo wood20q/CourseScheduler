@@ -81,16 +81,16 @@ app.post(['/api/courses', '/courses'], async (req, res) => {
             return res.status(400).json({ error: 'Course credits must be a non-negative number' });
         }
 
-        let normalizedPrereqs;
+        let normalizedPrerequisites;
         try {
-            normalizedPrereqs = normalizeRequirements(prerequisites);
+            normalizedPrerequisites = normalizeRequirements(prerequisites);
         } catch (err) {
             return res.status(400).json({ error: err.message });
         }
 
-        let normalizedCoreqs;
+        let normalizedCorequisites;
         try {
-            normalizedCoreqs = normalizeRequirements(corequisites);
+            normalizedCorequisites = normalizeRequirements(corequisites);
         } catch (err) {
             return res.status(400).json({ error: err.message });
         }
@@ -107,8 +107,8 @@ app.post(['/api/courses', '/courses'], async (req, res) => {
             name: name.trim(),
             credits: numCredits,
             description: typeof description === 'string' ? description.trim() : (description || ''),
-            prerequisites: normalizedPrereqs,
-            corequisites: normalizedCoreqs
+            prerequisites: normalizedPrerequisites,
+            corequisites: normalizedCorequisites
         });
 
         res.status(201).json(newCourse);
@@ -191,19 +191,19 @@ app.put(['/api/courses/:id', '/courses/:id'], async (req, res) => {
             targetDescription = typeof description === 'string' ? description.trim() : (description || '');
         }
 
-        let targetPrereqs = course.prerequisites;
+        let targetPrerequisites = course.prerequisites;
         if (prerequisites !== undefined) {
             try {
-                targetPrereqs = normalizeRequirements(prerequisites);
+                targetPrerequisites = normalizeRequirements(prerequisites);
             } catch (err) {
                 return res.status(400).json({ error: err.message });
             }
         }
 
-        let targetCoreqs = course.corequisites;
+        let targetCorequisites = course.corequisites;
         if (corequisites !== undefined) {
             try {
-                targetCoreqs = normalizeRequirements(corequisites);
+                targetCorequisites = normalizeRequirements(corequisites);
             } catch (err) {
                 return res.status(400).json({ error: err.message });
             }
@@ -213,8 +213,8 @@ app.put(['/api/courses/:id', '/courses/:id'], async (req, res) => {
         course.name = targetName;
         course.credits = targetCredits;
         course.description = targetDescription;
-        course.prerequisites = targetPrereqs;
-        course.corequisites = targetCoreqs;
+        course.prerequisites = targetPrerequisites;
+        course.corequisites = targetCorequisites;
 
         await course.save();
 
@@ -260,14 +260,28 @@ app.delete(['/api/courses/:id', '/courses/:id'], async (req, res) => {
 app.get(['/api/courses/:code/dependents', '/courses/:code/dependents'], async (req, res) => {
     try {
         await ensureDbInitialized();
-        const course = await findCourseByIdentifier(req.params.code);
+        const rawCode = req.params.code;
+        const canonicalCode = canonicalizeCode(rawCode);
+        if (!canonicalCode || !isValidCourseCode(canonicalCode)) {
+            return res.status(404).json({ error: `Course not found: ${rawCode}` });
+        }
+
+        const course = await Course.findOne({ where: { code: canonicalCode } });
         if (!course) {
-            return res.status(404).json({ error: `Course not found: ${req.params.code}` });
+            return res.status(404).json({ error: `Course not found: ${rawCode}` });
         }
 
         const allCourses = await Course.findAll();
         const dependents = findDependentCourses(course.code, allCourses);
-        return res.json(dependents);
+        const prerequisites = dependents.filter(d => d.isPrerequisite);
+        const corequisites = dependents.filter(d => d.isCorequisite);
+
+        return res.json({
+            course: course.code,
+            dependents,
+            prerequisites,
+            corequisites
+        });
     } catch (error) {
         console.error('Error fetching course dependents:', error.message);
         return res.status(500).json({ error: error.message });

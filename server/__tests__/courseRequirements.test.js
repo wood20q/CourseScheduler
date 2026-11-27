@@ -103,6 +103,24 @@ describe('Course Requirements and Canonicalization Integration Tests (Issue #30)
       expect(res.body.corequisites).toEqual([]);
     });
 
+    test('distributes conjunctions over disjunctions into canonical DNF (e.g. (A OR B) AND C)', async () => {
+      const payload = {
+        code: 'cs 406',
+        name: 'Distributed Algorithms',
+        credits: 3,
+        prerequisites: '(CS120 OR CS220) AND MATH101',
+        corequisites: []
+      };
+
+      const res = await request(app)
+        .post('/api/courses')
+        .send(payload);
+
+      expect(res.status).toBe(201);
+      expect(res.body.code).toBe('CS406');
+      expect(res.body.prerequisites).toEqual([['CS120', 'MATH101'], ['CS220', 'MATH101']]);
+    });
+
     test('accepts flat array of course codes and converts to single AND DNF clause', async () => {
       const payload = {
         code: 'cs 403',
@@ -220,6 +238,19 @@ describe('Course Requirements and Canonicalization Integration Tests (Issue #30)
       expect(res.status).toBe(400);
       expect(res.body.error).toBeDefined();
     });
+
+    test('rejects course code containing unbalanced parentheses (400 Bad Request)', async () => {
+      const res = await request(app)
+        .post('/api/courses')
+        .send({
+          code: '(CS120',
+          name: 'Invalid Code Course',
+          credits: 3
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/alphanumeric|valid/i);
+    });
   });
 
   describe('POST /api/courses - Invalid Requirement Syntax Rejection (400 Bad Request)', () => {
@@ -235,6 +266,19 @@ describe('Course Requirements and Canonicalization Integration Tests (Issue #30)
 
       expect(res.status).toBe(400);
       expect(res.body.error).toMatch(/syntax/i);
+
+      // Token with unbalanced parenthesis
+      const resToken = await request(app)
+        .post('/api/courses')
+        .send({
+          code: 'CS501B',
+          name: 'Syntax Error 1B',
+          credits: 3,
+          prerequisites: '(CS120'
+        });
+
+      expect(resToken.status).toBe(400);
+      expect(resToken.body.error).toMatch(/syntax/i);
     });
 
     test('rejects dangling boolean operator in string expression', async () => {

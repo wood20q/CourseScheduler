@@ -305,4 +305,56 @@ describe('Catalog Referential Integrity and Cycle Prevention Integration Tests (
       await expect(Course.bulkCreate(cyclicBatch)).rejects.toThrow(/cycle/i);
     });
   });
+
+  describe('beforeSave hook coverage even when validate: false is passed', () => {
+    test('enforces referential integrity on save({ validate: false })', async () => {
+      const course = Course.build({
+        code: 'TESTNOVAL1',
+        name: 'Test No Val 1',
+        credits: 3,
+        prerequisites: [['NONEXISTENT999']],
+        corequisites: []
+      });
+
+      await expect(course.save({ validate: false })).rejects.toThrow(/does not exist/i);
+    });
+
+    test('enforces self-reference prevention on save({ validate: false })', async () => {
+      const course = Course.build({
+        code: 'TESTSELFVAL',
+        name: 'Test Self Val',
+        credits: 3,
+        prerequisites: [['TESTSELFVAL']],
+        corequisites: []
+      });
+
+      await expect(course.save({ validate: false })).rejects.toThrow(/itself|self/i);
+    });
+
+    test('enforces cycle prevention on save({ validate: false })', async () => {
+      // CS120 -> CS220 already exists. If a course CYCLENEW requires CS220 and CS120 requires CYCLENEW:
+      const cs120 = await Course.findOne({ where: { code: 'CS120' } });
+      expect(cs120).toBeDefined();
+
+      // Setting CS120 prerequisites to CS220 introduces a cycle: CS120 -> CS220 -> CS120
+      cs120.prerequisites = [['CS220']];
+      await expect(cs120.save({ validate: false })).rejects.toThrow(/cycle/i);
+    });
+
+    test('normalizes requirement expressions and course codes on save({ validate: false })', async () => {
+      const course = Course.build({
+        code: '  test  noval2  ',
+        name: 'Test No Val 2',
+        credits: 3,
+        prerequisites: 'CS120, MATH101',
+        corequisites: 'PHYS200'
+      });
+
+      await course.save({ validate: false });
+
+      expect(course.code).toBe('TESTNOVAL2');
+      expect(course.prerequisites).toEqual([['CS120', 'MATH101']]);
+      expect(course.corequisites).toEqual([['PHYS200']]);
+    });
+  });
 });

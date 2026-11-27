@@ -43,6 +43,8 @@ describe('Course Utilities Unit Tests', () => {
       expect(isValidCourseCode('OR')).toBe(false);
       expect(isValidCourseCode('CS@100')).toBe(false);
       expect(isValidCourseCode('CS#120')).toBe(false);
+      expect(isValidCourseCode('(CS120')).toBe(false);
+      expect(isValidCourseCode('CS120)')).toBe(false);
       expect(isValidCourseCode(null)).toBe(false);
       expect(isValidCourseCode(undefined)).toBe(false);
       expect(isValidCourseCode(123)).toBe(false);
@@ -82,6 +84,28 @@ describe('Course Utilities Unit Tests', () => {
       ]);
     });
 
+    test('distributes conjunctions over disjunctions into canonical DNF', () => {
+      // (A OR B) AND C -> (A AND C) OR (B AND C) -> [['A', 'C'], ['B', 'C']]
+      expect(normalizeRequirements('(CS120 OR CS220) AND MATH101')).toEqual([
+        ['CS120', 'MATH101'],
+        ['CS220', 'MATH101']
+      ]);
+
+      // C AND (A OR B) -> [['MATH101', 'CS120'], ['MATH101', 'CS220']]
+      expect(normalizeRequirements('MATH101 AND (CS120 OR CS220)')).toEqual([
+        ['MATH101', 'CS120'],
+        ['MATH101', 'CS220']
+      ]);
+
+      // (A OR B) AND (C OR D) -> 4 clauses
+      expect(normalizeRequirements('(CS120 OR CS220) AND (MATH101 OR MATH215)')).toEqual([
+        ['CS120', 'MATH101'],
+        ['CS120', 'MATH215'],
+        ['CS220', 'MATH101'],
+        ['CS220', 'MATH215']
+      ]);
+    });
+
     test('normalizes string expressions with comma, pipe, and ampersand operators', () => {
       expect(normalizeRequirements('CS120, MATH101')).toEqual([['CS120', 'MATH101']]);
       expect(normalizeRequirements('CS120 & MATH101 | CS220')).toEqual([
@@ -109,6 +133,8 @@ describe('Course Utilities Unit Tests', () => {
       expect(() => normalizeRequirements('(CS120 AND MATH101')).toThrow(/unbalanced parentheses/i);
       expect(() => normalizeRequirements('CS120 AND MATH101)')).toThrow(/unbalanced parentheses/i);
       expect(() => normalizeRequirements(')CS120(')).toThrow(/unbalanced parentheses/i);
+      expect(() => normalizeRequirements('(CS120')).toThrow(/unbalanced parentheses/i);
+      expect(() => normalizeRequirements('CS120)')).toThrow(/unbalanced parentheses/i);
     });
 
     test('throws error on empty parentheses', () => {
@@ -155,6 +181,8 @@ describe('Course Utilities Unit Tests', () => {
       expect(() => normalizeRequirements([[123]])).toThrow(/non-string course code/i);
       expect(() => normalizeRequirements([''])).toThrow(/invalid course code/i);
       expect(() => normalizeRequirements([['']])).toThrow(/invalid course code/i);
+      expect(() => normalizeRequirements(['(CS120'])).toThrow(/invalid course code/i);
+      expect(() => normalizeRequirements([['(CS120']])).toThrow(/invalid course code/i);
       expect(() => normalizeRequirements([['CS120'], []])).toThrow(/empty clause/i);
       expect(() => normalizeRequirements([['CS120'], 'CS220'])).toThrow(/mixed array structures/i);
     });
