@@ -257,6 +257,23 @@ app.delete(['/api/courses/:id', '/courses/:id'], async (req, res) => {
     }
 });
 
+app.get(['/api/courses/:code/dependents', '/courses/:code/dependents'], async (req, res) => {
+    try {
+        await ensureDbInitialized();
+        const course = await findCourseByIdentifier(req.params.code);
+        if (!course) {
+            return res.status(404).json({ error: `Course not found: ${req.params.code}` });
+        }
+
+        const allCourses = await Course.findAll();
+        const dependents = findDependentCourses(course.code, allCourses);
+        return res.json(dependents);
+    } catch (error) {
+        console.error('Error fetching course dependents:', error.message);
+        return res.status(500).json({ error: error.message });
+    }
+});
+
 app.post(['/api/schedule/addCourse', '/schedule/addCourse'], (req, res) => {
     try {
         const { termList, course, schedule } = req.body;
