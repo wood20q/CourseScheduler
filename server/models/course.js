@@ -53,7 +53,8 @@ module.exports = (sequelize) => {
                 }
 
                 const CourseModel = sequelize.models.Course;
-                const existingCourses = CourseModel ? await CourseModel.findAll() : [];
+                const allCourses = CourseModel ? await CourseModel.findAll() : [];
+                const existingCourses = course.id ? allCourses.filter(c => c.id !== course.id) : allCourses;
                 validateCourseRequirements({
                     code: course.code,
                     prerequisites: course.prerequisites,
