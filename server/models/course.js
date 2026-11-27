@@ -1,4 +1,5 @@
-const { DataTypes } = require('sequelize')
+const { DataTypes } = require('sequelize');
+const { canonicalizeCode, normalizeRequirements } = require('../courseUtils');
 
 module.exports = (sequelize) => {
     return sequelize.define('Course', {
@@ -29,5 +30,19 @@ module.exports = (sequelize) => {
           allowNull: true,
           defaultValue: []
         }
-    })
-}
+    }, {
+        hooks: {
+            beforeValidate: (course) => {
+                if (course.code && typeof course.code === 'string') {
+                    course.code = canonicalizeCode(course.code);
+                }
+                if (course.prerequisites !== undefined && course.prerequisites !== null) {
+                    course.prerequisites = normalizeRequirements(course.prerequisites);
+                }
+                if (course.corequisites !== undefined && course.corequisites !== null) {
+                    course.corequisites = normalizeRequirements(course.corequisites);
+                }
+            }
+        }
+    });
+};
