@@ -6,6 +6,35 @@ const {
     validateCourseBatch
 } = require('../courseUtils');
 
+function normalizeCourseInstance(course) {
+    if (course.code && typeof course.code === 'string') {
+        course.code = canonicalizeCode(course.code);
+    }
+    if (course.prerequisites !== undefined && course.prerequisites !== null) {
+        course.prerequisites = normalizeRequirements(course.prerequisites);
+    }
+    if (course.corequisites !== undefined && course.corequisites !== null) {
+        course.corequisites = normalizeRequirements(course.corequisites);
+    }
+}
+
+async function validateCourseInstance(course, options, sequelize) {
+    if (options && (options.skipValidation || options.batchValidated)) {
+        return;
+    }
+
+    const CourseModel = sequelize.models.Course;
+    const allCourses = CourseModel ? await CourseModel.findAll() : [];
+    const existingCourses = course.id ? allCourses.filter(c => c.id !== course.id) : allCourses;
+    validateCourseRequirements({
+        code: course.code,
+        prerequisites: course.prerequisites,
+        corequisites: course.corequisites,
+        existingCourses,
+        batchCodes: options && options.batchCodes ? options.batchCodes : new Set()
+    });
+}
+
 module.exports = (sequelize) => {
     return sequelize.define('Course', {
         code: {
@@ -38,42 +67,23 @@ module.exports = (sequelize) => {
     }, {
         hooks: {
             beforeValidate: async (course, options) => {
-                if (course.code && typeof course.code === 'string') {
-                    course.code = canonicalizeCode(course.code);
+                normalizeCourseInstance(course);
+                await validateCourseInstance(course, options, sequelize);
+                course._requirementsValidated = true;
+            },
+            beforeSave: async (course, options) => {
+                normalizeCourseInstance(course);
+                if (!course._requirementsValidated) {
+                    await validateCourseInstance(course, options, sequelize);
+                    course._requirementsValidated = true;
                 }
-                if (course.prerequisites !== undefined && course.prerequisites !== null) {
-                    course.prerequisites = normalizeRequirements(course.prerequisites);
-                }
-                if (course.corequisites !== undefined && course.corequisites !== null) {
-                    course.corequisites = normalizeRequirements(course.corequisites);
-                }
-
-                if (options && (options.skipValidation || options.batchValidated)) {
-                    return;
-                }
-
-                const CourseModel = sequelize.models.Course;
-                const allCourses = CourseModel ? await CourseModel.findAll() : [];
-                const existingCourses = course.id ? allCourses.filter(c => c.id !== course.id) : allCourses;
-                validateCourseRequirements({
-                    code: course.code,
-                    prerequisites: course.prerequisites,
-                    corequisites: course.corequisites,
-                    existingCourses,
-                    batchCodes: options && options.batchCodes ? options.batchCodes : new Set()
-                });
+            },
+            afterSave: (course) => {
+                delete course._requirementsValidated;
             },
             beforeBulkCreate: async (courses, options) => {
                 for (const course of courses) {
-                    if (course.code && typeof course.code === 'string') {
-                        course.code = canonicalizeCode(course.code);
-                    }
-                    if (course.prerequisites !== undefined && course.prerequisites !== null) {
-                        course.prerequisites = normalizeRequirements(course.prerequisites);
-                    }
-                    if (course.corequisites !== undefined && course.corequisites !== null) {
-                        course.corequisites = normalizeRequirements(course.corequisites);
-                    }
+                    normalizeCourseInstance(course);
                 }
 
                 if (options && options.skipValidation) {
