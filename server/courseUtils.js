@@ -226,8 +226,236 @@ function normalizeRequirements(req) {
   throw new Error('Invalid requirement syntax: requirements must be a string expression or array of course codes');
 }
 
+/**
+ * Extracts all unique canonical course codes from a requirement specification
+ * (DNF array, flat array, or boolean string).
+ */
+function extractCourseCodes(req) {
+  if (!req) return [];
+  let dnf = req;
+  if (typeof dnf === 'string') {
+    try {
+      dnf = normalizeRequirements(dnf);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(dnf)) return [];
+
+  const codes = new Set();
+  for (const clause of dnf) {
+    if (Array.isArray(clause)) {
+      for (const item of clause) {
+        if (typeof item === 'string') {
+          const canonical = canonicalizeCode(item);
+          if (canonical && isValidCourseCode(canonical)) {
+            codes.add(canonical);
+          }
+        }
+      }
+    } else if (typeof clause === 'string') {
+      const canonical = canonicalizeCode(clause);
+      if (canonical && isValidCourseCode(canonical)) {
+        codes.add(canonical);
+      }
+    }
+  }
+  return Array.from(codes);
+}
+
+/**
+ * Detects whether adding/updating targetCode with proposedPrerequisites introduces
+ * a directed cycle in the prerequisite graph, or whether an existing set of catalog
+ * courses contains any prerequisite cycles.
+ * 
+ * Returns the cycle path (e.g. ['A', 'B', 'A']) if a cycle is found, or null otherwise.
+ */
+function detectPrerequisiteCycle(targetCode, proposedPrerequisites, catalogCourses = []) {
+  const graph = new Map();
+
+  function getPrereqs(c) {
+    if (!c) return [];
+    const prereqs = c.prerequisites !== undefined ? c.prerequisites : [];
+    return extractCourseCodes(prereqs);
+  }
+
+  // Populate graph from catalog courses
+  for (const course of catalogCourses) {
+    if (!course || !course.code) continue;
+    const code = canonicalizeCode(course.code);
+    const prereqs = getPrereqs(course);
+    graph.set(code, new Set(prereqs));
+  }
+
+  // Add/override target course if provided
+  if (targetCode) {
+    const canonicalTarget = canonicalizeCode(targetCode);
+    const targetPrereqs = proposedPrerequisites ? extractCourseCodes(proposedPrerequisites) : [];
+    graph.set(canonicalTarget, new Set(targetPrereqs));
+  }
+
+  // DFS Cycle detection with 3-color states: 0 = unvisited, 1 = visiting, 2 = visited
+  const state = new Map();
+
+  function dfs(node, path) {
+    state.set(node, 1);
+    path.push(node);
+
+    const neighbors = graph.get(node) || new Set();
+    for (const neighbor of neighbors) {
+      const neighborState = state.get(neighbor) || 0;
+      if (neighborState === 1) {
+        // Cycle detected: isolate the cycle slice from path
+        const cycleStartIndex = path.indexOf(neighbor);
+        return path.slice(cycleStartIndex).concat(neighbor);
+      }
+      if (neighborState === 0) {
+        const cycle = dfs(neighbor, path);
+        if (cycle) return cycle;
+      }
+    }
+
+    path.pop();
+    state.set(node, 2);
+    return null;
+  }
+
+  // If targetCode was given, run DFS from targetCode first
+  if (targetCode) {
+    const canonicalTarget = canonicalizeCode(targetCode);
+    if (graph.has(canonicalTarget)) {
+      const cycle = dfs(canonicalTarget, []);
+      if (cycle) return cycle;
+    }
+  }
+
+  // Check all remaining nodes in graph
+  for (const node of graph.keys()) {
+    if ((state.get(node) || 0) === 0) {
+      const cycle = dfs(node, []);
+      if (cycle) return cycle;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Validates course requirements for referential integrity, self-references,
+ * and prerequisite cycles. Throws an Error with a descriptive message if invalid.
+ */
+function validateCourseRequirements({ code, prerequisites, corequisites, existingCourses = [], batchCodes = new Set() }) {
+  const canonical = canonicalizeCode(code);
+  const prereqCodes = extractCourseCodes(prerequisites);
+  const coreqCodes = extractCourseCodes(corequisites);
+
+  // 1. Self-reference check
+  if (canonical) {
+    if (prereqCodes.includes(canonical)) {
+      throw new Error(`Course cannot require itself as a prerequisite: ${canonical}`);
+    }
+    if (coreqCodes.includes(canonical)) {
+      throw new Error(`Course cannot corequisite itself: ${canonical}`);
+    }
+  }
+
+  // 2. Referential integrity check
+  const knownCodes = new Set();
+  for (const c of existingCourses) {
+    if (c && c.code) {
+      knownCodes.add(canonicalizeCode(c.code));
+    }
+  }
+  for (const bCode of batchCodes) {
+    knownCodes.add(canonicalizeCode(bCode));
+  }
+
+  for (const p of prereqCodes) {
+    if (!knownCodes.has(p)) {
+      throw new Error(`Referenced prerequisite course "${p}" does not exist in the catalog`);
+    }
+  }
+
+  for (const c of coreqCodes) {
+    if (!knownCodes.has(c)) {
+      throw new Error(`Referenced corequisite course "${c}" does not exist in the catalog`);
+    }
+  }
+
+  // 3. Prerequisite cycle detection
+  const cycle = detectPrerequisiteCycle(canonical, prerequisites, existingCourses);
+  if (cycle) {
+    throw new Error(`Prerequisite cycle detected: ${cycle.join(' -> ')}`);
+  }
+}
+
+/**
+ * Validates an entire batch of courses (e.g. for bulkCreate or database seeding).
+ * Batch-aware: courses defined later in the batch can satisfy requirements of earlier courses.
+ */
+function validateCourseBatch(courses, existingCourses = []) {
+  if (!Array.isArray(courses) || courses.length === 0) return;
+
+  const batchCodes = new Set();
+  for (const c of courses) {
+    if (!c || !c.code) continue;
+    const canonical = canonicalizeCode(c.code);
+    if (batchCodes.has(canonical)) {
+      throw new Error(`Duplicate course code in batch: ${canonical}`);
+    }
+    batchCodes.add(canonical);
+  }
+
+  // Validate self-reference and referential integrity for each course in the batch
+  for (const c of courses) {
+    const canonical = canonicalizeCode(c.code);
+    const prereqCodes = extractCourseCodes(c.prerequisites);
+    const coreqCodes = extractCourseCodes(c.corequisites);
+
+    if (canonical) {
+      if (prereqCodes.includes(canonical)) {
+        throw new Error(`Course cannot require itself as a prerequisite: ${canonical}`);
+      }
+      if (coreqCodes.includes(canonical)) {
+        throw new Error(`Course cannot corequisite itself: ${canonical}`);
+      }
+    }
+
+    const knownCodes = new Set();
+    for (const ec of existingCourses) {
+      if (ec && ec.code) knownCodes.add(canonicalizeCode(ec.code));
+    }
+    for (const bc of batchCodes) {
+      knownCodes.add(bc);
+    }
+
+    for (const p of prereqCodes) {
+      if (!knownCodes.has(p)) {
+        throw new Error(`Referenced prerequisite course "${p}" does not exist in the catalog`);
+      }
+    }
+
+    for (const coreq of coreqCodes) {
+      if (!knownCodes.has(coreq)) {
+        throw new Error(`Referenced corequisite course "${coreq}" does not exist in the catalog`);
+      }
+    }
+  }
+
+  // Combined cycle detection on existing + batch courses
+  const combined = [...existingCourses, ...courses];
+  const cycle = detectPrerequisiteCycle(null, null, combined);
+  if (cycle) {
+    throw new Error(`Prerequisite cycle detected: ${cycle.join(' -> ')}`);
+  }
+}
+
 module.exports = {
   canonicalizeCode,
   isValidCourseCode,
-  normalizeRequirements
+  normalizeRequirements,
+  extractCourseCodes,
+  detectPrerequisiteCycle,
+  validateCourseRequirements,
+  validateCourseBatch
 };

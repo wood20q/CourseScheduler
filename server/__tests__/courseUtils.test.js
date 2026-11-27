@@ -1,7 +1,9 @@
 const {
   canonicalizeCode,
   isValidCourseCode,
-  normalizeRequirements
+  normalizeRequirements,
+  extractCourseCodes,
+  detectPrerequisiteCycle
 } = require('../courseUtils');
 
 describe('Course Utilities Unit Tests', () => {
@@ -160,6 +162,81 @@ describe('Course Utilities Unit Tests', () => {
       expect(() => normalizeRequirements(123)).toThrow(/must be a string expression or array/i);
       expect(() => normalizeRequirements({ req: 'CS120' })).toThrow(/must be a string expression or array/i);
       expect(() => normalizeRequirements(true)).toThrow(/must be a string expression or array/i);
+    });
+  });
+
+  describe('extractCourseCodes', () => {
+    test('extracts unique canonical course codes from DNF arrays', () => {
+      expect(extractCourseCodes([['CS120', 'MATH101'], ['CS220']])).toEqual(['CS120', 'MATH101', 'CS220']);
+      expect(extractCourseCodes([['CS120'], ['CS120']])).toEqual(['CS120']);
+      expect(extractCourseCodes([['cs 120', '  math   101 ']])).toEqual(['CS120', 'MATH101']);
+    });
+
+    test('extracts codes from string expressions', () => {
+      expect(extractCourseCodes('(CS120 AND MATH101) OR CS220')).toEqual(['CS120', 'MATH101', 'CS220']);
+      expect(extractCourseCodes('CS120, MATH101')).toEqual(['CS120', 'MATH101']);
+      expect(extractCourseCodes('')).toEqual([]);
+    });
+
+    test('returns empty array for falsy, empty, or invalid input', () => {
+      expect(extractCourseCodes([])).toEqual([]);
+      expect(extractCourseCodes(null)).toEqual([]);
+      expect(extractCourseCodes(undefined)).toEqual([]);
+      expect(extractCourseCodes(123)).toEqual([]);
+    });
+  });
+
+  describe('detectPrerequisiteCycle', () => {
+    test('returns null when no cycle exists (simple linear chain)', () => {
+      const catalog = [
+        { code: 'CS120', prerequisites: [] },
+        { code: 'CS220', prerequisites: [['CS120']] },
+        { code: 'CS310', prerequisites: [['CS220']] }
+      ];
+      expect(detectPrerequisiteCycle('CS400', [['CS310']], catalog)).toBeNull();
+    });
+
+    test('returns null for diamond graphs (DAG with multiple paths to same root)', () => {
+      // A -> B -> D, A -> C -> D
+      const catalog = [
+        { code: 'D', prerequisites: [] },
+        { code: 'B', prerequisites: [['D']] },
+        { code: 'C', prerequisites: [['D']] }
+      ];
+      expect(detectPrerequisiteCycle('A', [['B', 'C']], catalog)).toBeNull();
+    });
+
+    test('detects self-loop (length 1)', () => {
+      const cycle = detectPrerequisiteCycle('CS100', [['CS100']], []);
+      expect(cycle).toEqual(['CS100', 'CS100']);
+    });
+
+    test('detects direct 2-node cycle (A -> B -> A)', () => {
+      const catalog = [
+        { code: 'A', prerequisites: [['B']] }
+      ];
+      const cycle = detectPrerequisiteCycle('B', [['A']], catalog);
+      expect(cycle).toEqual(['B', 'A', 'B']);
+    });
+
+    test('detects multi-hop 3-node cycle (A -> B -> C -> A)', () => {
+      const catalog = [
+        { code: 'A', prerequisites: [['B']] },
+        { code: 'B', prerequisites: [['C']] }
+      ];
+      const cycle = detectPrerequisiteCycle('C', [['A']], catalog);
+      expect(cycle).toEqual(['C', 'A', 'B', 'C']);
+    });
+
+    test('detects cycle in batch across multiple nodes', () => {
+      const allNodes = [
+        { code: 'X', prerequisites: [['Y']] },
+        { code: 'Y', prerequisites: [['Z']] },
+        { code: 'Z', prerequisites: [['X']] }
+      ];
+      const cycle = detectPrerequisiteCycle(null, null, allNodes);
+      expect(cycle).toBeDefined();
+      expect(cycle[0]).toBe(cycle[cycle.length - 1]);
     });
   });
 });

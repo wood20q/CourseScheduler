@@ -6,11 +6,17 @@ async function setup() {
         await sequelize.sync({ force: true });
         await Course.bulkCreate(initialCourses);
         console.log('Database seeded!');
-        process.exit(0);
+        return true;
     } catch (error) {
         console.error('Setup failed:', error);
-        process.exit(1);
+        throw error;
     }
 }
 
-setup();
+if (require.main === module) {
+    setup()
+        .then(() => process.exit(0))
+        .catch(() => process.exit(1));
+}
+
+module.exports = setup;
