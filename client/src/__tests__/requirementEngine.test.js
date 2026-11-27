@@ -1,13 +1,17 @@
 import { describe, it, expect } from 'vitest';
+import * as requirementEngine from '../utils/requirementEngine';
 import { 
   normalizeDNF, 
   evaluateDNF, 
-  validateSchedule,
-  simulateScheduleMutation,
-  canonicalizeCode
+  validateSchedule, 
+  simulateScheduleMutation, 
+  canonicalizeCode 
 } from '../utils/requirementEngine';
 
 describe('Requirement Engine', () => {
+  it('does not export canonicalizeCourseCode alias', () => {
+    expect(requirementEngine.canonicalizeCourseCode).toBeUndefined();
+  });
   describe('canonicalizeCode', () => {
     it('removes inner whitespace between letters and digits and trims/uppercases', () => {
       expect(canonicalizeCode('MA 101')).toBe('MA101');
@@ -146,6 +150,28 @@ describe('Requirement Engine', () => {
       const cs220Diag = result.diagnostics.find(d => d.courseCode === 'CS220');
       expect(cs220Diag.overallStatus).toBe('UNSATISFIED');
       expect(cs220Diag.hasFlag).toBe(true);
+      expect(cs220Diag.missingSummary).toBe('Prerequisite: CS120');
+      expect(cs220Diag.unfulfilledSummary).toBe('Prerequisite: CS120');
+    });
+
+    it('formats unfulfilledSummary and missingSummary with Glossary terms Prerequisite: and Corequisite:', () => {
+      const catalog = [
+        { code: 'ADV100', prerequisites: ['PREREQ1'], corequisites: ['COREQ1'] }
+      ];
+      const schedule = {
+        transferCourses: [],
+        years: [
+          [[{ code: 'ADV100' }], [], []],
+          [[], [], []],
+          [[], [], []],
+          [[], [], []]
+        ]
+      };
+      const result = validateSchedule(schedule, catalog);
+      const diag = result.diagnostics.find(d => d.courseCode === 'ADV100');
+      expect(diag.overallStatus).toBe('UNSATISFIED');
+      expect(diag.missingSummary).toBe('Prerequisite: PREREQ1; Corequisite: COREQ1');
+      expect(diag.unfulfilledSummary).toBe('Prerequisite: PREREQ1; Corequisite: COREQ1');
     });
 
     it('allows concurrent term enrollment for corequisites', () => {

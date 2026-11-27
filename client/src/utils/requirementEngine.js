@@ -13,8 +13,6 @@ export function canonicalizeCode(code) {
   return String(code).replace(/[()]/g, '').trim().toUpperCase().replace(/\s+/g, '');
 }
 
-export const canonicalizeCourseCode = canonicalizeCode;
-
 /**
  * Normalizes any requirement representation (DNF array, flat array, or boolean string)
  * into canonical Disjunctive Normal Form (DNF): Array<Array<string>>.
@@ -232,13 +230,13 @@ export function validateSchedule(schedule, catalogCourses = []) {
         }
 
         const unfulfilledParts = [];
-        if (prereqResult.unfulfilledSummary) unfulfilledParts.push(`Prereq: ${prereqResult.unfulfilledSummary}`);
-        if (coreqResult.unfulfilledSummary) unfulfilledParts.push(`Coreq: ${coreqResult.unfulfilledSummary}`);
+        if (prereqResult.unfulfilledSummary) unfulfilledParts.push(`Prerequisite: ${prereqResult.unfulfilledSummary}`);
+        if (coreqResult.unfulfilledSummary) unfulfilledParts.push(`Corequisite: ${coreqResult.unfulfilledSummary}`);
         const unfulfilledText = unfulfilledParts.join('; ');
 
         const missingParts = [];
-        if (prereqResult.status === 'UNSATISFIED') missingParts.push(`Prereq: ${prereqResult.missingSummary}`);
-        if (coreqResult.status === 'UNSATISFIED') missingParts.push(`Coreq: ${coreqResult.missingSummary}`);
+        if (prereqResult.status === 'UNSATISFIED') missingParts.push(`Prerequisite: ${prereqResult.missingSummary}`);
+        if (coreqResult.status === 'UNSATISFIED') missingParts.push(`Corequisite: ${coreqResult.missingSummary}`);
 
         let missingSummaryText;
         if (missingParts.length > 0) {

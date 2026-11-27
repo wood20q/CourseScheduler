@@ -116,7 +116,7 @@ describe('Catalog Requirements Schema Integration (Issue #27)', () => {
 
     render(<App />);
 
-    // Since CS120 is not taken prior to DYNAMIC201, it should show Missing Req badge
+    // Since CS120 is not taken prior to DYNAMIC201, it should show Unsatisfied Requirement Flag
     expect(await screen.findByText('⚠️ Missing Req')).toBeInTheDocument();
   });
 

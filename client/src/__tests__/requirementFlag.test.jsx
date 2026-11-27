@@ -9,7 +9,7 @@ describe('Requirement Flag & Inspector Modal', () => {
   const sampleValidation = {
     hasFlag: true,
     overallStatus: 'UNSATISFIED',
-    missingSummary: 'Prereq: CS120',
+    missingSummary: 'Prerequisite: CS120',
     prereqResult: { status: 'UNSATISFIED', missingSummary: 'CS120' },
     coreqResult: { status: 'SATISFIED', missingSummary: 'None' }
   };
@@ -124,7 +124,7 @@ describe('Requirement Flag & Inspector Modal', () => {
         overallStatus: 'WAIVED',
         isWaived: true,
         missingSummary: 'Waived by advisor waiver',
-        unfulfilledSummary: 'Prereq: CS120; Coreq: CS125',
+        unfulfilledSummary: 'Prerequisite: CS120; Corequisite: CS125',
         prereqResult: {
           status: 'WAIVED',
           isWaived: true,
@@ -158,7 +158,7 @@ describe('Requirement Flag & Inspector Modal', () => {
         overallStatus: 'WAIVED',
         isWaived: true,
         missingSummary: 'Waived by advisor waiver',
-        unfulfilledSummary: 'Prereq: CS120',
+        unfulfilledSummary: 'Prerequisite: CS120',
         prereqResult: {
           status: 'WAIVED',
           isWaived: true,

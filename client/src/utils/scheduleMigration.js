@@ -191,6 +191,23 @@ export function formatLocationLabel(location) {
   return `Year ${parsed.year + 1}, Term ${parsed.term + 1}`;
 }
 
+function isValidTermCoordinates(yRaw, tRaw) {
+  if (
+    typeof yRaw === 'boolean' ||
+    typeof tRaw === 'boolean' ||
+    yRaw === null ||
+    tRaw === null ||
+    yRaw === '' ||
+    tRaw === ''
+  ) {
+    return false;
+  }
+  const y = Number(yRaw);
+  const t = Number(tRaw);
+  if (!Number.isInteger(y) || !Number.isInteger(t)) return false;
+  return y >= 0 && y <= 3 && t >= 0 && t <= 2;
+}
+
 export function isValidLocation(location) {
   if (!location) return false;
 
@@ -198,58 +215,22 @@ export function isValidLocation(location) {
 
   if (typeof location === 'object') {
     if (Array.isArray(location)) {
-      if (location.length !== 2) return false;
-      const [yRaw, tRaw] = location;
-      if (
-        typeof yRaw === 'boolean' ||
-        typeof tRaw === 'boolean' ||
-        yRaw === null ||
-        tRaw === null ||
-        yRaw === '' ||
-        tRaw === ''
-      ) {
-        return false;
-      }
-      const y = Number(yRaw);
-      const t = Number(tRaw);
-      if (!Number.isInteger(y) || !Number.isInteger(t)) return false;
-      return y >= 0 && y <= 3 && t >= 0 && t <= 2;
+      return location.length === 2 && isValidTermCoordinates(location[0], location[1]);
     }
 
     if (location.type === 'transfer') return true;
 
     if (location.type === 'term' || ('year' in location && 'term' in location)) {
-      if (
-        typeof location.year === 'boolean' ||
-        typeof location.term === 'boolean' ||
-        location.year === null ||
-        location.term === null ||
-        location.year === '' ||
-        location.term === ''
-      ) {
-        return false;
-      }
-      const y = Number(location.year);
-      const t = Number(location.term);
-      if (!Number.isInteger(y) || !Number.isInteger(t)) return false;
-      return y >= 0 && y <= 3 && t >= 0 && t <= 2;
+      return isValidTermCoordinates(location.year, location.term);
     }
 
     return false;
   }
 
-  if (typeof location === 'string') {
-    if (location.includes(',')) {
-      const parts = location.split(',');
-      if (parts.length !== 2) return false;
-      const [yStr, tStr] = parts.map((s) => s.trim());
-      if (yStr === '' || tStr === '') return false;
-      const y = Number(yStr);
-      const t = Number(tStr);
-      if (!Number.isInteger(y) || !Number.isInteger(t)) return false;
-      return y >= 0 && y <= 3 && t >= 0 && t <= 2;
-    }
-    return false;
+  if (typeof location === 'string' && location.includes(',')) {
+    const parts = location.split(',');
+    if (parts.length !== 2) return false;
+    return isValidTermCoordinates(parts[0].trim(), parts[1].trim());
   }
 
   return false;
@@ -314,7 +295,7 @@ export function findCourseInSchedule(schedule, code) {
     return {
       course: transferCourse,
       location: { type: 'transfer' },
-      locationLabel: 'Pre-College / Transfer Credits'
+      locationLabel: formatLocationLabel({ type: 'transfer' })
     };
   }
 
@@ -324,14 +305,12 @@ export function findCourseInSchedule(schedule, code) {
     for (let t = 0; t < terms.length; t++) {
       const course = terms[t].find(
         (c) => String(c?.code || '').trim().toUpperCase() === targetCode
-      ) || terms[t].find(
-        (c) => c?.satisfiesCourse && String(c.satisfiesCourse).trim().toUpperCase() === targetCode
       );
       if (course) {
         return {
           course,
           location: { type: 'term', year: y, term: t },
-          locationLabel: `Year ${y + 1} Term ${t + 1}`
+          locationLabel: formatLocationLabel({ type: 'term', year: y, term: t })
         };
       }
     }

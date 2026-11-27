@@ -298,7 +298,7 @@ describe('scheduleMigration utils', () => {
       expect(foundTerm.location.type).toBe('term');
       expect(foundTerm.location.year).toBe(0);
       expect(foundTerm.location.term).toBe(0);
-      expect(foundTerm.locationLabel).toBe('Year 1 Term 1');
+      expect(foundTerm.locationLabel).toBe('Year 1, Term 1');
 
       expect(findCourseInSchedule(baseSchedule, 'NON-EXISTENT')).toBeNull();
     });
@@ -335,19 +335,17 @@ describe('scheduleMigration utils', () => {
       expect(foundTransferCase).not.toBeNull();
       expect(foundTransferCase.course.code).toBe('AP-CALC');
 
-      // By satisfiesCourse equivalency in scheduled terms
-      const foundTermEquiv = findCourseInSchedule(scheduleWithEquivalencies, 'CS101');
-      expect(foundTermEquiv).not.toBeNull();
-      expect(foundTermEquiv.course.code).toBe('HON-CS101');
-      expect(foundTermEquiv.location.type).toBe('term');
-      expect(foundTermEquiv.location.year).toBe(0);
-      expect(foundTermEquiv.location.term).toBe(0);
-      expect(foundTermEquiv.locationLabel).toBe('Year 1 Term 1');
+      // satisfiesCourse equivalency is strictly restricted to transferCourses, so HON-CS101 is not found via CS101
+      expect(findCourseInSchedule(scheduleWithEquivalencies, 'CS101')).toBeNull();
 
       // Direct match in scheduled terms
       const foundTermDirect = findCourseInSchedule(scheduleWithEquivalencies, 'HON-CS101');
       expect(foundTermDirect).not.toBeNull();
       expect(foundTermDirect.course.code).toBe('HON-CS101');
+      expect(foundTermDirect.location.type).toBe('term');
+      expect(foundTermDirect.location.year).toBe(0);
+      expect(foundTermDirect.location.term).toBe(0);
+      expect(foundTermDirect.locationLabel).toBe('Year 1, Term 1');
 
       // Null when non-existent
       expect(findCourseInSchedule(scheduleWithEquivalencies, 'UNKNOWN')).toBeNull();
