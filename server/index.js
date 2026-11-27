@@ -3,6 +3,12 @@ const cors = require('cors');
 const { sequelize, Course } = require('./db');
 const { addCourse, removeCourse, moveCourse } = require('./scheduleService');
 const initialCourses = require('./initialCourses');
+const {
+    canonicalizeCode,
+    isValidCourseCode,
+    normalizeRequirements,
+    findDependentCourses
+} = require('./courseUtils');
 
 const app = express();
 app.use(cors());
@@ -33,14 +39,252 @@ app.get(['/api/courses', '/courses'], async (req, res) => {
     try {
         await ensureDbInitialized();
         const courses = await Course.findAll();
-        if (courses && courses.length > 0) {
-            return res.json(courses);
-        }
-        return res.json(initialCourses);
+        const rawList = (courses && courses.length > 0) ? courses : initialCourses;
+        const standardized = rawList.map(c => {
+            const plain = (c && typeof c.toJSON === 'function') ? c.toJSON() : { ...c };
+            return {
+                ...plain,
+                code: canonicalizeCode(plain.code),
+                prerequisites: normalizeRequirements(plain.prerequisites),
+                corequisites: normalizeRequirements(plain.corequisites)
+            };
+        });
+        return res.json(standardized);
     } catch (error) {
         console.warn('Failed to fetch courses from SQLite, falling back to initial courses:', error.message);
         // Fallback ensures courses are always delivered even in read-only serverless environments
-        res.json(initialCourses);
+        const standardized = initialCourses.map(c => ({
+            ...c,
+            code: canonicalizeCode(c.code),
+            prerequisites: normalizeRequirements(c.prerequisites),
+            corequisites: normalizeRequirements(c.corequisites)
+        }));
+        res.json(standardized);
+    }
+});
+
+app.post(['/api/courses', '/courses'], async (req, res) => {
+    try {
+        await ensureDbInitialized();
+        const { code, name, credits, description, prerequisites, corequisites } = req.body || {};
+
+        if (!code || typeof code !== 'string' || !isValidCourseCode(code)) {
+            return res.status(400).json({ error: 'Course code is required and must be a valid alphanumeric identifier' });
+        }
+
+        if (!name || typeof name !== 'string' || !name.trim()) {
+            return res.status(400).json({ error: 'Course name is required and cannot be empty' });
+        }
+
+        const numCredits = Number(credits);
+        if (credits === undefined || credits === null || isNaN(numCredits) || numCredits < 0 || typeof credits === 'boolean') {
+            return res.status(400).json({ error: 'Course credits must be a non-negative number' });
+        }
+
+        let normalizedPrerequisites;
+        try {
+            normalizedPrerequisites = normalizeRequirements(prerequisites);
+        } catch (err) {
+            return res.status(400).json({ error: err.message });
+        }
+
+        let normalizedCorequisites;
+        try {
+            normalizedCorequisites = normalizeRequirements(corequisites);
+        } catch (err) {
+            return res.status(400).json({ error: err.message });
+        }
+
+        const canonicalCode = canonicalizeCode(code);
+
+        const existing = await Course.findOne({ where: { code: canonicalCode } });
+        if (existing) {
+            return res.status(400).json({ error: `Course with code ${canonicalCode} already exists in the catalog` });
+        }
+
+        const newCourse = await Course.create({
+            code: canonicalCode,
+            name: name.trim(),
+            credits: numCredits,
+            description: typeof description === 'string' ? description.trim() : (description || ''),
+            prerequisites: normalizedPrerequisites,
+            corequisites: normalizedCorequisites
+        });
+
+        res.status(201).json(newCourse);
+    } catch (error) {
+        console.error('Error creating course:', error.message);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+async function findCourseByIdentifier(identifier) {
+    if (!identifier) return null;
+    let course = null;
+    if (/^\d+$/.test(identifier)) {
+        course = await Course.findByPk(Number(identifier));
+    }
+    if (!course) {
+        const canonical = canonicalizeCode(identifier);
+        course = await Course.findOne({ where: { code: canonical } });
+    }
+    return course;
+}
+
+app.put(['/api/courses/:id', '/courses/:id'], async (req, res) => {
+    try {
+        await ensureDbInitialized();
+        const course = await findCourseByIdentifier(req.params.id);
+        if (!course) {
+            return res.status(404).json({ error: `Course not found: ${req.params.id}` });
+        }
+
+        const { code, name, credits, description, prerequisites, corequisites } = req.body || {};
+
+        let targetCode = course.code;
+        if (code !== undefined) {
+            if (typeof code !== 'string' || !isValidCourseCode(code)) {
+                return res.status(400).json({ error: 'Course code must be a valid alphanumeric identifier' });
+            }
+            const canonicalNewCode = canonicalizeCode(code);
+            if (canonicalNewCode !== course.code) {
+                const existingWithCode = await Course.findOne({ where: { code: canonicalNewCode } });
+                if (existingWithCode && existingWithCode.id !== course.id) {
+                    return res.status(400).json({ error: `Course with code ${canonicalNewCode} already exists in the catalog` });
+                }
+
+                const allCourses = await Course.findAll();
+                const dependents = findDependentCourses(course.code, allCourses);
+                if (dependents.length > 0) {
+                    const dependentCodes = dependents.map(d => d.code);
+                    return res.status(409).json({
+                        error: `Cannot rename course ${course.code} to ${canonicalNewCode}: referenced as a dependency by ${dependentCodes.join(', ')}`,
+                        dependents,
+                        dependentCodes,
+                        dependentCourses: dependents
+                    });
+                }
+
+                targetCode = canonicalNewCode;
+            }
+        }
+
+        let targetName = course.name;
+        if (name !== undefined) {
+            if (typeof name !== 'string' || !name.trim()) {
+                return res.status(400).json({ error: 'Course name cannot be empty' });
+            }
+            targetName = name.trim();
+        }
+
+        let targetCredits = course.credits;
+        if (credits !== undefined) {
+            const numCredits = Number(credits);
+            if (credits === null || isNaN(numCredits) || numCredits < 0 || typeof credits === 'boolean') {
+                return res.status(400).json({ error: 'Course credits must be a non-negative number' });
+            }
+            targetCredits = numCredits;
+        }
+
+        let targetDescription = course.description;
+        if (description !== undefined) {
+            targetDescription = typeof description === 'string' ? description.trim() : (description || '');
+        }
+
+        let targetPrerequisites = course.prerequisites;
+        if (prerequisites !== undefined) {
+            try {
+                targetPrerequisites = normalizeRequirements(prerequisites);
+            } catch (err) {
+                return res.status(400).json({ error: err.message });
+            }
+        }
+
+        let targetCorequisites = course.corequisites;
+        if (corequisites !== undefined) {
+            try {
+                targetCorequisites = normalizeRequirements(corequisites);
+            } catch (err) {
+                return res.status(400).json({ error: err.message });
+            }
+        }
+
+        course.code = targetCode;
+        course.name = targetName;
+        course.credits = targetCredits;
+        course.description = targetDescription;
+        course.prerequisites = targetPrerequisites;
+        course.corequisites = targetCorequisites;
+
+        await course.save();
+
+        res.json(course);
+    } catch (error) {
+        console.error('Error updating course:', error.message);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+app.delete(['/api/courses/:id', '/courses/:id'], async (req, res) => {
+    try {
+        await ensureDbInitialized();
+        const course = await findCourseByIdentifier(req.params.id);
+        if (!course) {
+            return res.status(404).json({ error: `Course not found: ${req.params.id}` });
+        }
+
+        const allCourses = await Course.findAll();
+        const dependents = findDependentCourses(course.code, allCourses);
+
+        if (dependents.length > 0) {
+            const dependentCodes = dependents.map(d => d.code);
+            return res.status(409).json({
+                error: `Cannot delete course ${course.code}: referenced as a dependency by ${dependentCodes.join(', ')}`,
+                dependents,
+                dependentCodes,
+                dependentCourses: dependents
+            });
+        }
+
+        await course.destroy();
+        return res.status(200).json({
+            message: `Course ${course.code} deleted successfully`,
+            deletedCourse: course
+        });
+    } catch (error) {
+        console.error('Error deleting course:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get(['/api/courses/:code/dependents', '/courses/:code/dependents'], async (req, res) => {
+    try {
+        await ensureDbInitialized();
+        const rawCode = req.params.code;
+        const canonicalCode = canonicalizeCode(rawCode);
+        if (!canonicalCode || !isValidCourseCode(canonicalCode)) {
+            return res.status(404).json({ error: `Course not found: ${rawCode}` });
+        }
+
+        const course = await Course.findOne({ where: { code: canonicalCode } });
+        if (!course) {
+            return res.status(404).json({ error: `Course not found: ${rawCode}` });
+        }
+
+        const allCourses = await Course.findAll();
+        const dependents = findDependentCourses(course.code, allCourses);
+        const prerequisites = dependents.filter(d => d.isPrerequisite);
+        const corequisites = dependents.filter(d => d.isCorequisite);
+
+        return res.json({
+            course: course.code,
+            dependents,
+            prerequisites,
+            corequisites
+        });
+    } catch (error) {
+        console.error('Error fetching course dependents:', error.message);
+        return res.status(500).json({ error: error.message });
     }
 });
 

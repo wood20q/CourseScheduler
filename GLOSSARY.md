@@ -36,6 +36,10 @@ _Avoid_: Prereq, prior requirement, entry course
 Coursework that must be taken either concurrently in the same academic term or completed in an earlier term, or satisfied via Pre-College Transfer Credits.
 _Avoid_: Coreq, co-course, parallel requirement
 
+**Mutual Corequisite**:
+A bidirectional requirement pairing between two distinct catalog courses that may be taken concurrently in the same academic term, each satisfying the other's corequisite requirement.
+_Avoid_: Circular corequisite, paired course, co-prerequisite
+
 **Requirement Waiver**:
 An explicit exemption applied to a scheduled course permitting it to remain on the schedule despite unsatisfied prerequisites or corequisites.
 _Avoid_: Override, wave, pass, bypass

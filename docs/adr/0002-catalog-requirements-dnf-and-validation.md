@@ -1,0 +1,7 @@
+# Catalog Requirements DNF Schema, Referential Validation, and Catalog API
+
+To make course prerequisites and corequisites fully functional in the backend catalog database, we decided to store requirements directly on the `Course` model as Disjunctive Normal Form (DNF) JSON arrays (`Array<Array<string>>`) rather than decomposing them into normalized relational join tables. This directly matches the boolean expression AST used by the client requirement engine and keeps queries lightweight and self-contained across SQLite and serverless deployments.
+
+To maintain catalog integrity without SQL foreign key constraints, we implement batch-aware Sequelize validation hooks (`beforeValidate`/`beforeSave`) that enforce referential validity against the catalog, strictly prevent prerequisite cycles and self-references, and explicitly permit mutual corequisite pairings between distinct courses (such as lectures and labs).
+
+We expose administrative catalog REST endpoints (`POST /api/courses`, `PUT /api/courses/:id`, `DELETE /api/courses/:id`, and `GET /api/courses/:code/dependents`). The API accepts either canonical DNF arrays or human-readable boolean string expressions, automatically canonicalizing all course codes and normalizing expressions to DNF. Attempting to delete a course or alter a course code that is referenced downstream by other catalog courses is strictly rejected with a `409 Conflict`.
