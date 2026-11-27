@@ -3,7 +3,8 @@ const {
   isValidCourseCode,
   normalizeRequirements,
   extractCourseCodes,
-  detectPrerequisiteCycle
+  detectPrerequisiteCycle,
+  findDependentCourses
 } = require('../courseUtils');
 
 describe('Course Utilities Unit Tests', () => {
@@ -237,6 +238,75 @@ describe('Course Utilities Unit Tests', () => {
       const cycle = detectPrerequisiteCycle(null, null, allNodes);
       expect(cycle).toBeDefined();
       expect(cycle[0]).toBe(cycle[cycle.length - 1]);
+    });
+  });
+
+  describe('findDependentCourses', () => {
+    const sampleCatalog = [
+      { id: 1, code: 'CS120', name: 'Intro to Python', prerequisites: [], corequisites: [] },
+      { id: 2, code: 'CS220', name: 'Data Structures', prerequisites: [['CS120']], corequisites: [] },
+      { id: 3, code: 'MATH101', name: 'Calculus I', prerequisites: [], corequisites: [] },
+      { id: 4, code: 'PHYS200', name: 'General Physics', prerequisites: [], corequisites: [['MATH101']] },
+      { id: 5, code: 'CS240', name: 'Cybersecurity', prerequisites: 'CS120', corequisites: [] },
+      { id: 6, code: 'CS350', name: 'Software Engineering', prerequisites: [['CS220', 'CS240']], corequisites: [] },
+      { id: 7, code: 'ENG200', name: 'Creative Writing', prerequisites: [], corequisites: [] }
+    ];
+
+    test('returns empty array when course has no dependents', () => {
+      const dependents = findDependentCourses('ENG200', sampleCatalog);
+      expect(dependents).toEqual([]);
+    });
+
+    test('finds downstream prerequisite dependents', () => {
+      const dependents = findDependentCourses('CS120', sampleCatalog);
+      expect(dependents).toHaveLength(2);
+      const codes = dependents.map(d => d.code);
+      expect(codes).toContain('CS220');
+      expect(codes).toContain('CS240');
+      expect(dependents.every(d => d.isPrerequisite)).toBe(true);
+      expect(dependents.find(d => d.code === 'CS220').type).toBe('prerequisite');
+    });
+
+    test('finds downstream corequisite dependents', () => {
+      const dependents = findDependentCourses('MATH101', sampleCatalog);
+      expect(dependents).toHaveLength(1);
+      expect(dependents[0].code).toBe('PHYS200');
+      expect(dependents[0].type).toBe('corequisite');
+      expect(dependents[0].isCorequisite).toBe(true);
+    });
+
+    test('identifies dependents requiring target as both prerequisite and corequisite', () => {
+      const catalogWithBoth = [
+        { id: 10, code: 'LAB101', name: 'Physics Lab', prerequisites: [['PHYS100']], corequisites: [['PHYS100']] }
+      ];
+      const dependents = findDependentCourses('PHYS100', catalogWithBoth);
+      expect(dependents).toHaveLength(1);
+      expect(dependents[0].code).toBe('LAB101');
+      expect(dependents[0].type).toBe('both');
+      expect(dependents[0].isPrerequisite).toBe(true);
+      expect(dependents[0].isCorequisite).toBe(true);
+    });
+
+    test('canonicalizes course codes (whitespace and casing)', () => {
+      const dependents = findDependentCourses('  cs  120 ', sampleCatalog);
+      expect(dependents).toHaveLength(2);
+      expect(dependents.map(d => d.code)).toEqual(expect.arrayContaining(['CS220', 'CS240']));
+    });
+
+    test('ignores self-referencing if present in corrupt catalog data', () => {
+      const corruptCatalog = [
+        { id: 99, code: 'CORRUPT', name: 'Corrupt Course', prerequisites: [['CORRUPT']] }
+      ];
+      const dependents = findDependentCourses('CORRUPT', corruptCatalog);
+      expect(dependents).toEqual([]);
+    });
+
+    test('returns empty array for empty catalog, null, or undefined code', () => {
+      expect(findDependentCourses(null, sampleCatalog)).toEqual([]);
+      expect(findDependentCourses(undefined, sampleCatalog)).toEqual([]);
+      expect(findDependentCourses('', sampleCatalog)).toEqual([]);
+      expect(findDependentCourses('CS120', [])).toEqual([]);
+      expect(findDependentCourses('CS120', null)).toEqual([]);
     });
   });
 });

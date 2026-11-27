@@ -3,7 +3,12 @@ const cors = require('cors');
 const { sequelize, Course } = require('./db');
 const { addCourse, removeCourse, moveCourse } = require('./scheduleService');
 const initialCourses = require('./initialCourses');
-const { canonicalizeCode, isValidCourseCode, normalizeRequirements } = require('./courseUtils');
+const {
+    canonicalizeCode,
+    isValidCourseCode,
+    normalizeRequirements,
+    findDependentCourses
+} = require('./courseUtils');
 
 const app = express();
 app.use(cors());
@@ -110,6 +115,145 @@ app.post(['/api/courses', '/courses'], async (req, res) => {
     } catch (error) {
         console.error('Error creating course:', error.message);
         res.status(400).json({ error: error.message });
+    }
+});
+
+async function findCourseByIdentifier(identifier) {
+    if (!identifier) return null;
+    let course = null;
+    if (/^\d+$/.test(identifier)) {
+        course = await Course.findByPk(Number(identifier));
+    }
+    if (!course) {
+        const canonical = canonicalizeCode(identifier);
+        course = await Course.findOne({ where: { code: canonical } });
+    }
+    return course;
+}
+
+app.put(['/api/courses/:id', '/courses/:id'], async (req, res) => {
+    try {
+        await ensureDbInitialized();
+        const course = await findCourseByIdentifier(req.params.id);
+        if (!course) {
+            return res.status(404).json({ error: `Course not found: ${req.params.id}` });
+        }
+
+        const { code, name, credits, description, prerequisites, corequisites } = req.body || {};
+
+        let targetCode = course.code;
+        if (code !== undefined) {
+            if (typeof code !== 'string' || !isValidCourseCode(code)) {
+                return res.status(400).json({ error: 'Course code must be a valid alphanumeric identifier' });
+            }
+            const canonicalNewCode = canonicalizeCode(code);
+            if (canonicalNewCode !== course.code) {
+                const existingWithCode = await Course.findOne({ where: { code: canonicalNewCode } });
+                if (existingWithCode && existingWithCode.id !== course.id) {
+                    return res.status(400).json({ error: `Course with code ${canonicalNewCode} already exists in the catalog` });
+                }
+
+                const allCourses = await Course.findAll();
+                const dependents = findDependentCourses(course.code, allCourses);
+                if (dependents.length > 0) {
+                    const dependentCodes = dependents.map(d => d.code);
+                    return res.status(409).json({
+                        error: `Cannot rename course ${course.code} to ${canonicalNewCode}: referenced as a dependency by ${dependentCodes.join(', ')}`,
+                        dependents,
+                        dependentCodes,
+                        dependentCourses: dependents
+                    });
+                }
+
+                targetCode = canonicalNewCode;
+            }
+        }
+
+        let targetName = course.name;
+        if (name !== undefined) {
+            if (typeof name !== 'string' || !name.trim()) {
+                return res.status(400).json({ error: 'Course name cannot be empty' });
+            }
+            targetName = name.trim();
+        }
+
+        let targetCredits = course.credits;
+        if (credits !== undefined) {
+            const numCredits = Number(credits);
+            if (credits === null || isNaN(numCredits) || numCredits < 0 || typeof credits === 'boolean') {
+                return res.status(400).json({ error: 'Course credits must be a non-negative number' });
+            }
+            targetCredits = numCredits;
+        }
+
+        let targetDescription = course.description;
+        if (description !== undefined) {
+            targetDescription = typeof description === 'string' ? description.trim() : (description || '');
+        }
+
+        let targetPrereqs = course.prerequisites;
+        if (prerequisites !== undefined) {
+            try {
+                targetPrereqs = normalizeRequirements(prerequisites);
+            } catch (err) {
+                return res.status(400).json({ error: err.message });
+            }
+        }
+
+        let targetCoreqs = course.corequisites;
+        if (corequisites !== undefined) {
+            try {
+                targetCoreqs = normalizeRequirements(corequisites);
+            } catch (err) {
+                return res.status(400).json({ error: err.message });
+            }
+        }
+
+        course.code = targetCode;
+        course.name = targetName;
+        course.credits = targetCredits;
+        course.description = targetDescription;
+        course.prerequisites = targetPrereqs;
+        course.corequisites = targetCoreqs;
+
+        await course.save();
+
+        res.json(course);
+    } catch (error) {
+        console.error('Error updating course:', error.message);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+app.delete(['/api/courses/:id', '/courses/:id'], async (req, res) => {
+    try {
+        await ensureDbInitialized();
+        const course = await findCourseByIdentifier(req.params.id);
+        if (!course) {
+            return res.status(404).json({ error: `Course not found: ${req.params.id}` });
+        }
+
+        const allCourses = await Course.findAll();
+        const dependents = findDependentCourses(course.code, allCourses);
+
+        if (dependents.length > 0) {
+            const dependentCodes = dependents.map(d => d.code);
+            return res.status(409).json({
+                error: `Cannot delete course ${course.code}: referenced as a dependency by ${dependentCodes.join(', ')}`,
+                dependents,
+                dependentCodes,
+                dependentCourses: dependents
+            });
+        }
+
+        await course.destroy();
+        return res.status(200).json({
+            message: `Course ${course.code} deleted successfully`,
+            deletedCourse: course
+        });
+    } catch (error) {
+        console.error('Error deleting course:', error.message);
+        res.status(500).json({ error: error.message });
     }
 });
 

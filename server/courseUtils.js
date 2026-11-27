@@ -450,6 +450,53 @@ function validateCourseBatch(courses, existingCourses = []) {
   }
 }
 
+/**
+ * Finds all courses in catalogCourses that directly depend on the given course code
+ * as a prerequisite or corequisite.
+ * 
+ * Returns an array of dependent course descriptor objects:
+ * [{ id, code, name, type: 'prerequisite' | 'corequisite' | 'both', isPrerequisite: boolean, isCorequisite: boolean }]
+ */
+function findDependentCourses(code, catalogCourses = []) {
+  if (!code || typeof code !== 'string') return [];
+  const target = canonicalizeCode(code);
+  if (!target || !Array.isArray(catalogCourses) || catalogCourses.length === 0) return [];
+
+  const dependents = [];
+
+  for (const course of catalogCourses) {
+    if (!course || !course.code) continue;
+    const courseCode = canonicalizeCode(course.code);
+    if (courseCode === target) continue; // Self-reference is not a valid dependent
+
+    const prereqCodes = extractCourseCodes(course.prerequisites);
+    const coreqCodes = extractCourseCodes(course.corequisites);
+
+    const isPrereq = prereqCodes.includes(target);
+    const isCoreq = coreqCodes.includes(target);
+
+    if (isPrereq || isCoreq) {
+      let type = 'prerequisite';
+      if (isPrereq && isCoreq) {
+        type = 'both';
+      } else if (isCoreq) {
+        type = 'corequisite';
+      }
+
+      dependents.push({
+        id: course.id,
+        code: courseCode,
+        name: course.name,
+        type,
+        isPrerequisite: isPrereq,
+        isCorequisite: isCoreq
+      });
+    }
+  }
+
+  return dependents;
+}
+
 module.exports = {
   canonicalizeCode,
   isValidCourseCode,
@@ -457,5 +504,6 @@ module.exports = {
   extractCourseCodes,
   detectPrerequisiteCycle,
   validateCourseRequirements,
-  validateCourseBatch
+  validateCourseBatch,
+  findDependentCourses
 };
