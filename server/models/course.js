@@ -1,5 +1,10 @@
 const { DataTypes } = require('sequelize');
-const { canonicalizeCode, normalizeRequirements } = require('../courseUtils');
+const {
+    canonicalizeCode,
+    normalizeRequirements,
+    validateCourseRequirements,
+    validateCourseBatch
+} = require('../courseUtils');
 
 module.exports = (sequelize) => {
     return sequelize.define('Course', {
@@ -32,7 +37,7 @@ module.exports = (sequelize) => {
         }
     }, {
         hooks: {
-            beforeValidate: (course) => {
+            beforeValidate: async (course, options) => {
                 if (course.code && typeof course.code === 'string') {
                     course.code = canonicalizeCode(course.code);
                 }
@@ -41,6 +46,44 @@ module.exports = (sequelize) => {
                 }
                 if (course.corequisites !== undefined && course.corequisites !== null) {
                     course.corequisites = normalizeRequirements(course.corequisites);
+                }
+
+                if (options && (options.skipValidation || options.batchValidated)) {
+                    return;
+                }
+
+                const CourseModel = sequelize.models.Course;
+                const existingCourses = CourseModel ? await CourseModel.findAll() : [];
+                validateCourseRequirements({
+                    code: course.code,
+                    prerequisites: course.prerequisites,
+                    corequisites: course.corequisites,
+                    existingCourses,
+                    batchCodes: options && options.batchCodes ? options.batchCodes : new Set()
+                });
+            },
+            beforeBulkCreate: async (courses, options) => {
+                for (const course of courses) {
+                    if (course.code && typeof course.code === 'string') {
+                        course.code = canonicalizeCode(course.code);
+                    }
+                    if (course.prerequisites !== undefined && course.prerequisites !== null) {
+                        course.prerequisites = normalizeRequirements(course.prerequisites);
+                    }
+                    if (course.corequisites !== undefined && course.corequisites !== null) {
+                        course.corequisites = normalizeRequirements(course.corequisites);
+                    }
+                }
+
+                if (options && options.skipValidation) {
+                    return;
+                }
+
+                const CourseModel = sequelize.models.Course;
+                const existingCourses = CourseModel ? await CourseModel.findAll() : [];
+                validateCourseBatch(courses, existingCourses);
+                if (options) {
+                    options.batchValidated = true;
                 }
             }
         }
